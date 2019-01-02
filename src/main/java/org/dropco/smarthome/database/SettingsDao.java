@@ -1,0 +1,92 @@
+package org.dropco.smarthome.database;
+
+import com.querydsl.core.Tuple;
+import com.querydsl.core.types.Predicate;
+import com.querydsl.sql.mysql.MySQLQuery;
+import org.dropco.smarthome.database.querydsl.StringSetting;
+
+import java.sql.Connection;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.dropco.smarthome.database.querydsl.DoubleSetting.DOUBLE;
+import static org.dropco.smarthome.database.querydsl.LongSetting.LONG;
+import static org.dropco.smarthome.database.querydsl.StringSetting.STRING;
+
+public class SettingsDao {
+    private Map<String, String> stringCacheMap = new HashMap<>();
+    private Map<String, Long> longCacheMap = new HashMap<>();
+    private Map<String, Double> doubleCacheMap = new HashMap<>();
+    private Date lastUpdatedDate;
+
+
+    public String getString(String key) {
+        updateIfNeeded();
+        return stringCacheMap.get(key);
+    }
+
+
+    public long getLong(String key) {
+        updateIfNeeded();
+        return longCacheMap.get(key);
+    }
+
+    public double getDouble(String key) {
+        updateIfNeeded();
+        return doubleCacheMap.get(key);
+    }
+
+    private void updateIfNeeded() {
+        loadStringCache();
+        loadLongCache();
+        loadDoubleCache();
+    }
+
+    private void loadStringCache() {
+        Predicate condition;
+        if (lastUpdatedDate==null){
+            condition=STRING.modifiedTs.eq(STRING.modifiedTs);
+        } else {
+            condition = STRING.modifiedTs.after(lastUpdatedDate);
+        }
+        List<Tuple> fetch = new MySQLQuery<StringSetting>(getConnection()).select(STRING.all()).from(STRING).where(condition).fetch();
+        for (Tuple result: fetch){
+            stringCacheMap.put(result.get(STRING.refCd),result.get(STRING.value));
+        }
+    }
+
+    private void loadLongCache() {
+        Predicate condition;
+        List<Tuple> fetch;
+        if (lastUpdatedDate==null){
+            condition=LONG.modifiedTs.eq(LONG.modifiedTs);
+        } else {
+            condition = LONG.modifiedTs.after(lastUpdatedDate);
+        }
+        fetch = new MySQLQuery<StringSetting>(getConnection()).select(LONG.all()).from(LONG).where(condition).fetch();
+        for (Tuple result: fetch){
+            longCacheMap.put(result.get(LONG.refCd),result.get(LONG.value));
+        }
+    }
+
+    private void loadDoubleCache() {
+        Predicate condition;
+        List<Tuple> fetch;
+        if (lastUpdatedDate==null){
+            condition=DOUBLE.modifiedTs.eq(DOUBLE.modifiedTs);
+        } else {
+            condition = DOUBLE.modifiedTs.after(lastUpdatedDate);
+        }
+        fetch = new MySQLQuery<StringSetting>(getConnection()).select(DOUBLE.all()).from(DOUBLE).where(condition).fetch();
+        for (Tuple result: fetch){
+            doubleCacheMap.put(result.get(DOUBLE.refCd),result.get(DOUBLE.value));
+        }
+    }
+
+    private Connection getConnection() {
+        return null;
+    }
+
+}
