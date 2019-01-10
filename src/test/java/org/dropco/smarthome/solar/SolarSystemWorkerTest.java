@@ -1,5 +1,6 @@
 package org.dropco.smarthome.solar;
 
+import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.database.SolarSystemDao;
 import org.junit.Assert;
 import org.junit.Test;
@@ -19,7 +20,7 @@ public class SolarSystemWorkerTest {
         AtomicBoolean strongWind = new AtomicBoolean(false);
         AtomicBoolean overheated = new AtomicBoolean(false);
         SolarPanel solarPanel = solarPanel(new ArrayList<>());
-        SolarSystemWorker worker = new SolarSystemWorker(shutdownRequested, strongWind, overheated, new SolarSystemDao(settingsDao) {
+        SolarSystemWorker worker = new SolarSystemWorker(shutdownRequested, strongWind, overheated, new SolarSystemDao(new SettingsDao()) {
             @Override
             public SolarPanelStepRecord getNextRecord(Calendar calendar, SolarPanelPosition currentPosition) {
                 SolarPanelStepRecord stepRecord = startPos();
@@ -46,7 +47,7 @@ public class SolarSystemWorkerTest {
         SolarPanel solarPanel = solarPanel(list);
         solarPanel.getCurrentPosition().setHorizontalPositionInSeconds(-15);
         solarPanel.getCurrentPosition().setVerticalPositionInSeconds(-30);
-        SolarSystemWorker worker = new SolarSystemWorker(shutdownRequested, strongWind, overheated, new SolarSystemDao(settingsDao) {
+        SolarSystemWorker worker = new SolarSystemWorker(shutdownRequested, strongWind, overheated, new SolarSystemDao(new SettingsDao()) {
             @Override
             public SolarPanelStepRecord getNextRecord(Calendar calendar, SolarPanelPosition currentPosition) {
                 SolarPanelStepRecord stepRecord = startPos();
@@ -62,11 +63,12 @@ public class SolarSystemWorkerTest {
                 solarPanelPosition.setHorizontalPositionInSeconds(0);
                 return solarPanelPosition;
             }
-        }, solarPanel){
+        }, solarPanel) {
             @Override
             Calendar getCalendar() {
                 Calendar instance = Calendar.getInstance(TimeZone.getTimeZone(ZoneId.of("GMT")));
-                instance.set(Calendar.HOUR_OF_DAY,6);
+                instance.set(2018, 11, 31, 6, 10, 00);
+                instance.set(Calendar.HOUR_OF_DAY, 6);
                 return instance;
             }
         };
@@ -77,7 +79,7 @@ public class SolarSystemWorkerTest {
         synchronized (thread) {
             thread.notify();
         }
-        Thread.sleep(30 * 1000);
+        Thread.sleep(40 * 1000);
         shutdownRequested.set(true);
         synchronized (thread) {
             thread.notify();
@@ -120,7 +122,7 @@ public class SolarSystemWorkerTest {
 
     private SolarPanel solarPanel(List<String> result) {
         return new SolarPanel(startPos().getPanelPosition(), (s, aBoolean) -> {
-            result.add(s+aBoolean);
+            result.add(s + aBoolean);
         });
     }
 
