@@ -39,7 +39,7 @@ public class TemperatureMeasurePlace extends com.querydsl.sql.RelationalPathBase
 
     public void addMetadata() {
         addMetadata(placeRefCd, ColumnMetadata.named("PLACE_REF_CD").withIndex(1).ofType(Types.VARCHAR).withSize(255).notNull());
-        addMetadata(devideId, ColumnMetadata.named("DEVICE_ID").withIndex(2).ofType(Types.NUMERIC).withSize(50).withDigits(5).notNull());
+        addMetadata(devideId, ColumnMetadata.named("DEVICE_ID").withIndex(2).ofType(Types.VARCHAR).withSize(255).withDigits(5).notNull());
         addMetadata(name, ColumnMetadata.named("NAME").withIndex(3).ofType(Types.VARCHAR).withSize(50).withDigits(5).notNull());
     }
 

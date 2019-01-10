@@ -90,6 +90,6 @@ public class SolarSystemDao {
     }
 
     private Connection getConnection() {
-        return null;
+        return DBConnection.getConnection();
     }
 }

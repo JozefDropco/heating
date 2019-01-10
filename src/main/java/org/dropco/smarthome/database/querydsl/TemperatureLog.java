@@ -47,7 +47,7 @@ public class TemperatureLog extends com.querydsl.sql.RelationalPathBase<Temperat
         addMetadata(placeRefCd, ColumnMetadata.named("PLACE_REF_CD").withIndex(1).ofType(Types.VARCHAR).withSize(255).notNull());
         addMetadata(devideId, ColumnMetadata.named("DEVICE_ID").withIndex(2).ofType(Types.NUMERIC).withSize(50).withDigits(5).notNull());
         addMetadata(value, ColumnMetadata.named("VALUE").withIndex(3).ofType(Types.NUMERIC).withSize(50).withDigits(5).notNull());
-        addMetadata(timestamp, ColumnMetadata.named("MODIFIED_TS").withIndex(4).ofType(Types.TIMESTAMP).withSize(11).withDigits(6).notNull());
+        addMetadata(timestamp, ColumnMetadata.named("CREATION_TS").withIndex(4).ofType(Types.TIMESTAMP).withSize(11).withDigits(6).notNull());
     }
 
 }

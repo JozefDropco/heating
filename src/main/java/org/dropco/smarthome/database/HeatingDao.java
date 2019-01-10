@@ -14,6 +14,6 @@ public class HeatingDao {
     }
 
     private Connection getConnection() {
-        return null;
+        return DBConnection.getConnection();
     }
 }

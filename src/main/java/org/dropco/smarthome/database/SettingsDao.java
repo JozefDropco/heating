@@ -86,7 +86,7 @@ public class SettingsDao {
     }
 
     private Connection getConnection() {
-        return null;
+        return DBConnection.getConnection();
     }
 
 }
