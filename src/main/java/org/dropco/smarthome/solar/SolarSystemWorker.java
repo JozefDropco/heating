@@ -7,6 +7,8 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class SolarSystemWorker implements Runnable {
 
@@ -15,6 +17,7 @@ public class SolarSystemWorker implements Runnable {
     private AtomicBoolean shutdownRequested;
     private AtomicBoolean strongWind;
     private AtomicBoolean overheated;
+    private static final Logger logger = Logger.getLogger(SolarSystemWorker.class.getName());
 
 
     public SolarSystemWorker(AtomicBoolean shutdownRequested, AtomicBoolean strongWind, AtomicBoolean overheated, SolarSystemDao dao, SolarPanel solarPanel) {
@@ -31,24 +34,32 @@ public class SolarSystemWorker implements Runnable {
             try {
                 Calendar calendar = getCalendar();
                 SolarPanelStepRecord nextRecord = dao.getNextRecord(calendar, solarPanel.getCurrentPosition());
+                logger.log(Level.INFO, "Next position: " + nextRecord);
                 SolarPanelStepRecord futurePosition = null;
                 if (!strongWind.get() && !overheated.get()) {
                     solarPanel.setShouldTerminate(() -> this.strongWind.get() || overheated.get());
+                    logger.log(Level.INFO, "Moving towards (strong wind): " + nextRecord.getPanelPosition());
                     solarPanel.move(nextRecord.getPanelPosition());
                     futurePosition = dao.getNextRecord(calendar, nextRecord.getPanelPosition());
                 }
                 if (strongWind.get()) {
                     solarPanel.setShouldTerminate(() -> this.overheated.get());
-                    solarPanel.move(dao.getStrongWindPosition());
+                    SolarPanelPosition strongWindPosition = dao.getStrongWindPosition();
+                    logger.log(Level.INFO, "Moving towards (strong wind): " + strongWindPosition);
+                    solarPanel.move(strongWindPosition);
                     futurePosition = nextRecord;
                 }
                 if (overheated.get()) {
                     solarPanel.setShouldTerminate(() -> this.strongWind.get());
-                    solarPanel.move(dao.getOverheatedPosition());
+                    SolarPanelPosition overheatedPosition = dao.getOverheatedPosition();
+                    logger.log(Level.INFO, "Moving towards (overheated): " + overheatedPosition);
+                    solarPanel.move(overheatedPosition);
                     futurePosition = nextRecord;
                 }
                 synchronized (Thread.currentThread()) {
-                    Thread.currentThread().wait(millisRemaining(calendar, futurePosition));
+                    long timeout = millisRemaining(calendar, futurePosition);
+                    logger.log(Level.INFO, "Solar system will sleep for next: " + timeout + " milliseconds");
+                    Thread.currentThread().wait(timeout);
                 }
             } catch (InterruptedException e) {
             }

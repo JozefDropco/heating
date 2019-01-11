@@ -20,4 +20,13 @@ public class SolarPanelPosition {
     public void setHorizontalPositionInSeconds(Integer horizontalPositionInSeconds) {
         this.horizontalPositionInSeconds = horizontalPositionInSeconds;
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("SolarPanelPosition{");
+        sb.append("verticalPositionInSeconds=").append(verticalPositionInSeconds);
+        sb.append(", horizontalPositionInSeconds=").append(horizontalPositionInSeconds);
+        sb.append('}');
+        return sb.toString();
+    }
 }

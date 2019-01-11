@@ -46,4 +46,16 @@ public class SolarPanelStepRecord {
     public void setPanelPosition(SolarPanelPosition panelPosition) {
         this.panelPosition = panelPosition;
     }
+
+    @Override
+    public String toString() {
+        final StringBuilder sb = new StringBuilder("SolarPanelStepRecord{");
+        sb.append("month=").append(month);
+        sb.append(", weekDay=").append(weekDay);
+        sb.append(", hour=").append(hour);
+        sb.append(", minute=").append(minute);
+        sb.append(", panelPosition=").append(panelPosition);
+        sb.append('}');
+        return sb.toString();
+    }
 }
