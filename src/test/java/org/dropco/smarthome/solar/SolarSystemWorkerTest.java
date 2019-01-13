@@ -105,7 +105,7 @@ public class SolarSystemWorkerTest {
         Calendar current = Calendar.getInstance(TimeZone.getTimeZone(ZoneId.of("GMT")));
         current.set(2018, 11, 30, 18, 0, 0);
         current.set(Calendar.MILLISECOND, 0);
-        long remaining = SolarSystemWorker.millisRemaining(current, position(-5, 0, 6, 10, 12, WeekDay.MONDAY));
+        long remaining = SolarSystemWorker.millisRemaining(current, position(-5, 0, 6, 10, 12, 1));
         Assert.assertEquals((12 * 60 + 10) * 60 * 1000l, remaining);
     }
 
@@ -115,7 +115,7 @@ public class SolarSystemWorkerTest {
         Calendar current = Calendar.getInstance(TimeZone.getTimeZone(ZoneId.of("GMT")));
         current.set(2018, 11, 30, 18, 0, 0);
         current.set(Calendar.MILLISECOND, 0);
-        long remaining = SolarSystemWorker.millisRemaining(current, position(-5, 0, 6, 10, 12, WeekDay.WEDNESDAY));
+        long remaining = SolarSystemWorker.millisRemaining(current, position(-5, 0, 6, 10, 12, 3));
         Assert.assertEquals((2 * 24 * 60 + 12 * 60 + 10) * 60 * 1000l, remaining);
     }
 
@@ -127,10 +127,10 @@ public class SolarSystemWorkerTest {
     }
 
     private SolarPanelStepRecord startPos() {
-        return position(0, 0, 6, 10, 12, WeekDay.MONDAY);
+        return position(0, 0, 6, 10, 12, 1);
     }
 
-    private SolarPanelStepRecord position(int horizontalPositionInSeconds, int verticalPositionInSeconds, int hour, int minute, int month, WeekDay weekDay) {
+    private SolarPanelStepRecord position(int horizontalPositionInSeconds, int verticalPositionInSeconds, int hour, int minute, int month, int day) {
         SolarPanelStepRecord currentPosition = new SolarPanelStepRecord();
         SolarPanelPosition position = new SolarPanelPosition();
         position.setHorizontalPositionInSeconds(horizontalPositionInSeconds);
@@ -139,7 +139,7 @@ public class SolarSystemWorkerTest {
         currentPosition.setHour(hour);
         currentPosition.setMinute(minute);
         currentPosition.setMonth(month);
-        currentPosition.setWeekDay(weekDay);
+        currentPosition.setDay(day);
         return currentPosition;
     }
 }

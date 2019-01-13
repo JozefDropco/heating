@@ -71,16 +71,8 @@ public class SolarSystemWorker implements Runnable {
     }
 
     static long millisRemaining(Calendar current, SolarPanelStepRecord nextRecord) {
-        WeekDay weekDay = WeekDay.fromCalendarDay(current.get(Calendar.DAY_OF_WEEK));
-        WeekDay futurePositionDay = nextRecord.getWeekDay();
-        //1 - SUNDAY, 7 - SATURDAY
-        int currentCalDay = weekDay.calendarDay;
-        int futureCalendarDay = futurePositionDay.calendarDay;
-        if (currentCalDay > futureCalendarDay) {
-            currentCalDay += 7; //add virtually a week
-        }
         Date currentDate = current.getTime();
-        current.add(Calendar.DAY_OF_YEAR, (futureCalendarDay - currentCalDay));
+        current.set(Calendar.DAY_OF_MONTH, nextRecord.getDay());
         current.set(Calendar.HOUR_OF_DAY, nextRecord.getHour());
         current.set(Calendar.MINUTE, nextRecord.getMinute());
         current.set(Calendar.SECOND, 0);

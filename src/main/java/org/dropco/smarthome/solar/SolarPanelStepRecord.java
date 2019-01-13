@@ -2,7 +2,7 @@ package org.dropco.smarthome.solar;
 
 public class SolarPanelStepRecord {
     private int month;
-    private WeekDay weekDay;
+    private int day;
     private int hour;
     private int minute;
     private SolarPanelPosition panelPosition;
@@ -15,12 +15,12 @@ public class SolarPanelStepRecord {
         this.month = month;
     }
 
-    public WeekDay getWeekDay() {
-        return weekDay;
+    public int getDay() {
+        return day;
     }
 
-    public void setWeekDay(WeekDay weekDay) {
-        this.weekDay = weekDay;
+    public void setDay(int day) {
+        this.day = day;
     }
 
     public int getHour() {
@@ -51,7 +51,7 @@ public class SolarPanelStepRecord {
     public String toString() {
         final StringBuilder sb = new StringBuilder("SolarPanelStepRecord{");
         sb.append("month=").append(month);
-        sb.append(", weekDay=").append(weekDay);
+        sb.append(", day=").append(day);
         sb.append(", hour=").append(hour);
         sb.append(", minute=").append(minute);
         sb.append(", panelPosition=").append(panelPosition);

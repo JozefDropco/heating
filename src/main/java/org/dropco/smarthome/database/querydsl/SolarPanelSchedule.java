@@ -1,7 +1,6 @@
 package org.dropco.smarthome.database.querydsl;
 
 import com.querydsl.core.types.dsl.NumberPath;
-import com.querydsl.core.types.dsl.StringPath;
 import com.querydsl.sql.ColumnMetadata;
 
 import javax.annotation.Generated;
@@ -24,7 +23,7 @@ public class SolarPanelSchedule extends com.querydsl.sql.RelationalPathBase<Sola
     public final NumberPath<Integer> month = createNumber("month",Integer.class);
     public final NumberPath<Integer> hour = createNumber("hour",Integer.class);
     public final NumberPath<Integer> minute = createNumber("minute",Integer.class);
-    public final StringPath weekDay = createString("weekday");
+    public final NumberPath<Integer> day = createNumber("day",Integer.class);
     public final NumberPath<Long> position = createNumber("position",Long.class);
 
     public final com.querydsl.sql.PrimaryKey<SolarPanelSchedule> posPk = createPrimaryKey(id);
@@ -44,7 +43,7 @@ public class SolarPanelSchedule extends com.querydsl.sql.RelationalPathBase<Sola
         addMetadata(month, ColumnMetadata.named("MONTH").withIndex(2).ofType(Types.NUMERIC).withSize(50).withDigits(0).notNull());
         addMetadata(hour, ColumnMetadata.named("HOUR").withIndex(3).ofType(Types.NUMERIC).withSize(50).withDigits(0).notNull());
         addMetadata(minute, ColumnMetadata.named("MINUTE").withIndex(4).ofType(Types.NUMERIC).withSize(50).withDigits(0).notNull());
-        addMetadata(weekDay, ColumnMetadata.named("WEEKDAY").withIndex(5).ofType(Types.VARCHAR).withSize(255).notNull());
+        addMetadata(day, ColumnMetadata.named("DAY").withIndex(5).ofType(Types.NUMERIC).withSize(50).withDigits(0).notNull());
         addMetadata(position, ColumnMetadata.named("POSITION").withIndex(6).ofType(Types.NUMERIC).withSize(50).withDigits(0).notNull());
     }
 

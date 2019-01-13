@@ -2,7 +2,10 @@ package org.dropco.smarthome.database;
 
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Expression;
+import com.querydsl.core.types.Template;
+import com.querydsl.core.types.TemplateFactory;
 import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.sql.SQLTemplates;
 import com.querydsl.sql.dml.SQLUpdateClause;
 import com.querydsl.sql.mysql.MySQLQuery;
@@ -10,17 +13,17 @@ import org.dropco.smarthome.database.querydsl.SolarPosition;
 import org.dropco.smarthome.solar.SolarPanelPosition;
 import org.dropco.smarthome.solar.SolarPanelStepRecord;
 import org.dropco.smarthome.solar.SolarSystemRefCode;
-import org.dropco.smarthome.solar.WeekDay;
 
 import java.sql.Connection;
 import java.util.Calendar;
+import java.util.Date;
 
 import static org.dropco.smarthome.database.querydsl.SolarPanelSchedule.SOLAR_SCHEDULE;
 import static org.dropco.smarthome.database.querydsl.SolarPosition.SOLAR_POSITION;
 
 public class SolarSystemDao {
     private SettingsDao settingsDao;
-
+    private static final Template toDate = TemplateFactory.DEFAULT.create("STR_TO_DATE(CONCAT({0},'-',{1},'-',{2},' ',{3},':',{5},':',{6}), '%Y-%c-%e %k:%i:%s')");
 
     public SolarSystemDao(SettingsDao settingsDao) {
         this.settingsDao = settingsDao;
@@ -50,19 +53,12 @@ public class SolarSystemDao {
     }
 
     public SolarPanelStepRecord getNextRecord(Calendar calendar, SolarPanelPosition currentPosition) {
-        Tuple tuple = getNextPosition(calendar, currentPosition, SOLAR_SCHEDULE.hour.goe(calendar.get(Calendar.HOUR_OF_DAY)));
-        while (tuple == null) {
-            Calendar cal = Calendar.getInstance(calendar.getTimeZone());
-            cal.setTime(calendar.getTime());
-            cal.add(Calendar.DAY_OF_YEAR, 1);
-            tuple = getNextPosition(cal, currentPosition, null);
-        }
-        ;
+        Tuple tuple = getNextPosition(calendar, currentPosition);
         SolarPanelStepRecord record = new SolarPanelStepRecord();
         record.setHour(tuple.get(SOLAR_SCHEDULE.hour));
         record.setMonth(tuple.get(SOLAR_SCHEDULE.month));
         record.setMinute(tuple.get(SOLAR_SCHEDULE.minute));
-        record.setWeekDay(WeekDay.valueOf(tuple.get(SOLAR_SCHEDULE.weekDay)));
+        record.setDay(tuple.get(SOLAR_SCHEDULE.day));
         SolarPanelPosition position = new SolarPanelPosition();
         position.setHorizontalPositionInSeconds(tuple.get(SOLAR_POSITION.horizontalPosition));
         position.setVerticalPositionInSeconds(tuple.get(SOLAR_POSITION.verticalPosition));
@@ -70,12 +66,9 @@ public class SolarSystemDao {
         return record;
     }
 
-    Tuple getNextPosition(Calendar calendar, SolarPanelPosition currentPosition, BooleanExpression condition) {
-        Expression<?>[] list = new Expression[]{SOLAR_POSITION.horizontalPosition, SOLAR_POSITION.verticalPosition, SOLAR_SCHEDULE.hour, SOLAR_SCHEDULE.month, SOLAR_SCHEDULE.weekDay};
-        BooleanExpression whereCond = SOLAR_SCHEDULE.month.goe(calendar.get(Calendar.MONTH));
-        if (condition != null)
-            whereCond.and(condition);
-        whereCond = whereCond.and(SOLAR_SCHEDULE.weekDay.eq(WeekDay.fromCalendarDay(calendar.get(Calendar.DAY_OF_WEEK)).name()));
+    Tuple getNextPosition(Calendar calendar, SolarPanelPosition currentPosition) {
+        Expression<?>[] list = new Expression[]{SOLAR_POSITION.horizontalPosition, SOLAR_POSITION.verticalPosition, SOLAR_SCHEDULE.hour, SOLAR_SCHEDULE.month, SOLAR_SCHEDULE.day};
+        BooleanExpression whereCond = Expressions.dateTemplate(Date.class,toDate,calendar.get(Calendar.YEAR),SOLAR_SCHEDULE.month,SOLAR_SCHEDULE.day,SOLAR_SCHEDULE.hour,SOLAR_SCHEDULE.minute,0).goe(calendar.getTime());
         whereCond = whereCond.and(SOLAR_POSITION.horizontalPosition.ne(currentPosition.getHorizontalPositionInSeconds())).and(SOLAR_POSITION.verticalPosition.ne(currentPosition.getVerticalPositionInSeconds()));
         return new MySQLQuery<SolarPosition>(getConnection()).select(list).from(SOLAR_SCHEDULE).join(SOLAR_POSITION).on(SOLAR_SCHEDULE.position.eq(SOLAR_POSITION.id)).where(whereCond).fetchFirst();
     }
