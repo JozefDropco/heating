@@ -9,6 +9,8 @@ import org.dropco.smarthome.gpioextension.ExtendedPin;
 import org.dropco.smarthome.solar.SolarPanel;
 import org.dropco.smarthome.solar.SolarSystemWorker;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -24,15 +26,15 @@ public class Main {
     public static final String EXTEND_GATE_PIN = "EXTEND_GATE_PIN";
     public static final String STRONG_WIND_PIN_REF_CD = "STRONG_WIND_PIN";
     private static ExtendedGpioProvider extendedGpioProvider;
-
+    private static Map<String,GpioPinDigitalOutput> map =new HashMap<>();
 
     public static void main(String[] args) {
         AtomicBoolean strongWind = new AtomicBoolean(false);
         AtomicBoolean solarOverHeated = new AtomicBoolean(false);
         SolarPanel solarPanel = new SolarPanel(solarSystemDao.getLastKnownPosition(), (key, value) -> {
-            GpioPinDigitalOutput output = gpio.provisionDigitalOutputPin(getExtendedProvider(), ExtendedPin.getPinByName(settingsDao.getString(key)), key, PinState.LOW);
+            String pinName = settingsDao.getString(key);
+            GpioPinDigitalOutput output = map.getOrDefault(pinName, gpio.provisionDigitalOutputPin(getExtendedProvider(), ExtendedPin.getPinByName(pinName), key, PinState.LOW));
             output.setState(value);
-            gpio.unprovisionPin(output);
         });
         solarPanel.addListener(panel -> solarSystemDao.updateLastKnownPosition(panel.getCurrentPosition()));
         Thread solarMovementThread = new Thread(new SolarSystemWorker(shutdownRequested, strongWind, solarOverHeated, solarSystemDao, solarPanel));
