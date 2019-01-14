@@ -6,6 +6,7 @@ import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.database.SolarSystemDao;
 import org.dropco.smarthome.gpioextension.ExtendedGpioProvider;
 import org.dropco.smarthome.gpioextension.ExtendedPin;
+import org.dropco.smarthome.solar.PositionUpdater;
 import org.dropco.smarthome.solar.SolarPanel;
 import org.dropco.smarthome.solar.SolarSystemWorker;
 
@@ -40,14 +41,18 @@ public class Main {
             }
             output.setState(value);
         });
-        solarPanel.addListener(panel -> solarSystemDao.updateLastKnownPosition(panel.getCurrentPosition()));
+        PositionUpdater positionUpdater = new PositionUpdater(solarSystemDao);
+        solarPanel.addListener(panel -> positionUpdater.add(panel.getCurrentPosition()));
         Thread solarMovementThread = new Thread(new SolarSystemWorker(shutdownRequested, strongWind, solarOverHeated, solarSystemDao, solarPanel));
         solarMovementThread.start();
+        Thread positionUpdaterThread = new Thread(positionUpdater);
+        positionUpdaterThread.start();
 //        startStrongWindDetector(strongWind, solarMovementThread);
 //        Thread heatingThread = new Thread(new HeatingWorker(shutdownRequested, overHeatedHandler(solarOverHeated, solarMovementThread),settingsDao,new HeatingDao()));
 //        heatingThread.start();
         try {
             solarMovementThread.join();
+            positionUpdaterThread.join();
 //            heatingThread.join();
         } catch (InterruptedException e) {
             e.printStackTrace();
