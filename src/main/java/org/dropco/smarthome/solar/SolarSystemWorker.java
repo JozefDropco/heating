@@ -30,34 +30,33 @@ public class SolarSystemWorker implements Runnable {
     }
 
     public void run() {
+        logger.log(Level.INFO, "Starting solar system. Last known position to: " + solarPanel.getCurrentPosition());
+        SolarPanelStepRecord nextRecord = dao.getLastPosition(getCalendar());
+        logger.log(Level.INFO, "Warm up. Move to correct location: " + nextRecord.getPanelPosition());
         while (!shutdownRequested.get()) {
             try {
                 Calendar calendar = getCalendar();
-                SolarPanelStepRecord nextRecord = dao.getNextRecord(calendar, solarPanel.getCurrentPosition());
-                logger.log(Level.INFO, "Next position: " + nextRecord);
-                SolarPanelStepRecord futurePosition = null;
                 if (!strongWind.get() && !overheated.get()) {
                     solarPanel.setShouldTerminate(() -> this.strongWind.get() || overheated.get());
-                    logger.log(Level.INFO, "Moving towards (strong wind): " + nextRecord.getPanelPosition());
+                    logger.log(Level.INFO, "Moving towards: " + nextRecord.getPanelPosition());
                     solarPanel.move(nextRecord.getPanelPosition());
-                    futurePosition = dao.getNextRecord(calendar, nextRecord.getPanelPosition());
                 }
                 if (strongWind.get()) {
                     solarPanel.setShouldTerminate(() -> this.overheated.get());
                     SolarPanelPosition strongWindPosition = dao.getStrongWindPosition();
                     logger.log(Level.INFO, "Moving towards (strong wind): " + strongWindPosition);
                     solarPanel.move(strongWindPosition);
-                    futurePosition = nextRecord;
                 }
                 if (overheated.get()) {
                     solarPanel.setShouldTerminate(() -> this.strongWind.get());
                     SolarPanelPosition overheatedPosition = dao.getOverheatedPosition();
                     logger.log(Level.INFO, "Moving towards (overheated): " + overheatedPosition);
                     solarPanel.move(overheatedPosition);
-                    futurePosition = nextRecord;
                 }
+                nextRecord = dao.getNextRecord(calendar);
+                logger.log(Level.INFO, "Next position: " + nextRecord);
                 synchronized (Thread.currentThread()) {
-                    long timeout = millisRemaining(calendar, futurePosition);
+                    long timeout = millisRemaining(calendar, nextRecord);
                     logger.log(Level.INFO, "Solar system will sleep for next: " + timeout + " milliseconds");
                     Thread.currentThread().wait(timeout);
                 }
