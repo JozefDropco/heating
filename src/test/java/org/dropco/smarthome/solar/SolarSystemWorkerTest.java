@@ -33,7 +33,15 @@ public class SolarSystemWorkerTest {
                 stepRecord.getPanelPosition().setHorizontalPositionInSeconds(-10);
                 return stepRecord;
             }
-        }, solarPanel);
+        }, solarPanel){
+            @Override
+            Calendar getCalendar() {
+                Calendar calendar = super.getCalendar();
+                calendar.set(Calendar.YEAR,2018);
+                calendar.set(Calendar.MONTH,11);
+                return calendar;
+            }
+        };
         Thread thread = new Thread(worker);
         thread.start();
         shutdownRequested.set(true);
@@ -78,8 +86,7 @@ public class SolarSystemWorkerTest {
             @Override
             Calendar getCalendar() {
                 Calendar instance = Calendar.getInstance(TimeZone.getTimeZone(ZoneId.of("GMT")));
-                instance.set(2018, 11, 31, 6, 10, 00);
-                instance.set(Calendar.HOUR_OF_DAY, 6);
+                instance.set(2018, 10, 31, 7, 9, 50);
                 return instance;
             }
         };
@@ -114,7 +121,7 @@ public class SolarSystemWorkerTest {
     @Test
     public void millisRemainingNextDay() {
         Calendar current = Calendar.getInstance(TimeZone.getTimeZone(ZoneId.of("GMT")));
-        current.set(2018, 11, 30, 18, 0, 0);
+        current.set(2018, 10, 30, 18, 0, 0);
         current.set(Calendar.MILLISECOND, 0);
         long remaining = SolarSystemWorker.millisRemaining(current, position(-5, 0, 6, 10, 12, 1));
         Assert.assertEquals((12 * 60 + 10) * 60 * 1000l, remaining);
@@ -124,7 +131,7 @@ public class SolarSystemWorkerTest {
     @Test
     public void millisRemainingNext3Days() {
         Calendar current = Calendar.getInstance(TimeZone.getTimeZone(ZoneId.of("GMT")));
-        current.set(2018, 11, 30, 18, 0, 0);
+        current.set(2018, 10, 30, 18, 0, 0);
         current.set(Calendar.MILLISECOND, 0);
         long remaining = SolarSystemWorker.millisRemaining(current, position(-5, 0, 6, 10, 12, 3));
         Assert.assertEquals((2 * 24 * 60 + 12 * 60 + 10) * 60 * 1000l, remaining);

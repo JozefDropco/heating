@@ -71,13 +71,15 @@ public class SolarSystemWorker implements Runnable {
 
     static long millisRemaining(Calendar current, SolarPanelStepRecord nextRecord) {
         Date currentDate = current.getTime();
+        current.set(Calendar.MONTH, nextRecord.getMonth()-1);
         current.set(Calendar.DAY_OF_MONTH, nextRecord.getDay());
         current.set(Calendar.HOUR_OF_DAY, nextRecord.getHour());
         current.set(Calendar.MINUTE, nextRecord.getMinute());
         current.set(Calendar.SECOND, 0);
         current.set(Calendar.MILLISECOND, 0);
         Date future = current.getTime();
-        return future.getTime() - currentDate.getTime();
+        long diff = future.getTime() - currentDate.getTime();
+        return diff;
     }
 
 
