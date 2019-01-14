@@ -26,15 +26,18 @@ public class Main {
     public static final String EXTEND_GATE_PIN = "EXTEND_GATE_PIN";
     public static final String STRONG_WIND_PIN_REF_CD = "STRONG_WIND_PIN";
     private static ExtendedGpioProvider extendedGpioProvider;
-    private static Map<String,GpioPinDigitalOutput> map =new HashMap<>();
+    private static Map<String, GpioPinDigitalOutput> map = new HashMap<>();
 
     public static void main(String[] args) {
         AtomicBoolean strongWind = new AtomicBoolean(false);
         AtomicBoolean solarOverHeated = new AtomicBoolean(false);
         SolarPanel solarPanel = new SolarPanel(solarSystemDao.getLastKnownPosition(), (key, value) -> {
             String pinName = settingsDao.getString(key);
-            GpioPinDigitalOutput output = map.getOrDefault(pinName, gpio.provisionDigitalOutputPin(getExtendedProvider(), ExtendedPin.getPinByName(pinName), key, PinState.LOW));
-            map.put(pinName,output);
+            GpioPinDigitalOutput output = map.get(pinName);
+            if (output == null) {
+                output = gpio.provisionDigitalOutputPin(getExtendedProvider(), ExtendedPin.getPinByName(pinName), key, PinState.LOW)
+                map.put(pinName, output);
+            }
             output.setState(value);
         });
         solarPanel.addListener(panel -> solarSystemDao.updateLastKnownPosition(panel.getCurrentPosition()));
@@ -63,10 +66,10 @@ public class Main {
     }
 
     static Consumer<Boolean> overHeatedHandler(AtomicBoolean solarOverHeated, Thread solarMovementThread) {
-        return overHeated-> {
+        return overHeated -> {
             solarOverHeated.set(overHeated);
             if (overHeated) {
-                synchronized (solarMovementThread){
+                synchronized (solarMovementThread) {
                     solarMovementThread.notify();
                 }
             }
@@ -78,8 +81,8 @@ public class Main {
         strongWindPin.addListener((GpioPinListenerDigital) event -> {
             boolean value = event.getState() == PinState.HIGH;
             strongWind.set(value);
-            if (value){
-                synchronized (solarThread){
+            if (value) {
+                synchronized (solarThread) {
                     solarThread.notify();
                 }
             }
