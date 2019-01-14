@@ -67,7 +67,7 @@ public class SolarSystemDao {
     }
 
     Tuple getNextPosition(Calendar calendar, SolarPanelPosition currentPosition) {
-        Expression<?>[] list = new Expression[]{SOLAR_POSITION.horizontalPosition, SOLAR_POSITION.verticalPosition, SOLAR_SCHEDULE.hour, SOLAR_SCHEDULE.month, SOLAR_SCHEDULE.day};
+        Expression<?>[] list = new Expression[]{SOLAR_POSITION.horizontalPosition, SOLAR_POSITION.verticalPosition, SOLAR_SCHEDULE.hour, SOLAR_SCHEDULE.minute,SOLAR_SCHEDULE.month, SOLAR_SCHEDULE.day};
         BooleanExpression whereCond = Expressions.dateTemplate(Date.class,toDate,calendar.get(Calendar.YEAR),SOLAR_SCHEDULE.month,SOLAR_SCHEDULE.day,SOLAR_SCHEDULE.hour,SOLAR_SCHEDULE.minute,0).goe(calendar.getTime());
         whereCond = whereCond.and(SOLAR_POSITION.horizontalPosition.ne(currentPosition.getHorizontalPositionInSeconds())).and(SOLAR_POSITION.verticalPosition.ne(currentPosition.getVerticalPositionInSeconds()));
         return new MySQLQuery<SolarPosition>(getConnection()).select(list).from(SOLAR_SCHEDULE).join(SOLAR_POSITION).on(SOLAR_SCHEDULE.position.eq(SOLAR_POSITION.id)).where(whereCond).fetchFirst();
