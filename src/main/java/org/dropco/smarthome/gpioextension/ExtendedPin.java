@@ -14,4 +14,8 @@ public class ExtendedPin extends PinProvider {
     public static final Pin GPIO_106 = createPin(ExtendedGpioProvider.NAME,106, "GPIO 106",EnumSet.of(PinMode.DIGITAL_OUTPUT),EnumSet.allOf(PinPullResistance.class),EnumSet.allOf(PinEdge.class));
     public static final Pin GPIO_107 = createPin(ExtendedGpioProvider.NAME,107, "GPIO 107",EnumSet.of(PinMode.DIGITAL_OUTPUT),EnumSet.allOf(PinPullResistance.class),EnumSet.allOf(PinEdge.class));
 
+
+    public static Pin getPinByName(String name) {
+        return pins.get(name);
+    }
 }
