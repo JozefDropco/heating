@@ -75,6 +75,10 @@ public class SolarPanel {
             }
         }
         if (horizontal != 0 || vertical != 0) move(horizontal, vertical, true);
+        commandExecutor.accept(SolarSystemRefCode.SOUTH_PIN_REF_CD, false);
+        commandExecutor.accept(SolarSystemRefCode.NORTH_PIN_REF_CD, false);
+        commandExecutor.accept(SolarSystemRefCode.WEST_PIN_REF_CD, false);
+        commandExecutor.accept(SolarSystemRefCode.EAST_PIN_REF_CD, false);
     }
 
     private void fireUpdate() {
