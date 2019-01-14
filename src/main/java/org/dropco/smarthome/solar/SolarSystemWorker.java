@@ -31,7 +31,7 @@ public class SolarSystemWorker implements Runnable {
 
     public void run() {
         logger.log(Level.INFO, "Starting solar system. Last known position to: " + solarPanel.getCurrentPosition());
-        SolarPanelStepRecord nextRecord = dao.getLastPosition(getCalendar());
+        SolarPanelStepRecord nextRecord = dao.getRecentRecord(getCalendar());
         logger.log(Level.INFO, "Warm up. Move to correct location: " + nextRecord.getPanelPosition());
         while (!shutdownRequested.get()) {
             try {

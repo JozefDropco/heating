@@ -22,7 +22,12 @@ public class SolarSystemWorkerTest {
         SolarPanel solarPanel = solarPanel(new ArrayList<>());
         SolarSystemWorker worker = new SolarSystemWorker(shutdownRequested, strongWind, overheated, new SolarSystemDao(new SettingsDao()) {
             @Override
-            public SolarPanelStepRecord getNextRecord(Calendar calendar, SolarPanelPosition currentPosition) {
+            public SolarPanelStepRecord getRecentRecord(Calendar calendar) {
+                return getNextRecord(calendar);
+            }
+
+            @Override
+            public SolarPanelStepRecord getNextRecord(Calendar calendar) {
                 SolarPanelStepRecord stepRecord = startPos();
                 stepRecord.setHour(7);
                 stepRecord.getPanelPosition().setHorizontalPositionInSeconds(-10);
@@ -48,8 +53,14 @@ public class SolarSystemWorkerTest {
         solarPanel.getCurrentPosition().setHorizontalPositionInSeconds(-15);
         solarPanel.getCurrentPosition().setVerticalPositionInSeconds(-30);
         SolarSystemWorker worker = new SolarSystemWorker(shutdownRequested, strongWind, overheated, new SolarSystemDao(new SettingsDao()) {
+
             @Override
-            public SolarPanelStepRecord getNextRecord(Calendar calendar, SolarPanelPosition currentPosition) {
+            public SolarPanelStepRecord getRecentRecord(Calendar calendar) {
+                return getNextRecord(calendar);
+            }
+
+            @Override
+            public SolarPanelStepRecord getNextRecord(Calendar calendar) {
                 SolarPanelStepRecord stepRecord = startPos();
                 stepRecord.setHour(7);
                 stepRecord.getPanelPosition().setHorizontalPositionInSeconds(-20);

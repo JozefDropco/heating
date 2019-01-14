@@ -63,7 +63,7 @@ public class SolarSystemDao {
     }
 
 
-    public SolarPanelStepRecord getLastPosition(Calendar calendar) {
+    public SolarPanelStepRecord getRecentRecord(Calendar calendar) {
         Expression<?>[] list = new Expression[]{SOLAR_POSITION.horizontalPosition, SOLAR_POSITION.verticalPosition, SOLAR_SCHEDULE.hour, SOLAR_SCHEDULE.minute,SOLAR_SCHEDULE.month, SOLAR_SCHEDULE.day};
         DateTemplate<Date> dateDateTemplate = Expressions.dateTemplate(Date.class, toDate, calendar.get(Calendar.YEAR), SOLAR_SCHEDULE.month, SOLAR_SCHEDULE.day, SOLAR_SCHEDULE.hour, SOLAR_SCHEDULE.minute, 0);
         BooleanExpression whereCond = dateDateTemplate.lt(calendar.getTime());
