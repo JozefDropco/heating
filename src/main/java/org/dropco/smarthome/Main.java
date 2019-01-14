@@ -52,7 +52,7 @@ public class Main {
     }
 
     static ExtendedGpioProvider getExtendedProvider() {
-        if (extendedGpioProvider!=null) {
+        if (extendedGpioProvider == null) {
             GpioPinDigitalOutput dataOutPin = gpio.provisionDigitalOutputPin(RaspiPin.getPinByName(settingsDao.getString(EXTEND_DATA_OUT_PIN)), EXTEND_DATA_OUT_PIN, PinState.LOW);
             GpioPinDigitalOutput clockPin = gpio.provisionDigitalOutputPin(RaspiPin.getPinByName(settingsDao.getString(EXTEND_CLOCK_PIN)), EXTEND_CLOCK_PIN, PinState.LOW);
             GpioPinDigitalOutput gatePin = gpio.provisionDigitalOutputPin(RaspiPin.getPinByName(settingsDao.getString(EXTEND_GATE_PIN)), EXTEND_GATE_PIN, PinState.LOW);
