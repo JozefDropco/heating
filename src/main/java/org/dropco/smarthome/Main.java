@@ -23,6 +23,7 @@ public class Main {
     public static final String EXTEND_CLOCK_PIN = "EXTEND_CLOCK_PIN";
     public static final String EXTEND_GATE_PIN = "EXTEND_GATE_PIN";
     public static final String STRONG_WIND_PIN_REF_CD = "STRONG_WIND_PIN";
+    private static ExtendedGpioProvider extendedGpioProvider;
 
 
     public static void main(String[] args) {
@@ -48,10 +49,14 @@ public class Main {
     }
 
     static ExtendedGpioProvider getExtendedProvider() {
-        GpioPinDigitalOutput dataOutPin = gpio.provisionDigitalOutputPin(RaspiPin.getPinByName(settingsDao.getString(EXTEND_DATA_OUT_PIN)), EXTEND_DATA_OUT_PIN, PinState.LOW);
-        GpioPinDigitalOutput clockPin = gpio.provisionDigitalOutputPin(RaspiPin.getPinByName(settingsDao.getString(EXTEND_CLOCK_PIN)), EXTEND_CLOCK_PIN, PinState.LOW);
-        GpioPinDigitalOutput gatePin = gpio.provisionDigitalOutputPin(RaspiPin.getPinByName(settingsDao.getString(EXTEND_GATE_PIN)), EXTEND_GATE_PIN, PinState.LOW);
-        return new ExtendedGpioProvider(gpio,dataOutPin, clockPin, gatePin);
+        if (extendedGpioProvider!=null) {
+            GpioPinDigitalOutput dataOutPin = gpio.provisionDigitalOutputPin(RaspiPin.getPinByName(settingsDao.getString(EXTEND_DATA_OUT_PIN)), EXTEND_DATA_OUT_PIN, PinState.LOW);
+            GpioPinDigitalOutput clockPin = gpio.provisionDigitalOutputPin(RaspiPin.getPinByName(settingsDao.getString(EXTEND_CLOCK_PIN)), EXTEND_CLOCK_PIN, PinState.LOW);
+            GpioPinDigitalOutput gatePin = gpio.provisionDigitalOutputPin(RaspiPin.getPinByName(settingsDao.getString(EXTEND_GATE_PIN)), EXTEND_GATE_PIN, PinState.LOW);
+            extendedGpioProvider = new ExtendedGpioProvider(gpio, dataOutPin, clockPin, gatePin);
+        }
+        //reload if needed
+        return extendedGpioProvider;
     }
 
     static Consumer<Boolean> overHeatedHandler(AtomicBoolean solarOverHeated, Thread solarMovementThread) {
