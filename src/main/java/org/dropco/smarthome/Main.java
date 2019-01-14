@@ -34,6 +34,7 @@ public class Main {
         SolarPanel solarPanel = new SolarPanel(solarSystemDao.getLastKnownPosition(), (key, value) -> {
             String pinName = settingsDao.getString(key);
             GpioPinDigitalOutput output = map.getOrDefault(pinName, gpio.provisionDigitalOutputPin(getExtendedProvider(), ExtendedPin.getPinByName(pinName), key, PinState.LOW));
+            map.put(pinName,output);
             output.setState(value);
         });
         solarPanel.addListener(panel -> solarSystemDao.updateLastKnownPosition(panel.getCurrentPosition()));
