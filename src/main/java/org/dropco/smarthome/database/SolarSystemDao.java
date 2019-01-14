@@ -23,7 +23,7 @@ import static org.dropco.smarthome.database.querydsl.SolarPosition.SOLAR_POSITIO
 
 public class SolarSystemDao {
     private SettingsDao settingsDao;
-    private static final Template toDate = TemplateFactory.DEFAULT.create("STR_TO_DATE(CONCAT({0},'-',{1},'-',{2},' ',{3},':',{5},':',{6}), '%Y-%c-%e %k:%i:%s')");
+    private static final Template toDate = TemplateFactory.DEFAULT.create("STR_TO_DATE(CONCAT({0},'-',{1},'-',{2},' ',{3},':',{4},':',{5}), '%Y-%c-%e %k:%i:%s')");
 
     public SolarSystemDao(SettingsDao settingsDao) {
         this.settingsDao = settingsDao;
