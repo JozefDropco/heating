@@ -24,23 +24,23 @@ public class ExtendedGpioProvider extends GpioProviderBase {
     public void setState(Pin pin, PinState state) {
         super.setState(pin, state);
         if (state.isHigh()) {
-            value |= 1 << (pin.getAddress() - 100);
+            value |= 1 << (pin.getAddress() - 101);
             sent();
         } else {
-            value &= ~(1 << (pin.getAddress() - 100));
+            value &= ~(1 << (pin.getAddress() - 101));
             sent();
         }
     }
 
     @Override
     public PinState getState(Pin pin) {
-        if ((value & (1 << (pin.getAddress() - 100))) != 0) return PinState.HIGH;
+        if ((value & (1 << (pin.getAddress() - 101))) != 0) return PinState.HIGH;
         return PinState.LOW;
     }
 
     void sent() {
         gatePin.low();
-        Shift.shiftOut((byte) dataOutPin.getPin().getAddress(), (byte) clockPin.getPin().getAddress(), (byte) Shift.LSBFIRST, value);
+        Shift.shiftOut((byte) dataOutPin.getPin().getAddress(), (byte) clockPin.getPin().getAddress(), (byte) Shift.MSBFIRST, value);
         gatePin.high();
     }
 
