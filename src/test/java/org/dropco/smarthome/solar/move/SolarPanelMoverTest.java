@@ -1,22 +1,25 @@
-package org.dropco.smarthome.solar;
+package org.dropco.smarthome.solar.move;
 
+import org.dropco.smarthome.solar.SolarPanelPosition;
+import org.dropco.smarthome.solar.SolarSystemRefCode;
 import org.junit.Assert;
 import org.junit.Test;
 
 import java.util.HashSet;
 import java.util.Set;
 
-public class SolarPanelTest {
+public class SolarPanelMoverTest {
 
     @Test
-    public void moveToSouth() throws InterruptedException {
+    public void moveToSouth() {
         SolarPanelPosition currentPosition = position(0, 0);
         Set<String> result = new HashSet<>();
-        SolarPanel panel = new SolarPanel(currentPosition, (cmdRefCd, value) -> {
+        SolarPanelMover.setCommandExecutor((cmdRefCd, value) -> {
             result.add(cmdRefCd + value);
         });
+        SolarPanelMover.setCurrentPositionSupplier(()->currentPosition);
         long beforeExecTime = System.currentTimeMillis();
-        panel.move(position(-5, 0));
+        new SolarPanelMover(-5, 0).run();
         long delta = System.currentTimeMillis() - beforeExecTime;
         long round = Math.round(delta / 1000.0);
         Assert.assertTrue(round >= 5);
@@ -30,14 +33,15 @@ public class SolarPanelTest {
 
 
     @Test
-    public void moveWest() throws InterruptedException {
+    public void moveWest() {
         SolarPanelPosition currentPosition = position(0, 0);
         Set<String> result = new HashSet<>();
-        SolarPanel panel = new SolarPanel(currentPosition, (cmdRefCd, value) -> {
+        SolarPanelMover.setCommandExecutor((cmdRefCd, value) -> {
             result.add(cmdRefCd + value);
         });
+        SolarPanelMover.setCurrentPositionSupplier(()->currentPosition);
         long beforeExecTime = System.currentTimeMillis();
-        panel.move(position(0, -5));
+        new SolarPanelMover(0,-5).run();
         long delta = System.currentTimeMillis() - beforeExecTime;
         long round = Math.round(delta / 1000.0);
         Assert.assertTrue(round >= 5);
@@ -50,14 +54,15 @@ public class SolarPanelTest {
     }
 
     @Test
-    public void moveSouthEast() throws InterruptedException {
+    public void moveSouthEast() {
         SolarPanelPosition currentPosition = position(0, -10);
         Set<String> result = new HashSet<>();
-        SolarPanel panel = new SolarPanel(currentPosition, (cmdRefCd, value) -> {
+        SolarPanelMover.setCommandExecutor((cmdRefCd, value) -> {
             result.add(cmdRefCd + value);
         });
+        SolarPanelMover.setCurrentPositionSupplier(()->currentPosition);
         long beforeExecTime = System.currentTimeMillis();
-        panel.move(position(-5, 0));
+        new SolarPanelMover(-5,0).run();
         long delta = System.currentTimeMillis() - beforeExecTime;
         long round = Math.round(delta / 1000.0);
         Assert.assertTrue(round >= 10);

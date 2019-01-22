@@ -1,14 +1,14 @@
 package org.dropco.smarthome;
 
 import com.pi4j.io.gpio.*;
-import com.pi4j.io.gpio.event.GpioPinListenerDigital;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.database.SolarSystemDao;
+import org.dropco.smarthome.gpioextension.DelayedGpioPinListener;
 import org.dropco.smarthome.gpioextension.ExtendedGpioProvider;
 import org.dropco.smarthome.gpioextension.ExtendedPin;
-import org.dropco.smarthome.solar.PositionUpdater;
-import org.dropco.smarthome.solar.SolarPanel;
-import org.dropco.smarthome.solar.SolarSystemWorker;
+import org.dropco.smarthome.solar.SolarSystemScheduler;
+import org.dropco.smarthome.solar.move.SafetySolarPanel;
+import org.dropco.smarthome.solar.move.SolarPanelMover;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -18,7 +18,6 @@ import java.util.function.Consumer;
 public class Main {
 
 
-    private static final AtomicBoolean shutdownRequested = new AtomicBoolean(false);
     private static final SettingsDao settingsDao = new SettingsDao();
     private static final SolarSystemDao solarSystemDao = new SolarSystemDao(settingsDao);
     private static final GpioController gpio = GpioFactory.getInstance();
@@ -32,7 +31,7 @@ public class Main {
     public static void main(String[] args) {
         AtomicBoolean strongWind = new AtomicBoolean(false);
         AtomicBoolean solarOverHeated = new AtomicBoolean(false);
-        SolarPanel solarPanel = new SolarPanel(solarSystemDao.getLastKnownPosition(), (key, value) -> {
+        SolarPanelMover.setCommandExecutor((key, value) -> {
             String pinName = settingsDao.getString(key);
             GpioPinDigitalOutput output = map.get(pinName);
             if (output == null) {
@@ -41,19 +40,16 @@ public class Main {
             }
             output.setState(value);
         });
-        PositionUpdater positionUpdater = new PositionUpdater(solarSystemDao);
-        solarPanel.addListener(panel -> positionUpdater.add(panel.getCurrentPosition()));
-        Thread solarMovementThread = new Thread(new SolarSystemWorker(shutdownRequested, strongWind, solarOverHeated, solarSystemDao, solarPanel));
-        solarMovementThread.start();
-        Thread positionUpdaterThread = new Thread(positionUpdater);
-        positionUpdaterThread.start();
-//        startStrongWindDetector(strongWind, solarMovementThread);
-//        Thread heatingThread = new Thread(new HeatingWorker(shutdownRequested, overHeatedHandler(solarOverHeated, solarMovementThread),settingsDao,new HeatingDao()));
-//        heatingThread.start();
+        SolarPanelMover.setCurrentPositionSupplier(() -> solarSystemDao.getLastKnownPosition());
+        SolarPanelMover.addListener(panel -> solarSystemDao.updateLastKnownPosition(panel));
+        SafetySolarPanel safetySolarPanel = new SafetySolarPanel(solarOverHeated, strongWind, () -> solarSystemDao.getOverheatedPosition(), () -> solarSystemDao.getStrongWindPosition());
+        overHeatedHandler(solarOverHeated, safetySolarPanel);
+        startStrongWindDetector(solarOverHeated, safetySolarPanel);
+        new SolarSystemScheduler(solarSystemDao).schedule(safetySolarPanel);
         try {
-            solarMovementThread.join();
-            positionUpdaterThread.join();
-//            heatingThread.join();
+            synchronized (Thread.currentThread()) {
+                Thread.currentThread().wait();
+            }
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -70,25 +66,26 @@ public class Main {
         return extendedGpioProvider;
     }
 
-    static Consumer<Boolean> overHeatedHandler(AtomicBoolean solarOverHeated, Thread solarMovementThread) {
+    static Consumer<Boolean> overHeatedHandler(AtomicBoolean solarOverHeated, SafetySolarPanel safetySolarPanel) {
         return overHeated -> {
             solarOverHeated.set(overHeated);
-            if (overHeated) {
-                synchronized (solarMovementThread) {
-                    solarMovementThread.notify();
-                }
-            }
+            if (overHeated)
+                safetySolarPanel.moveToOverheatedPosition();
+            else
+                safetySolarPanel.backToNormal();
         };
     }
 
-    static void startStrongWindDetector(AtomicBoolean strongWind, Thread solarThread) {
+    static void startStrongWindDetector(AtomicBoolean strongWind, SafetySolarPanel safetySolarPanel) {
         GpioPinDigitalOutput strongWindPin = gpio.provisionDigitalOutputPin(RaspiPin.getPinByName(settingsDao.getString(STRONG_WIND_PIN_REF_CD)), STRONG_WIND_PIN_REF_CD, PinState.LOW);
-        strongWindPin.addListener((GpioPinListenerDigital) event -> {
-            boolean value = event.getState() == PinState.HIGH;
-            strongWind.set(value);
-            if (value) {
-                synchronized (solarThread) {
-                    solarThread.notify();
+        strongWindPin.addListener(new DelayedGpioPinListener(PinState.HIGH,5000,strongWindPin) {
+            @Override
+            public void handleStateChange(boolean state) {
+                strongWind.set(state);
+                if (state) {
+                    safetySolarPanel.moveToStrongWindPosition();
+                } else {
+                    safetySolarPanel.backToNormal();
                 }
             }
         });

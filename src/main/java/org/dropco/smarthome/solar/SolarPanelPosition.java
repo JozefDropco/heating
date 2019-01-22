@@ -5,6 +5,14 @@ public class SolarPanelPosition {
     private Integer verticalPositionInSeconds;
     private Integer horizontalPositionInSeconds;
 
+    public SolarPanelPosition() {
+    }
+
+    public SolarPanelPosition(Integer verticalPositionInSeconds, Integer horizontalPositionInSeconds) {
+        this.verticalPositionInSeconds = verticalPositionInSeconds;
+        this.horizontalPositionInSeconds = horizontalPositionInSeconds;
+    }
+
     public Integer getVerticalPositionInSeconds() {
         return verticalPositionInSeconds;
     }
