@@ -17,11 +17,9 @@ import org.dropco.smarthome.solar.SolarPanelStepRecord;
 import org.dropco.smarthome.solar.SolarSystemRefCode;
 
 import java.sql.Connection;
-import java.time.ZoneId;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
-import java.util.TimeZone;
 
 import static org.dropco.smarthome.database.querydsl.SolarPanelSchedule.SOLAR_SCHEDULE;
 import static org.dropco.smarthome.database.querydsl.SolarPosition.SOLAR_POSITION;
@@ -71,7 +69,7 @@ public class SolarSystemDao {
         Expression<?>[] list = new Expression[]{SOLAR_POSITION.horizontalPosition, SOLAR_POSITION.verticalPosition, SOLAR_SCHEDULE.hour, SOLAR_SCHEDULE.minute,SOLAR_SCHEDULE.month, SOLAR_SCHEDULE.day};
         DateTemplate<Date> dateTemplate = Expressions.dateTemplate(Date.class, toDate, cal.get(Calendar.YEAR), SOLAR_SCHEDULE.month, SOLAR_SCHEDULE.day, SOLAR_SCHEDULE.hour, SOLAR_SCHEDULE.minute, 0);
         Date currentTime = cal.getTime();
-        Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone(ZoneId.of("GMT")));
+        Calendar calendar = Calendar.getInstance(cal.getTimeZone());
         calendar.setTime(currentTime);
         calendar.set(Calendar.HOUR_OF_DAY,0);
         calendar.set(Calendar.MINUTE,0);
