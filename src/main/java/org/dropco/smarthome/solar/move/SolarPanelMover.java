@@ -60,7 +60,7 @@ public class SolarPanelMover implements Runnable {
                     if (diffHorizontal < 0) {
                         currentPosition.setHorizontalPositionInSeconds(currentPosition.getHorizontalPositionInSeconds() - secondsSlept);
                         diffHorizontal += secondsSlept;
-                        if (diffHorizontal > 0) {
+                        if (diffHorizontal >= 0) {
                             diffHorizontal = 0;
                             setState(SOUTH_PIN_REF_CD, false, "SOUTH", true);
                         }
@@ -68,7 +68,7 @@ public class SolarPanelMover implements Runnable {
                         if (diffHorizontal > 0) {
                             currentPosition.setHorizontalPositionInSeconds(currentPosition.getHorizontalPositionInSeconds() + secondsSlept);
                             diffHorizontal -= secondsSlept;
-                            if (diffHorizontal < 0) {
+                            if (diffHorizontal <= 0) {
                                 diffHorizontal = 0;
                                 setState(NORTH_PIN_REF_CD, false, "NORTH", true);
                             }
@@ -77,7 +77,7 @@ public class SolarPanelMover implements Runnable {
                     if (diffVertical < 0) {
                         currentPosition.setVerticalPositionInSeconds(currentPosition.getVerticalPositionInSeconds() - secondsSlept);
                         diffVertical += secondsSlept;
-                        if (diffVertical > 0) {
+                        if (diffVertical >= 0) {
                             diffVertical = 0;
                             setState(WEST_PIN_REF_CD, false, "WEST", true);
                         }
@@ -85,7 +85,7 @@ public class SolarPanelMover implements Runnable {
                         if (diffVertical > 0) {
                             currentPosition.setVerticalPositionInSeconds(currentPosition.getVerticalPositionInSeconds() + secondsSlept);
                             diffVertical -= secondsSlept;
-                            if (diffVertical < 0) {
+                            if (diffVertical <= 0) {
                                 diffVertical = 0;
                                 setState(EAST_PIN_REF_CD, false, "EAST", true);
                             }
@@ -108,7 +108,8 @@ public class SolarPanelMover implements Runnable {
 
     void setState(String pinRefCd, boolean state, String direction, boolean changeState) {
         if (changeState) {
-            if (state) LOGGER.log(Level.INFO, "Moving to " + direction + " started.");
+            if (state)
+                LOGGER.log(Level.INFO, "Moving to " + direction + " started.");
             else
                 LOGGER.log(Level.INFO, "Moving to " + direction + " stopped.");
         }
