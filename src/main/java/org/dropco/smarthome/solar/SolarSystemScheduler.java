@@ -24,7 +24,9 @@ public class SolarSystemScheduler {
         Calendar calendar = getCalendar();
         List<SolarPanelStepRecord> todayRecords = solarSystemDao.getTodayRecords(calendar);
         for (SolarPanelStepRecord record : todayRecords) {
-            executorService.schedule(new SolarSystemScheduledWork(safetySolarPanel, record.getPanelPosition()), millisRemaining(calendar, record.getMonth(), record.getDay(), record.getHour(), record.getMinute()), TimeUnit.MILLISECONDS);
+            Calendar tmpCal = Calendar.getInstance(calendar.getTimeZone());
+            tmpCal.setTime(calendar.getTime());
+            executorService.schedule(new SolarSystemScheduledWork(safetySolarPanel, record.getPanelPosition()), millisRemaining(tmpCal, record.getMonth(), record.getDay(), record.getHour(), record.getMinute()), TimeUnit.MILLISECONDS);
         }
         calendar.set(Calendar.HOUR_OF_DAY,0);
         calendar.set(Calendar.MINUTE,0);
