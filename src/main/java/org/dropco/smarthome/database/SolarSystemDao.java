@@ -79,7 +79,7 @@ public class SolarSystemDao {
         calendar.set(Calendar.MILLISECOND,0);
         calendar.add(Calendar.DAY_OF_YEAR,1);
         DateTemplate<Date>  dateTemplateNextDay = Expressions.dateTemplate(Date.class, toDate, calendar.get(Calendar.YEAR), SOLAR_SCHEDULE.month, SOLAR_SCHEDULE.day, SOLAR_SCHEDULE.hour, SOLAR_SCHEDULE.minute, 0);
-        BooleanExpression whereCond = dateTemplate.goe(currentTime).and(dateTemplateNextDay.loe(currentTime));
+        BooleanExpression whereCond = dateTemplate.goe(currentTime).and(dateTemplateNextDay.loe(cal.getTime()));
         List<Tuple> lst = new MySQLQuery<SolarPosition>(getConnection()).select(list).from(SOLAR_SCHEDULE).join(SOLAR_POSITION).on(SOLAR_SCHEDULE.position.eq(SOLAR_POSITION.id)).where(whereCond).orderBy(dateTemplate.asc()).
                 fetch();
         return FluentIterable.from(lst).transform(tuple->toRecord(tuple)).toList();
