@@ -9,8 +9,11 @@ import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class SolarSystemScheduler {
+    private static Logger logger = Logger.getLogger(SolarSystemScheduler.class.getName());
     private SolarSystemDao solarSystemDao;
 
     public SolarSystemScheduler(SolarSystemDao solarSystemDao) {
@@ -22,16 +25,18 @@ public class SolarSystemScheduler {
         Calendar calendar = Calendar.getInstance();
         List<SolarPanelStepRecord> todayRecords = solarSystemDao.getTodayRecords(calendar);
         for (SolarPanelStepRecord record : todayRecords) {
-            Calendar tmpCal = Calendar.getInstance(calendar.getTimeZone());
-            tmpCal.setTime(calendar.getTime());
-            executorService.schedule(new SolarSystemScheduledWork(safetySolarPanel, record.getPanelPosition()), millisRemaining(tmpCal, record.getMonth(), record.getDay(), record.getHour(), record.getMinute()), TimeUnit.MILLISECONDS);
+            long delay = millisRemaining(Calendar.getInstance(), record.getMonth(), record.getDay(), record.getHour(), record.getMinute());
+            logger.log(Level.INFO, "Scheduling "+record + " with delay of "+ delay);
+            executorService.schedule(new SolarSystemScheduledWork(safetySolarPanel, record.getPanelPosition()), delay, TimeUnit.MILLISECONDS);
         }
         calendar.set(Calendar.HOUR_OF_DAY, 0);
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MILLISECOND, 0);
         calendar.add(Calendar.DAY_OF_YEAR, 1);
-        executorService.schedule(() -> schedule(safetySolarPanel), millisRemaining(Calendar.getInstance(), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH), calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE)), TimeUnit.MILLISECONDS);
+        long delay = millisRemaining(Calendar.getInstance(), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH), calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE));
+        logger.log(Level.INFO, "Scheduling for next day is delayed for "+ delay);
+        executorService.schedule(() -> schedule(safetySolarPanel), delay, TimeUnit.MILLISECONDS);
 
     }
 

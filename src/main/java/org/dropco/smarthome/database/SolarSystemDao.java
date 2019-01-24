@@ -69,7 +69,7 @@ public class SolarSystemDao {
         Expression<?>[] list = new Expression[]{SOLAR_POSITION.horizontalPosition, SOLAR_POSITION.verticalPosition, SOLAR_SCHEDULE.hour, SOLAR_SCHEDULE.minute,SOLAR_SCHEDULE.month, SOLAR_SCHEDULE.day};
         DateTemplate<Date> dateTemplate = Expressions.dateTemplate(Date.class, toDate, cal.get(Calendar.YEAR), SOLAR_SCHEDULE.month, SOLAR_SCHEDULE.day, SOLAR_SCHEDULE.hour, SOLAR_SCHEDULE.minute, 0);
         Date currentTime = cal.getTime();
-        Calendar calendar = Calendar.getInstance(cal.getTimeZone());
+        Calendar calendar = Calendar.getInstance();
         calendar.setTime(currentTime);
         calendar.set(Calendar.HOUR_OF_DAY,0);
         calendar.set(Calendar.MINUTE,0);
