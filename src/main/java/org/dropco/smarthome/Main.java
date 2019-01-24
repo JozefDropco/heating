@@ -6,6 +6,7 @@ import org.dropco.smarthome.database.SolarSystemDao;
 import org.dropco.smarthome.gpioextension.DelayedGpioPinListener;
 import org.dropco.smarthome.gpioextension.ExtendedGpioProvider;
 import org.dropco.smarthome.gpioextension.ExtendedPin;
+import org.dropco.smarthome.heating.HeatingWorker;
 import org.dropco.smarthome.solar.SolarSystemScheduler;
 import org.dropco.smarthome.solar.move.SafetySolarPanel;
 import org.dropco.smarthome.solar.move.SolarPanelMover;
@@ -46,6 +47,8 @@ public class Main {
         overHeatedHandler(solarOverHeated, safetySolarPanel);
         startStrongWindDetector(solarOverHeated, safetySolarPanel);
         new SolarSystemScheduler(solarSystemDao).schedule(safetySolarPanel);
+        Thread heaterThread = new Thread(new HeatingWorker(value -> solarOverHeated.set(value), settingsDao));
+        heaterThread.start();
         try {
             synchronized (Thread.currentThread()) {
                 Thread.currentThread().wait();
