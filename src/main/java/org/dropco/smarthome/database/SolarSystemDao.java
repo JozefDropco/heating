@@ -55,7 +55,7 @@ public class SolarSystemDao {
         return solarPanelPosition;
     }
 
-        public void updateLastKnownPosition(SolarPanelPosition currentPosition) {
+    public void updateLastKnownPosition(SolarPanelPosition currentPosition) {
         new SQLUpdateClause(getConnection(), SQLTemplates.DEFAULT, SOLAR_POSITION)
                 .set(SOLAR_POSITION.verticalPosition, currentPosition.getVerticalPositionInSeconds())
                 .set(SOLAR_POSITION.horizontalPosition, currentPosition.getHorizontalPositionInSeconds())
@@ -64,23 +64,22 @@ public class SolarSystemDao {
     }
 
 
-
     public List<SolarPanelStepRecord> getTodayRecords(Calendar cal) {
-        Expression<?>[] list = new Expression[]{SOLAR_POSITION.horizontalPosition, SOLAR_POSITION.verticalPosition, SOLAR_SCHEDULE.hour, SOLAR_SCHEDULE.minute,SOLAR_SCHEDULE.month, SOLAR_SCHEDULE.day};
+        Expression<?>[] list = new Expression[]{SOLAR_POSITION.horizontalPosition, SOLAR_POSITION.verticalPosition, SOLAR_SCHEDULE.hour, SOLAR_SCHEDULE.minute, SOLAR_SCHEDULE.month, SOLAR_SCHEDULE.day};
         DateTemplate<Date> dateTemplate = Expressions.dateTemplate(Date.class, toDate, cal.get(Calendar.YEAR), SOLAR_SCHEDULE.month, SOLAR_SCHEDULE.day, SOLAR_SCHEDULE.hour, SOLAR_SCHEDULE.minute, 0);
         Date currentTime = cal.getTime();
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(currentTime);
-        calendar.set(Calendar.HOUR_OF_DAY,0);
-        calendar.set(Calendar.MINUTE,0);
-        calendar.set(Calendar.SECOND,0);
-        calendar.set(Calendar.MILLISECOND,0);
-        calendar.add(Calendar.DAY_OF_YEAR,1);
-        DateTemplate<Date>  dateTemplateNextDay = Expressions.dateTemplate(Date.class, toDate, calendar.get(Calendar.YEAR), SOLAR_SCHEDULE.month, SOLAR_SCHEDULE.day, SOLAR_SCHEDULE.hour, SOLAR_SCHEDULE.minute, 0);
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        calendar.add(Calendar.DAY_OF_YEAR, 1);
+        DateTemplate<Date> dateTemplateNextDay = Expressions.dateTemplate(Date.class, toDate, calendar.get(Calendar.YEAR), SOLAR_SCHEDULE.month, SOLAR_SCHEDULE.day, SOLAR_SCHEDULE.hour, SOLAR_SCHEDULE.minute, 0);
         BooleanExpression whereCond = dateTemplate.goe(currentTime).and(dateTemplateNextDay.loe(calendar.getTime()));
         List<Tuple> lst = new MySQLQuery<SolarPosition>(getConnection()).select(list).from(SOLAR_SCHEDULE).join(SOLAR_POSITION).on(SOLAR_SCHEDULE.position.eq(SOLAR_POSITION.id)).where(whereCond).orderBy(dateTemplate.asc()).
                 fetch();
-        return FluentIterable.from(lst).transform(tuple->toRecord(tuple)).toList();
+        return FluentIterable.from(lst).transform(tuple -> toRecord(tuple)).toList();
     }
 
     private SolarPanelStepRecord toRecord(Tuple tuple) {
@@ -95,7 +94,18 @@ public class SolarSystemDao {
         record.setPanelPosition(position);
         return record;
     }
+
     private Connection getConnection() {
         return DBConnection.getConnection();
+    }
+
+    public SolarPanelStepRecord getRecentRecord(Calendar instance) {
+        Expression<?>[] list = new Expression[]{SOLAR_POSITION.horizontalPosition, SOLAR_POSITION.verticalPosition, SOLAR_SCHEDULE.hour, SOLAR_SCHEDULE.minute, SOLAR_SCHEDULE.month, SOLAR_SCHEDULE.day};
+        DateTemplate<Date> dateTemplate = Expressions.dateTemplate(Date.class, toDate, instance.get(Calendar.YEAR), SOLAR_SCHEDULE.month, SOLAR_SCHEDULE.day, SOLAR_SCHEDULE.hour, SOLAR_SCHEDULE.minute, 0);
+        BooleanExpression where = dateTemplate.loe(instance.getTime());
+        Tuple tuple = new MySQLQuery<SolarPosition>(getConnection()).select(list).from(SOLAR_SCHEDULE).join(SOLAR_POSITION).on(SOLAR_SCHEDULE.position.eq(SOLAR_POSITION.id)).where(where)
+                .orderBy(dateTemplate.desc()).
+                        fetchFirst();
+        return toRecord(tuple);
     }
 }

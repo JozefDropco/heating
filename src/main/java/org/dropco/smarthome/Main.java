@@ -46,7 +46,9 @@ public class Main {
         SafetySolarPanel safetySolarPanel = new SafetySolarPanel(solarOverHeated, strongWind, () -> solarSystemDao.getOverheatedPosition(), () -> solarSystemDao.getStrongWindPosition());
         overHeatedHandler(solarOverHeated, safetySolarPanel);
         startStrongWindDetector(solarOverHeated, safetySolarPanel);
-        new SolarSystemScheduler(solarSystemDao).schedule(safetySolarPanel);
+        SolarSystemScheduler solarSystemScheduler = new SolarSystemScheduler(solarSystemDao);
+        solarSystemScheduler.moveToLastPositioon(safetySolarPanel);
+        solarSystemScheduler.schedule(safetySolarPanel);
         Thread heaterThread = new Thread(new HeatingWorker(value -> solarOverHeated.set(value), settingsDao));
         heaterThread.start();
         try {

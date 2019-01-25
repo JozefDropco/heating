@@ -20,6 +20,11 @@ public class SolarSystemScheduler {
         this.solarSystemDao = solarSystemDao;
     }
 
+    public void moveToLastPositioon(SafetySolarPanel safetySolarPanel){
+        SolarPanelStepRecord solarPanelStepRecord = solarSystemDao.getRecentRecord(Calendar.getInstance());
+        logger.log(Level.INFO, "Making sure solar panel is in last position after restart "+solarPanelStepRecord);
+        new Thread(new SolarSystemScheduledWork(safetySolarPanel,solarPanelStepRecord.getPanelPosition())).start();
+    }
     public void schedule(SafetySolarPanel safetySolarPanel) {
         ScheduledExecutorService executorService = GpioFactory.getExecutorServiceFactory().getScheduledExecutorService();
         Calendar calendar = Calendar.getInstance();
