@@ -34,7 +34,7 @@ public class SolarSystemScheduler {
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MILLISECOND, 0);
         calendar.add(Calendar.DAY_OF_YEAR, 1);
-        long delay = millisRemaining(Calendar.getInstance(), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH), calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE));
+        long delay = millisRemaining(Calendar.getInstance(), calendar.get(Calendar.MONTH)+1, calendar.get(Calendar.DAY_OF_MONTH), calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE));
         logger.log(Level.INFO, "Scheduling for next day is delayed for "+ delay);
         executorService.schedule(() -> schedule(safetySolarPanel), delay, TimeUnit.MILLISECONDS);
 
