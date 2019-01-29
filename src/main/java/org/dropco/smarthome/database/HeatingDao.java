@@ -10,9 +10,14 @@ import static org.dropco.smarthome.database.querydsl.TemperatureMeasurePlace.TEM
 public class HeatingDao {
 
     public String getDeviceId(String solarPanelTemperaturePlaceRefCd) {
-        return new MySQLQuery<StringSetting>(getConnection()).select(TEMP_MEASURE_PLACE.devideId).from(TEMP_MEASURE_PLACE).where(TEMP_MEASURE_PLACE.placeRefCd.eq(solarPanelTemperaturePlaceRefCd)).fetchFirst();
+        return new MySQLQuery<StringSetting>(getConnection()).select(TEMP_MEASURE_PLACE.devideId)
+                .from(TEMP_MEASURE_PLACE).where(TEMP_MEASURE_PLACE.placeRefCd.eq(solarPanelTemperaturePlaceRefCd)).fetchFirst();
     }
 
+    public String getPlaceRefCd(String deviceId) {
+        return new MySQLQuery<StringSetting>(getConnection()).select(TEMP_MEASURE_PLACE.placeRefCd)
+                .from(TEMP_MEASURE_PLACE).where(TEMP_MEASURE_PLACE.devideId.eq(deviceId)).fetchFirst();
+    }
     private Connection getConnection() {
         return DBConnection.getConnection();
     }
