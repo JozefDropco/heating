@@ -9,7 +9,9 @@ import org.dropco.smarthome.database.LogDao;
 import org.dropco.smarthome.database.SettingsDao;
 
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
@@ -20,8 +22,9 @@ public class HeatingWorker implements Runnable {
     private static final Logger logger = Logger.getLogger(HeatingWorker.class.getName());
     private final Consumer<Boolean> solarOverHeated;
     private SettingsDao settingsDao;
-    private HeatingDao heatingDao =new HeatingDao();
+    private HeatingDao heatingDao = new HeatingDao();
     private LogDao logDao = new LogDao();
+    private Map<String, Double> recentTemperatures = new HashMap<>();
 
     public HeatingWorker(Consumer<Boolean> solarOverHeated, SettingsDao settingsDao) {
         this.solarOverHeated = solarOverHeated;
@@ -40,7 +43,10 @@ public class HeatingWorker implements Runnable {
                 if (deviceId.equals(heatingDao.getDeviceId(SOLAR_PANEL_TEMPERATURE_PLACE_REF_CD))) {
                     solarOverHeated.accept(temperature >= settingsDao.getDouble(SOLAR_PANEL_TEMPERATURE_THRESHOLD_REF_CD));
                 }
-                logDao.logTemperature(deviceId, heatingDao.getPlaceRefCd(deviceId),new Date(), temperature);
+                if (!recentTemperatures.getOrDefault(deviceId, -1000.0d).equals(temperature)) {
+                    recentTemperatures.put(deviceId, temperature);
+                    logDao.logTemperature(deviceId, heatingDao.getPlaceRefCd(deviceId), new Date(), temperature);
+                }
             }
             try {
                 Thread.sleep(60 * 1000);
