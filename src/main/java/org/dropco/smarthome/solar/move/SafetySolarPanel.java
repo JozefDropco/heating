@@ -1,5 +1,6 @@
 package org.dropco.smarthome.solar.move;
 
+import org.dropco.smarthome.ServiceMode;
 import org.dropco.smarthome.solar.SolarPanelPosition;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -28,6 +29,10 @@ public class SafetySolarPanel {
     public void move(Integer horizontal, Integer vertical) {
         lastHorizontal = horizontal;
         lastVertical = vertical;
+        if (ServiceMode.isServiceMode()){
+            logger.log(Level.INFO, "New position stored but not moved due service mode activated.");
+            return;
+        }
         if (!overHeated.get() && !strongWind.get()) {
             SolarPanelThreadManager.move(horizontal, vertical);
         } else {

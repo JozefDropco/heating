@@ -1,4 +1,4 @@
-package org.dropco.smarthome.solar;
+package org.dropco.smarthome.watering;
 
 import com.pi4j.io.gpio.GpioFactory;
 import org.dropco.smarthome.solar.move.SafetySolarPanel;
@@ -11,27 +11,22 @@ import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class SolarSystemScheduler {
-    private static Logger logger = Logger.getLogger(SolarSystemScheduler.class.getName());
-    private SolarSystemDao solarSystemDao;
+public class WateringScheduler {
+    private static Logger logger = Logger.getLogger(WateringScheduler.class.getName());
+    private WateringDao wateringDao;
 
-    public SolarSystemScheduler(SolarSystemDao solarSystemDao) {
-        this.solarSystemDao = solarSystemDao;
+    public WateringScheduler(WateringDao wateringDao) {
+        this.wateringDao = wateringDao;
     }
 
-    public void moveToLastPositioon(SafetySolarPanel safetySolarPanel){
-        SolarPanelStepRecord solarPanelStepRecord = solarSystemDao.getRecentRecord(Calendar.getInstance());
-        logger.log(Level.INFO, "Making sure solar panel is in last position after restart "+solarPanelStepRecord);
-        new Thread(new SolarSystemScheduledWork(safetySolarPanel,solarPanelStepRecord.getPanelPosition())).start();
-    }
     public void schedule(SafetySolarPanel safetySolarPanel) {
         ScheduledExecutorService executorService = GpioFactory.getExecutorServiceFactory().getScheduledExecutorService();
         Calendar calendar = Calendar.getInstance();
-        List<SolarPanelStepRecord> todayRecords = solarSystemDao.getTodayRecords(calendar);
-        for (SolarPanelStepRecord record : todayRecords) {
+        List<WateringRecord> todayRecords = wateringDao.getTodayRecords(calendar);
+        for (WateringRecord record : todayRecords) {
             long delay = millisRemaining(Calendar.getInstance(), record.getMonth(), record.getDay(), record.getHour(), record.getMinute());
             logger.log(Level.INFO, "Scheduling "+record + " with delay of "+ delay);
-            executorService.schedule(new SolarSystemScheduledWork(safetySolarPanel, record.getPanelPosition()), delay, TimeUnit.MILLISECONDS);
+            executorService.schedule(new WateringScheduledWork(record.getZoneRefCode(),record.getTimeInSeconds()),delay,TimeUnit.MILLISECONDS);
         }
         calendar.set(Calendar.HOUR_OF_DAY, 0);
         calendar.set(Calendar.MINUTE, 0);

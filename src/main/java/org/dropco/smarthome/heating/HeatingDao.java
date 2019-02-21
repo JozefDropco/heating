@@ -1,6 +1,7 @@
-package org.dropco.smarthome.database;
+package org.dropco.smarthome.heating;
 
 import com.querydsl.sql.mysql.MySQLQuery;
+import org.dropco.smarthome.database.DBConnection;
 import org.dropco.smarthome.database.querydsl.StringSetting;
 
 import java.sql.Connection;

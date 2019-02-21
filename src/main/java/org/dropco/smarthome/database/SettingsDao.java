@@ -54,6 +54,9 @@ public class SettingsDao {
         List<Tuple> fetch = new MySQLQuery<StringSetting>(getConnection()).select(STRING.all()).from(STRING).where(condition).fetch();
         for (Tuple result: fetch){
             stringCacheMap.put(result.get(STRING.refCd),result.get(STRING.value));
+            Date date = result.get(STRING.modifiedTs);
+            if (lastUpdatedDate==null || date.after(lastUpdatedDate))
+            lastUpdatedDate = date;
         }
     }
 
@@ -68,6 +71,9 @@ public class SettingsDao {
         fetch = new MySQLQuery<StringSetting>(getConnection()).select(LONG.all()).from(LONG).where(condition).fetch();
         for (Tuple result: fetch){
             longCacheMap.put(result.get(LONG.refCd),result.get(LONG.value));
+            Date date = result.get(LONG.modifiedTs);
+            if (lastUpdatedDate==null || date.after(lastUpdatedDate))
+                lastUpdatedDate = date;
         }
     }
 
@@ -82,6 +88,9 @@ public class SettingsDao {
         fetch = new MySQLQuery<StringSetting>(getConnection()).select(DOUBLE.all()).from(DOUBLE).where(condition).fetch();
         for (Tuple result: fetch){
             doubleCacheMap.put(result.get(DOUBLE.refCd),result.get(DOUBLE.value));
+            Date date = result.get(DOUBLE.modifiedTs);
+            if (lastUpdatedDate==null || date.after(lastUpdatedDate))
+                lastUpdatedDate = date;
         }
     }
 

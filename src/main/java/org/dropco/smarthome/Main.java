@@ -2,14 +2,17 @@ package org.dropco.smarthome;
 
 import com.pi4j.io.gpio.*;
 import org.dropco.smarthome.database.SettingsDao;
-import org.dropco.smarthome.database.SolarSystemDao;
 import org.dropco.smarthome.gpioextension.DelayedGpioPinListener;
 import org.dropco.smarthome.gpioextension.ExtendedGpioProvider;
 import org.dropco.smarthome.gpioextension.ExtendedPin;
 import org.dropco.smarthome.heating.HeatingWorker;
+import org.dropco.smarthome.solar.SolarSystemDao;
 import org.dropco.smarthome.solar.SolarSystemScheduler;
 import org.dropco.smarthome.solar.move.SafetySolarPanel;
 import org.dropco.smarthome.solar.move.SolarPanelMover;
+import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.servlet.ServletContextHandler;
+import org.eclipse.jetty.servlet.ServletHolder;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -29,7 +32,20 @@ public class Main {
     private static ExtendedGpioProvider extendedGpioProvider;
     private static Map<String, GpioPinDigitalOutput> map = new HashMap<>();
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
+        ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
+        context.setContextPath("/");
+        Server server = new Server(8080);
+        server.setHandler(context);
+        ServletHolder jerseyServlet = context.addServlet(
+                org.glassfish.jersey.servlet.ServletContainer.class, "/*");
+        jerseyServlet.setInitOrder(0);
+
+        jerseyServlet.setInitParameter(
+                "jersey.config.server.provider.packages",
+                "org.dropco.smarthome.web");
+        server.start();
+        server.dumpStdErr();
         AtomicBoolean strongWind = new AtomicBoolean(false);
         AtomicBoolean solarOverHeated = new AtomicBoolean(false);
         SolarPanelMover.setCommandExecutor((key, value) -> {
@@ -51,13 +67,7 @@ public class Main {
         solarSystemScheduler.schedule(safetySolarPanel);
         Thread heaterThread = new Thread(new HeatingWorker(value -> solarOverHeated.set(value), settingsDao));
         heaterThread.start();
-        try {
-            synchronized (Thread.currentThread()) {
-                Thread.currentThread().wait();
-            }
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        server.join();
     }
 
     static ExtendedGpioProvider getExtendedProvider() {
@@ -83,7 +93,7 @@ public class Main {
 
     static void startStrongWindDetector(AtomicBoolean strongWind, SafetySolarPanel safetySolarPanel) {
         GpioPinDigitalOutput strongWindPin = gpio.provisionDigitalOutputPin(RaspiPin.getPinByName(settingsDao.getString(STRONG_WIND_PIN_REF_CD)), STRONG_WIND_PIN_REF_CD, PinState.LOW);
-        strongWindPin.addListener(new DelayedGpioPinListener(PinState.HIGH,5000,strongWindPin) {
+        strongWindPin.addListener(new DelayedGpioPinListener(PinState.HIGH, 5000, strongWindPin) {
             @Override
             public void handleStateChange(boolean state) {
                 strongWind.set(state);

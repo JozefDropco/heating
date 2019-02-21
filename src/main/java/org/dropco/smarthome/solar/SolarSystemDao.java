@@ -1,4 +1,4 @@
-package org.dropco.smarthome.database;
+package org.dropco.smarthome.solar;
 
 import com.google.common.collect.FluentIterable;
 import com.querydsl.core.Tuple;
@@ -11,10 +11,9 @@ import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.sql.SQLTemplates;
 import com.querydsl.sql.dml.SQLUpdateClause;
 import com.querydsl.sql.mysql.MySQLQuery;
+import org.dropco.smarthome.database.DBConnection;
+import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.database.querydsl.SolarPosition;
-import org.dropco.smarthome.solar.SolarPanelPosition;
-import org.dropco.smarthome.solar.SolarPanelStepRecord;
-import org.dropco.smarthome.solar.SolarSystemRefCode;
 
 import java.sql.Connection;
 import java.util.Calendar;

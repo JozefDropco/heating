@@ -4,7 +4,6 @@ import com.pi4j.component.temperature.TemperatureSensor;
 import com.pi4j.io.w1.W1Device;
 import com.pi4j.io.w1.W1Master;
 import com.pi4j.temperature.TemperatureScale;
-import org.dropco.smarthome.database.HeatingDao;
 import org.dropco.smarthome.database.LogDao;
 import org.dropco.smarthome.database.SettingsDao;
 
