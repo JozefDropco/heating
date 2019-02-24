@@ -23,7 +23,7 @@ public class WateringDao {
     private static final Template toDate = TemplateFactory.DEFAULT.create("STR_TO_DATE(CONCAT({0},'-',{1},'-',{2},' ',{3},':',{4},':',{5}), '%Y-%c-%e %k:%i:%s')");
 
     public List<WateringRecord> getTodayRecords(Calendar cal) {
-        Expression<?>[] list = new Expression[]{WATERING_SCHEDULE.timeZoneRefCd, WATERING_SCHEDULE.timeInSeconds, WATERING_SCHEDULE.hour, WATERING_SCHEDULE.minute, WATERING_SCHEDULE.month, WATERING_SCHEDULE.day};
+        Expression<?>[] list = new Expression[]{WATERING_SCHEDULE.zoneRefCd, WATERING_SCHEDULE.timeInSeconds, WATERING_SCHEDULE.hour, WATERING_SCHEDULE.minute, WATERING_SCHEDULE.month, WATERING_SCHEDULE.day};
         DateTemplate<Date> dateTemplate = Expressions.dateTemplate(Date.class, toDate, cal.get(Calendar.YEAR), WATERING_SCHEDULE.month, WATERING_SCHEDULE.day, WATERING_SCHEDULE.hour, WATERING_SCHEDULE.minute, 0);
         Date currentTime = cal.getTime();
         Calendar calendar = Calendar.getInstance();
@@ -47,7 +47,7 @@ public class WateringDao {
         record.setMinute(tuple.get(WATERING_SCHEDULE.minute));
         record.setDay(tuple.get(WATERING_SCHEDULE.day));
         record.setTimeInSeconds(tuple.get(WATERING_SCHEDULE.timeInSeconds));
-        record.setZoneRefCode(tuple.get(WATERING_SCHEDULE.timeZoneRefCd));
+        record.setZoneRefCode(tuple.get(WATERING_SCHEDULE.zoneRefCd));
         return record;
     }
 

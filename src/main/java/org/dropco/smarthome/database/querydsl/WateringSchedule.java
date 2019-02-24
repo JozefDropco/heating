@@ -25,7 +25,7 @@ public class WateringSchedule extends com.querydsl.sql.RelationalPathBase<Wateri
     public final NumberPath<Integer> hour = createNumber("hour",Integer.class);
     public final NumberPath<Integer> minute = createNumber("minute",Integer.class);
     public final NumberPath<Integer> day = createNumber("day",Integer.class);
-    public final StringPath timeZoneRefCd = createString("timeZoneRefCd");
+    public final StringPath zoneRefCd = createString("zoneRefCd");
     public final NumberPath<Long> timeInSeconds = createNumber("timeInSeconds",Long.class);
 
     public final com.querydsl.sql.PrimaryKey<WateringSchedule> posPk = createPrimaryKey(id);
@@ -47,7 +47,7 @@ public class WateringSchedule extends com.querydsl.sql.RelationalPathBase<Wateri
         addMetadata(minute, ColumnMetadata.named("MINUTE").withIndex(4).ofType(Types.NUMERIC).withSize(50).withDigits(0).notNull());
         addMetadata(day, ColumnMetadata.named("DAY").withIndex(5).ofType(Types.NUMERIC).withSize(50).withDigits(0).notNull());
         addMetadata(timeInSeconds, ColumnMetadata.named("TIME_IN_SEC").withIndex(6).ofType(Types.NUMERIC).withSize(50).withDigits(0).notNull());
-        addMetadata(timeZoneRefCd, ColumnMetadata.named("TIME_ZONE_REF_CD").withIndex(7).ofType(Types.VARCHAR).withSize(50).withDigits(0).notNull());
+        addMetadata(zoneRefCd, ColumnMetadata.named("ZONE_REF_CD").withIndex(7).ofType(Types.VARCHAR).withSize(50).withDigits(0).notNull());
     }
 
 }
