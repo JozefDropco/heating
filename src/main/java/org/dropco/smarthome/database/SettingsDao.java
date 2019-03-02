@@ -92,7 +92,7 @@ public class SettingsDao {
         for (Tuple result: fetch){
             doubleCacheMap.put(result.get(DOUBLE.refCd),result.get(DOUBLE.value));
             Date date = result.get(DOUBLE.modifiedTs);
-            if (lastUpdatedDateDouble=null || date.after(lastUpdatedDateDouble))
+            if (lastUpdatedDateDouble==null || date.after(lastUpdatedDateDouble))
                 lastUpdatedDateDouble = date;
         }
     }
