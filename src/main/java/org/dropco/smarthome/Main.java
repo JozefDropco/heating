@@ -73,7 +73,7 @@ public class Main {
             String pinName = settingsDao.getString(key);
             GpioPinDigitalOutput output = map.get(pinName);
             if (output == null) {
-                output = gpio.provisionDigitalOutputPin(getExtendedProvider(), ExtendedPin.getPinByName(pinName), key, PinState.LOW);
+                output = gpio.provisionDigitalOutputPin(RaspiPin.getPinByName(pinName), key, PinState.LOW);
                 map.put(pinName, output);
             }
             output.setState(value);
