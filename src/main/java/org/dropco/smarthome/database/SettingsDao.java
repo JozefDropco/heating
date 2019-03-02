@@ -19,7 +19,10 @@ public class SettingsDao {
     private Map<String, String> stringCacheMap = new HashMap<>();
     private Map<String, Long> longCacheMap = new HashMap<>();
     private Map<String, Double> doubleCacheMap = new HashMap<>();
-    private Date lastUpdatedDate;
+    private Date lastUpdatedDateString;
+    private Date lastUpdatedDateLong;
+
+    private Date lastUpdatedDateDouble;
 
 
     public String getString(String key) {
@@ -46,51 +49,51 @@ public class SettingsDao {
 
     private void loadStringCache() {
         Predicate condition;
-        if (lastUpdatedDate==null){
+        if (lastUpdatedDateString==null){
             condition=STRING.modifiedTs.eq(STRING.modifiedTs);
         } else {
-            condition = STRING.modifiedTs.after(lastUpdatedDate);
+            condition = STRING.modifiedTs.after(lastUpdatedDateString);
         }
         List<Tuple> fetch = new MySQLQuery<StringSetting>(getConnection()).select(STRING.all()).from(STRING).where(condition).fetch();
         for (Tuple result: fetch){
             stringCacheMap.put(result.get(STRING.refCd),result.get(STRING.value));
             Date date = result.get(STRING.modifiedTs);
-            if (lastUpdatedDate==null || date.after(lastUpdatedDate))
-            lastUpdatedDate = date;
+            if (lastUpdatedDateString==null || date.after(lastUpdatedDateString))
+            lastUpdatedDateString = date;
         }
     }
 
     private void loadLongCache() {
         Predicate condition;
         List<Tuple> fetch;
-        if (lastUpdatedDate==null){
+        if (lastUpdatedDateLong==null){
             condition=LONG.modifiedTs.eq(LONG.modifiedTs);
         } else {
-            condition = LONG.modifiedTs.after(lastUpdatedDate);
+            condition = LONG.modifiedTs.after(lastUpdatedDateLong);
         }
         fetch = new MySQLQuery<StringSetting>(getConnection()).select(LONG.all()).from(LONG).where(condition).fetch();
         for (Tuple result: fetch){
             longCacheMap.put(result.get(LONG.refCd),result.get(LONG.value));
             Date date = result.get(LONG.modifiedTs);
-            if (lastUpdatedDate==null || date.after(lastUpdatedDate))
-                lastUpdatedDate = date;
+            if (lastUpdatedDateLong==null || date.after(lastUpdatedDateLong))
+                lastUpdatedDateLong= date;
         }
     }
 
     private void loadDoubleCache() {
         Predicate condition;
         List<Tuple> fetch;
-        if (lastUpdatedDate==null){
+        if (lastUpdatedDateDouble==null){
             condition=DOUBLE.modifiedTs.eq(DOUBLE.modifiedTs);
         } else {
-            condition = DOUBLE.modifiedTs.after(lastUpdatedDate);
+            condition = DOUBLE.modifiedTs.after(lastUpdatedDateDouble);
         }
         fetch = new MySQLQuery<StringSetting>(getConnection()).select(DOUBLE.all()).from(DOUBLE).where(condition).fetch();
         for (Tuple result: fetch){
             doubleCacheMap.put(result.get(DOUBLE.refCd),result.get(DOUBLE.value));
             Date date = result.get(DOUBLE.modifiedTs);
-            if (lastUpdatedDate==null || date.after(lastUpdatedDate))
-                lastUpdatedDate = date;
+            if (lastUpdatedDateDouble=null || date.after(lastUpdatedDateDouble))
+                lastUpdatedDateDouble = date;
         }
     }
 
