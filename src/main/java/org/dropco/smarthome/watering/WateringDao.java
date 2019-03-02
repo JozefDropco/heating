@@ -1,6 +1,7 @@
 package org.dropco.smarthome.watering;
 
 import com.google.common.collect.FluentIterable;
+import com.google.common.collect.Sets;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Expression;
 import com.querydsl.core.types.Template;
@@ -16,6 +17,7 @@ import java.sql.Connection;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import static org.dropco.smarthome.database.querydsl.WateringSchedule.WATERING_SCHEDULE;
 
@@ -40,6 +42,9 @@ public class WateringDao {
         return FluentIterable.from(lst).transform(tuple -> toRecord(tuple)).toList();
     }
 
+    public Set<String> getAllZones() {
+        return Sets.newHashSet(new MySQLQuery<SolarPosition>(getConnection()).select(WATERING_SCHEDULE.zoneRefCd).from(WATERING_SCHEDULE).distinct().fetch());
+    }
     private WateringRecord toRecord(Tuple tuple) {
         WateringRecord record = new WateringRecord();
         record.setHour(tuple.get(WATERING_SCHEDULE.hour));
@@ -54,4 +59,5 @@ public class WateringDao {
     private Connection getConnection() {
         return DBConnection.getConnection();
     }
+
 }

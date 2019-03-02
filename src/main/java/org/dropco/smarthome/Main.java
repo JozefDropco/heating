@@ -11,6 +11,7 @@ import org.dropco.smarthome.solar.SolarSystemScheduler;
 import org.dropco.smarthome.solar.move.SafetySolarPanel;
 import org.dropco.smarthome.solar.move.SolarPanelMover;
 import org.dropco.smarthome.watering.WateringDao;
+import org.dropco.smarthome.watering.WateringJob;
 import org.dropco.smarthome.watering.WateringScheduler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -68,6 +69,16 @@ public class Main {
         solarSystemScheduler.moveToLastPositioon(safetySolarPanel);
         solarSystemScheduler.schedule(safetySolarPanel);
         Thread heaterThread = new Thread(new HeatingWorker(value -> solarOverHeated.set(value), settingsDao));
+        WateringJob.setCommandExecutor((key, value) -> {
+            String pinName = settingsDao.getString(key);
+            GpioPinDigitalOutput output = map.get(pinName);
+            if (output == null) {
+                output = gpio.provisionDigitalOutputPin(getExtendedProvider(), ExtendedPin.getPinByName(pinName), key, PinState.LOW);
+                map.put(pinName, output);
+            }
+            output.setState(value);
+        });
+        WateringJob.setZones(new WateringDao()::getAllZones);
         new WateringScheduler(new WateringDao()).schedule();
         heaterThread.start();
         server.join();
