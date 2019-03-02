@@ -10,6 +10,8 @@ import org.dropco.smarthome.solar.SolarSystemDao;
 import org.dropco.smarthome.solar.SolarSystemScheduler;
 import org.dropco.smarthome.solar.move.SafetySolarPanel;
 import org.dropco.smarthome.solar.move.SolarPanelMover;
+import org.dropco.smarthome.watering.WateringDao;
+import org.dropco.smarthome.watering.WateringScheduler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -66,6 +68,7 @@ public class Main {
         solarSystemScheduler.moveToLastPositioon(safetySolarPanel);
         solarSystemScheduler.schedule(safetySolarPanel);
         Thread heaterThread = new Thread(new HeatingWorker(value -> solarOverHeated.set(value), settingsDao));
+        new WateringScheduler(new WateringDao()).schedule();
         heaterThread.start();
         server.join();
     }

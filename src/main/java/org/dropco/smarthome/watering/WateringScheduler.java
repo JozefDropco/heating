@@ -1,7 +1,6 @@
 package org.dropco.smarthome.watering;
 
 import com.pi4j.io.gpio.GpioFactory;
-import org.dropco.smarthome.solar.move.SafetySolarPanel;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -19,7 +18,7 @@ public class WateringScheduler {
         this.wateringDao = wateringDao;
     }
 
-    public void schedule(SafetySolarPanel safetySolarPanel) {
+    public void schedule() {
         ScheduledExecutorService executorService = GpioFactory.getExecutorServiceFactory().getScheduledExecutorService();
         Calendar calendar = Calendar.getInstance();
         List<WateringRecord> todayRecords = wateringDao.getTodayRecords(calendar);
@@ -35,7 +34,7 @@ public class WateringScheduler {
         calendar.add(Calendar.DAY_OF_YEAR, 1);
         long delay = millisRemaining(Calendar.getInstance(), calendar.get(Calendar.MONTH)+1, calendar.get(Calendar.DAY_OF_MONTH), calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE));
         logger.log(Level.INFO, "Scheduling for next day is delayed for "+ delay);
-        executorService.schedule(() -> schedule(safetySolarPanel), delay, TimeUnit.MILLISECONDS);
+        executorService.schedule(() -> schedule(), delay, TimeUnit.MILLISECONDS);
 
     }
 
