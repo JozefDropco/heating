@@ -12,6 +12,7 @@ public class WateringJob implements Runnable {
     private static Supplier<Set<String>> zones;
     private static BiConsumer<String, Boolean> commandExecutor;
     private String currentZone;
+    private static String WATER_PUMP_REF_CD = "WATER_PUMP";
     private long timeInSeconds;
 
     WateringJob(String currentZone, long timeInSeconds) {
@@ -26,6 +27,7 @@ public class WateringJob implements Runnable {
         allZones.forEach(z -> commandExecutor.accept(z, false));
         LOGGER.log(Level.FINE,"All zones closed.");
         commandExecutor.accept(currentZone, true);
+        commandExecutor.accept(WATER_PUMP_REF_CD, true);
         LOGGER.log(Level.FINE,"Zone with REF_CD= " +currentZone +" opened.");
         try {
             LOGGER.log(Level.FINE,"Sleeping for next "+ timeInSeconds +" seconds.");
@@ -33,6 +35,7 @@ public class WateringJob implements Runnable {
         } catch (InterruptedException e) {
             LOGGER.log(Level.FINE,"Sleep interrupted");
         }
+        commandExecutor.accept(WATER_PUMP_REF_CD,false);
         commandExecutor.accept(currentZone,false);
         LOGGER.log(Level.FINE,"Zone with REF_CD= " +currentZone +" closed.");
     }

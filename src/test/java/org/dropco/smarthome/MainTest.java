@@ -13,6 +13,7 @@ public class MainTest {
     List<Clock> clocks = Lists.newArrayList();
     private Multimap<Schedule, Position> positionMultimap;
 
+
     @Before
     public void setup() {
         positionMultimap = Multimaps.newMultimap(new HashMap<>(), ArrayList::new);
