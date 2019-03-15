@@ -1,5 +1,6 @@
 package org.dropco.smarthome.web;
 
+import com.google.gson.Gson;
 import org.dropco.smarthome.ServiceMode;
 
 import javax.ws.rs.*;
@@ -14,7 +15,7 @@ public class WebService {
     @Path("/serviceMode")
 
     public Response getServiceModeState() {
-        return Response.ok(new org.dropco.smarthome.web.ServiceMode(ServiceMode.isServiceMode())).build();
+        return Response.ok(getServiceModeJson(ServiceMode.isServiceMode())).build();
     }
 
     @POST
@@ -26,5 +27,9 @@ public class WebService {
         } else
             ServiceMode.stopServiceMode();
         return Response.ok(new org.dropco.smarthome.web.ServiceMode(ServiceMode.isServiceMode())).build();
+    }
+
+    String getServiceModeJson(boolean state) {
+        return new Gson().toJson(new org.dropco.smarthome.web.ServiceMode(state));
     }
 }

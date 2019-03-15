@@ -56,7 +56,6 @@ public class SolarSystemScheduler {
         current.set(Calendar.SECOND, 0);
         current.set(Calendar.MILLISECOND, 0);
         Date future = current.getTime();
-        long diff = future.getTime() - currentDate.getTime();
-        return diff;
+        return future.getTime() - currentDate.getTime();
     }
 }

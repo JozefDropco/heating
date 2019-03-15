@@ -12,7 +12,6 @@ public class WateringJob implements Runnable {
     private static Supplier<Set<String>> zones;
     private static BiConsumer<String, Boolean> commandExecutor;
     private String currentZone;
-    private static String WATER_PUMP_REF_CD = "WATER_PUMP";
     private long timeInSeconds;
 
     WateringJob(String currentZone, long timeInSeconds) {
@@ -22,8 +21,8 @@ public class WateringJob implements Runnable {
 
     @Override
     public void run() {
+        String WATER_PUMP_REF_CD = "WATER_PUMP";
         Set<String> allZones = zones.get();
-
         allZones.forEach(z -> commandExecutor.accept(z, false));
         LOGGER.log(Level.FINE,"All zones closed.");
         commandExecutor.accept(currentZone, true);

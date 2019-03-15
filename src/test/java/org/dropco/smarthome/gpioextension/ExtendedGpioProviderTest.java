@@ -4,7 +4,6 @@ import com.pi4j.io.gpio.*;
 import org.junit.Test;
 
 import static java.lang.Thread.sleep;
-import static org.junit.Assert.*;
 
 public class ExtendedGpioProviderTest {
     private static final GpioController gpio = GpioFactory.getInstance();

@@ -32,8 +32,7 @@ public class SolarSystemDao {
     }
 
     public SolarPanelPosition getLastKnownPosition() {
-        SolarPanelPosition solarPanelPosition = getPositionById(settingsDao.getLong(SolarSystemRefCode.LAST_KNOWN_POSITION_REF_CD));
-        return solarPanelPosition;
+        return getPositionById(settingsDao.getLong(SolarSystemRefCode.LAST_KNOWN_POSITION_REF_CD));
     }
 
     SolarPanelPosition getPositionById(long id) {
@@ -45,13 +44,11 @@ public class SolarSystemDao {
     }
 
     public SolarPanelPosition getStrongWindPosition() {
-        SolarPanelPosition solarPanelPosition = getPositionById(settingsDao.getLong(SolarSystemRefCode.STRONG_WIND_POSITION_REF_CD));
-        return solarPanelPosition;
+        return getPositionById(settingsDao.getLong(SolarSystemRefCode.STRONG_WIND_POSITION_REF_CD));
     }
 
     public SolarPanelPosition getOverheatedPosition() {
-        SolarPanelPosition solarPanelPosition = getPositionById(settingsDao.getLong(SolarSystemRefCode.OVERHEAT_POSITION_REF_CD));
-        return solarPanelPosition;
+        return getPositionById(settingsDao.getLong(SolarSystemRefCode.OVERHEAT_POSITION_REF_CD));
     }
 
     public void updateLastKnownPosition(SolarPanelPosition currentPosition) {

@@ -13,9 +13,7 @@ import org.dropco.smarthome.solar.move.SolarPanelMover;
 import org.dropco.smarthome.watering.WateringDao;
 import org.dropco.smarthome.watering.WateringJob;
 import org.dropco.smarthome.watering.WateringScheduler;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.servlet.ServletContextHandler;
-import org.eclipse.jetty.servlet.ServletHolder;
+import org.dropco.smarthome.web.WebServer;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -36,19 +34,10 @@ public class Main {
     private static Map<String, GpioPinDigitalOutput> map = new HashMap<>();
 
     public static void main(String[] args) throws Exception {
-        ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
-        context.setContextPath("/");
-        Server server = new Server(8080);
-        server.setHandler(context);
-        ServletHolder jerseyServlet = context.addServlet(
-                org.glassfish.jersey.servlet.ServletContainer.class, "/*");
-        jerseyServlet.setInitOrder(0);
+        // Create JAX-RS application.
 
-        jerseyServlet.setInitParameter(
-                "jersey.config.server.provider.packages",
-                "org.dropco.smarthome.web");
-        server.start();
-        server.dumpStdErr();
+        WebServer webServer = new WebServer();
+        webServer.start();
         AtomicBoolean strongWind = new AtomicBoolean(false);
         AtomicBoolean solarOverHeated = new AtomicBoolean(false);
         SolarPanelMover.setCommandExecutor((key, value) -> {
@@ -81,7 +70,7 @@ public class Main {
         WateringJob.setZones(new WateringDao()::getAllZones);
         new WateringScheduler(new WateringDao()).schedule();
         heaterThread.start();
-        server.join();
+        webServer.join();
     }
 
     static ExtendedGpioProvider getExtendedProvider() {

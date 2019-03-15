@@ -22,12 +22,9 @@ public abstract class DelayedGpioPinListener implements GpioPinListenerDigital {
     @Override
     public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent event) {
         if (event.getState()==triggerState) {
-            GpioFactory.getExecutorServiceFactory().getScheduledExecutorService().schedule(new Runnable() {
-                @Override
-                public void run() {
-                    if (sourcePin.getState()==triggerState){
-                        handleStateChange(true);
-                    }
+            GpioFactory.getExecutorServiceFactory().getScheduledExecutorService().schedule(() -> {
+                if (sourcePin.getState()==triggerState){
+                    handleStateChange(true);
                 }
             },waitTimeInMilis, TimeUnit.MILLISECONDS);
         } else{
