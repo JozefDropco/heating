@@ -13,19 +13,17 @@ import java.util.logging.Logger;
 public class WateringScheduler {
     private static Logger logger = Logger.getLogger(WateringScheduler.class.getName());
     private WateringDao wateringDao;
+    private static final ScheduledExecutorService executorService = GpioFactory.getExecutorServiceFactory().getScheduledExecutorService();
 
     public WateringScheduler(WateringDao wateringDao) {
         this.wateringDao = wateringDao;
     }
 
     public void schedule() {
-        ScheduledExecutorService executorService = GpioFactory.getExecutorServiceFactory().getScheduledExecutorService();
         Calendar calendar = Calendar.getInstance();
         List<WateringRecord> todayRecords = wateringDao.getTodayRecords(calendar);
         for (WateringRecord record : todayRecords) {
-            long delay = millisRemaining(Calendar.getInstance(), record.getMonth(), record.getDay(), record.getHour(), record.getMinute());
-            logger.log(Level.INFO, "Scheduling "+record + " with delay of "+ delay);
-            executorService.schedule(new WateringScheduledWork(record.getZoneRefCode(),record.getTimeInSeconds()),delay,TimeUnit.MILLISECONDS);
+            schedule(record);
         }
         calendar.set(Calendar.HOUR_OF_DAY, 0);
         calendar.set(Calendar.MINUTE, 0);
@@ -36,6 +34,12 @@ public class WateringScheduler {
         logger.log(Level.INFO, "Scheduling for next day is delayed for "+ delay);
         executorService.schedule(() -> schedule(), delay, TimeUnit.MILLISECONDS);
 
+    }
+
+    static void schedule(WateringRecord record) {
+        long delay = millisRemaining(Calendar.getInstance(), record.getMonth(), record.getDay(), record.getHour(), record.getMinute());
+        logger.log(Level.INFO, "Scheduling "+record + " with delay of "+ delay);
+        executorService.schedule(new WateringScheduledWork(record.getZoneRefCode(),record.getTimeInSeconds()),delay, TimeUnit.MILLISECONDS);
     }
 
     static long millisRemaining(Calendar current, int month, int day, int hour, int minute) {

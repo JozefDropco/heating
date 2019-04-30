@@ -1,22 +1,34 @@
 package org.dropco.smarthome;
 
+import com.google.common.base.Optional;
+import com.google.common.collect.FluentIterable;
+import com.pi4j.component.temperature.TemperatureSensor;
 import com.pi4j.io.gpio.*;
+import com.pi4j.io.gpio.event.GpioPinListenerDigital;
+import com.pi4j.io.w1.W1Device;
+import com.pi4j.io.w1.W1Master;
+import com.pi4j.temperature.TemperatureScale;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.gpioextension.DelayedGpioPinListener;
 import org.dropco.smarthome.gpioextension.ExtendedGpioProvider;
 import org.dropco.smarthome.gpioextension.ExtendedPin;
+import org.dropco.smarthome.heating.HeatingDao;
+import org.dropco.smarthome.heating.HeatingRefCode;
 import org.dropco.smarthome.heating.HeatingWorker;
 import org.dropco.smarthome.solar.SolarSystemDao;
 import org.dropco.smarthome.solar.SolarSystemScheduler;
 import org.dropco.smarthome.solar.move.SafetySolarPanel;
 import org.dropco.smarthome.solar.move.SolarPanelMover;
 import org.dropco.smarthome.watering.WateringDao;
-import org.dropco.smarthome.watering.WateringJob;
 import org.dropco.smarthome.watering.WateringScheduler;
+import org.dropco.smarthome.watering2.WateringJob;
 import org.dropco.smarthome.web.WebServer;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -31,7 +43,8 @@ public class Main {
     public static final String EXTEND_GATE_PIN = "EXTEND_GATE_PIN";
     public static final String STRONG_WIND_PIN_REF_CD = "STRONG_WIND_PIN";
     private static ExtendedGpioProvider extendedGpioProvider;
-    private static Map<String, GpioPinDigitalOutput> map = new HashMap<>();
+    private static Map<String, GpioPinDigitalOutput> outputMap = Collections.synchronizedMap(new HashMap<>());
+    private static Map<String, GpioPinDigitalInput> inputMap = Collections.synchronizedMap(new HashMap<>());
 
     public static void main(String[] args) throws Exception {
         // Create JAX-RS application.
@@ -42,10 +55,10 @@ public class Main {
         AtomicBoolean solarOverHeated = new AtomicBoolean(false);
         SolarPanelMover.setCommandExecutor((key, value) -> {
             String pinName = settingsDao.getString(key);
-            GpioPinDigitalOutput output = map.get(pinName);
+            GpioPinDigitalOutput output = outputMap.get(pinName);
             if (output == null) {
                 output = gpio.provisionDigitalOutputPin(getExtendedProvider(), ExtendedPin.getPinByName(pinName), key, PinState.LOW);
-                map.put(pinName, output);
+                outputMap.put(pinName, output);
             }
             output.setState(value);
         });
@@ -60,14 +73,51 @@ public class Main {
         Thread heaterThread = new Thread(new HeatingWorker(value -> solarOverHeated.set(value), settingsDao));
         WateringJob.setCommandExecutor((key, value) -> {
             String pinName = settingsDao.getString(key);
-            GpioPinDigitalOutput output = map.get(pinName);
+            GpioPinDigitalOutput output = outputMap.get(pinName);
             if (output == null) {
                 output = gpio.provisionDigitalOutputPin(RaspiPin.getPinByName(pinName), key, PinState.LOW);
-                map.put(pinName, output);
+                outputMap.put(pinName, output);
             }
             output.setState(value);
         });
         WateringJob.setZones(new WateringDao()::getAllZones);
+        WateringJob.setTemperatureThreshold(() -> settingsDao.getDouble(WateringJob.TEMP_THRESHOLD));
+        WateringJob.setRaining(()->{
+            String pinName = settingsDao.getString(WateringJob.RAIN_SENSOR);
+            GpioPinDigitalInput input = inputMap.get(pinName);
+            if (input == null) {
+                input = gpio.provisionDigitalInputPin(RaspiPin.getPinByName(pinName), WateringJob.RAIN_SENSOR);
+                inputMap.put(pinName, input);
+            }
+            return input.getState()==PinState.LOW;
+        });
+        WateringJob.setTemperature(() -> {
+            W1Master master = new W1Master();
+            List<TemperatureSensor> sensors = master.getDevices(TemperatureSensor.class);
+            String deviceId = new HeatingDao().getDeviceId(HeatingRefCode.EXTERNAL_TEMPERATURE_PLACE_REF_CD);
+            Optional<TemperatureSensor> externalTemp = FluentIterable.from(sensors).filter(sensor -> ((W1Device) sensor).getId().trim().equals(deviceId)).first();
+            if (externalTemp.isPresent()) {
+                return externalTemp.get().getTemperature(TemperatureScale.CELSIUS);
+            }
+            return -10.0;
+        });
+        WateringJob.setWatchPumpSupplier(thread -> {
+            String pinName = settingsDao.getString(WateringJob.WATER_PUMP_REF_CD);
+            GpioPinDigitalInput input = inputMap.get(pinName);
+            if (input == null) {
+                input = gpio.provisionDigitalInputPin(RaspiPin.getPinByName(pinName), WateringJob.WATER_PUMP_REF_CD);
+                inputMap.put(pinName, input);
+            }
+            AtomicBoolean wasActive = new AtomicBoolean(input.getState() == PinState.HIGH);
+            input.addListener((GpioPinListenerDigital) event -> {
+                if (event.getState() == PinState.HIGH) wasActive.set(true);
+            });
+            GpioFactory.getExecutorServiceFactory().getScheduledExecutorService().schedule(() -> {
+                if (!wasActive.get()) {
+                    thread.interrupt();
+                }
+            }, settingsDao.getLong(WateringJob.WATER_PUMP_WAIT_TIME), TimeUnit.MILLISECONDS);
+        });
         new WateringScheduler(new WateringDao()).schedule();
         heaterThread.start();
         webServer.join();

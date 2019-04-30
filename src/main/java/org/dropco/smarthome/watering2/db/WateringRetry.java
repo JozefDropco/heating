@@ -1,12 +1,13 @@
-package org.dropco.smarthome.watering;
+package org.dropco.smarthome.watering2.db;
 
-public class WateringRecord {
+public class WateringRetry {
     private int month;
     private int day;
     private int hour;
     private int minute;
     private String zoneRefCode;
     private long timeInSeconds;
+    private int nextRetryId;
     public int getMonth() {
         return month;
     }
@@ -55,6 +56,14 @@ public class WateringRecord {
         this.timeInSeconds = timeInSeconds;
     }
 
+    public int getNextRetryId() {
+        return nextRetryId;
+    }
+
+    public void setNextRetryId(int nextRetryId) {
+        this.nextRetryId = nextRetryId;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("WateringRetry{");
@@ -64,6 +73,7 @@ public class WateringRecord {
         sb.append(", minute=").append(minute);
         sb.append(", zoneRefCode='").append(zoneRefCode).append('\'');
         sb.append(", timeInSeconds=").append(timeInSeconds);
+        sb.append(", nextRetryId=").append(nextRetryId);
         sb.append('}');
         return sb.toString();
     }
