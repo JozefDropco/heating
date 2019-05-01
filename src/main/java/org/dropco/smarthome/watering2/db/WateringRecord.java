@@ -10,6 +10,7 @@ public class WateringRecord {
     private int retryHour;
     private int retryMinute;
     private boolean continuous;
+    private boolean active;
 
     public int getReminder() {
         return reminder;
@@ -82,6 +83,15 @@ public class WateringRecord {
     public void setContinuous(boolean continuous) {
         this.continuous = continuous;
     }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public void setActive(boolean active) {
+        this.active = active;
+    }
+
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("WateringRecord{");

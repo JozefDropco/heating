@@ -1,7 +1,7 @@
 package org.dropco.smarthome;
 
 import org.dropco.smarthome.solar.move.SolarPanelThreadManager;
-import org.dropco.smarthome.watering.WateringThreadManager;
+import org.dropco.smarthome.watering2.WateringThreadManager;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 

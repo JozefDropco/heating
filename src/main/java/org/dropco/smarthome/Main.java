@@ -19,9 +19,9 @@ import org.dropco.smarthome.solar.SolarSystemDao;
 import org.dropco.smarthome.solar.SolarSystemScheduler;
 import org.dropco.smarthome.solar.move.SafetySolarPanel;
 import org.dropco.smarthome.solar.move.SolarPanelMover;
-import org.dropco.smarthome.watering.WateringDao;
-import org.dropco.smarthome.watering.WateringScheduler;
 import org.dropco.smarthome.watering2.WateringJob;
+import org.dropco.smarthome.watering2.WateringScheduler;
+import org.dropco.smarthome.watering2.db.WateringDao;
 import org.dropco.smarthome.web.WebServer;
 
 import java.util.Collections;
