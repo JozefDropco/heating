@@ -1,4 +1,4 @@
-package org.dropco.smarthome.web;
+package org.dropco.smarthome.web.dto;
 
 public class ServiceMode {
     private boolean state;

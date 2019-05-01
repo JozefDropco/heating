@@ -1,7 +1,7 @@
-package org.dropco.smarthome.watering2;
+package org.dropco.smarthome.watering;
 
 import org.dropco.smarthome.ServiceMode;
-import org.dropco.smarthome.watering2.db.WateringRecord;
+import org.dropco.smarthome.watering.db.WateringRecord;
 
 import java.util.Set;
 import java.util.function.BiConsumer;
@@ -37,7 +37,7 @@ public class WateringJob implements Runnable {
     @Override
     public void run() {
         long timeInSeconds = record.getTimeInSeconds();
-        if (ServiceMode.isServiceMode()) {
+        if (!ServiceMode.isServiceMode()) {
             if (!raining.get()) {
                 if (temperature.get() > temperatureThreshold.get()) {
                     set(WATER_PUMP_REF_CD, record.getZoneRefCode(), true);

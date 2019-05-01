@@ -1,9 +1,9 @@
-package org.dropco.smarthome.watering2;
+package org.dropco.smarthome.watering;
 
 import com.google.common.collect.FluentIterable;
 import com.pi4j.io.gpio.GpioFactory;
-import org.dropco.smarthome.watering2.db.WateringDao;
-import org.dropco.smarthome.watering2.db.WateringRecord;
+import org.dropco.smarthome.watering.db.WateringDao;
+import org.dropco.smarthome.watering.db.WateringRecord;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -25,7 +25,7 @@ public class WateringScheduler {
 
     public void schedule() {
         Calendar calendar = Calendar.getInstance();
-        List<WateringRecord> allWaterings = wateringDao.getWateringRecords();
+        List<WateringRecord> allWaterings = wateringDao.getActiveRecords();
         int dayOfYear = calendar.get(Calendar.DAY_OF_YEAR);
 
         FluentIterable<WateringRecord> todays = FluentIterable.from(allWaterings).filter(rec -> (dayOfYear % rec.getModulo()) == rec.getReminder());
@@ -38,7 +38,7 @@ public class WateringScheduler {
 
     }
 
-    static void schedule(WateringRecord record) {
+    public static void schedule(WateringRecord record) {
         long delay = millisRemaining(Calendar.getInstance(), record.getHour(), record.getMinute());
         logger.log(Level.INFO, "Scheduling " + record + " with delay of " + delay);
         EXECUTOR_SERVICE.schedule(new WateringScheduledWork(record), delay, TimeUnit.MILLISECONDS);

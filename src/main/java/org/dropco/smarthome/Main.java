@@ -19,9 +19,9 @@ import org.dropco.smarthome.solar.SolarSystemDao;
 import org.dropco.smarthome.solar.SolarSystemScheduler;
 import org.dropco.smarthome.solar.move.SafetySolarPanel;
 import org.dropco.smarthome.solar.move.SolarPanelMover;
-import org.dropco.smarthome.watering2.WateringJob;
-import org.dropco.smarthome.watering2.WateringScheduler;
-import org.dropco.smarthome.watering2.db.WateringDao;
+import org.dropco.smarthome.watering.WateringJob;
+import org.dropco.smarthome.watering.WateringScheduler;
+import org.dropco.smarthome.watering.db.WateringDao;
 import org.dropco.smarthome.web.WebServer;
 
 import java.util.Collections;
@@ -80,7 +80,7 @@ public class Main {
             }
             output.setState(value);
         });
-        WateringJob.setZones(new WateringDao()::getAllZones);
+        WateringJob.setZones(new WateringDao()::getActiveZones);
         WateringJob.setTemperatureThreshold(() -> settingsDao.getDouble(WateringJob.TEMP_THRESHOLD));
         WateringJob.setRaining(()->{
             String pinName = settingsDao.getString(WateringJob.RAIN_SENSOR);

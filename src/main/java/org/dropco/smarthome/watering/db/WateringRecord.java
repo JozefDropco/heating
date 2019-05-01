@@ -1,4 +1,4 @@
-package org.dropco.smarthome.watering2.db;
+package org.dropco.smarthome.watering.db;
 
 public class WateringRecord {
     private int reminder;

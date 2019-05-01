@@ -26,10 +26,10 @@ public class WebService {
             ServiceMode.startServiceMode();
         } else
             ServiceMode.stopServiceMode();
-        return Response.ok(new org.dropco.smarthome.web.ServiceMode(ServiceMode.isServiceMode())).build();
+        return Response.ok(new org.dropco.smarthome.web.dto.ServiceMode(ServiceMode.isServiceMode())).build();
     }
 
     String getServiceModeJson(boolean state) {
-        return new Gson().toJson(new org.dropco.smarthome.web.ServiceMode(state));
+        return new Gson().toJson(new org.dropco.smarthome.web.dto.ServiceMode(state));
     }
 }

@@ -1,6 +1,6 @@
-package org.dropco.smarthome.watering2;
+package org.dropco.smarthome.watering;
 
-import org.dropco.smarthome.watering2.db.WateringRecord;
+import org.dropco.smarthome.watering.db.WateringRecord;
 
 public class WateringScheduledWork implements Runnable {
 
