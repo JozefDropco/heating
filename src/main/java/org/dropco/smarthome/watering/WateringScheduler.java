@@ -40,7 +40,7 @@ public class WateringScheduler {
 
     public static void schedule(WateringRecord record) {
         long delay = millisRemaining(Calendar.getInstance(), record.getHour(), record.getMinute());
-        if (delay<0) {
+        if (delay>=0) {
            logger.log(Level.INFO, "Scheduling " + record + " with delay of " + delay);
            EXECUTOR_SERVICE.schedule(new WateringScheduledWork(record), delay, TimeUnit.MILLISECONDS);
         }
