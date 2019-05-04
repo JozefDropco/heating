@@ -21,6 +21,7 @@ public class WateringJob implements Runnable {
     public static final String TEMP_THRESHOLD = "TEMP_THRESHOLD";
     public static final String WATER_PUMP_REF_CD = "WATER_PUMP";
     public static final String WATER_PUMP_FEEDBACK_REF_CD = "WATER_PUMP_FEEDBACK";
+    public static final Level LEVEL = Level.INFO;
 
     private static Supplier<Set<String>> zones;
     private static BiConsumer<String, Boolean> commandExecutor;
@@ -50,6 +51,7 @@ public class WateringJob implements Runnable {
                             set(WATER_PUMP_REF_CD, record.getZoneRefCode(), false);
                         }
                     } catch (InterruptedException ex) {
+                        LOGGER.log(Level.INFO, "Sleep interrupted. Retry mechanism in action");
                         if (record.getHour() != record.getRetryHour() || record.getMinute() != record.getRetryMinute()) {
                             record.setHour(record.getRetryHour());
                             record.setMinute(record.getRetryMinute());
@@ -58,17 +60,17 @@ public class WateringJob implements Runnable {
                         set(WATER_PUMP_REF_CD, record.getZoneRefCode(), false);
                     }
                 } else {
-                    LOGGER.log(Level.FINE, "Temperature is too low for watering.");
+                    LOGGER.log(Level.INFO, "Temperature is too low for watering.");
                 }
             } else
-                LOGGER.log(Level.FINE, "It's raining.");
+                LOGGER.log(Level.INFO, "It's raining.");
         } else {
-            LOGGER.log(Level.FINE, "Service mode started, ignoring watering");
+            LOGGER.log(Level.INFO, "Service mode started, ignoring watering");
         }
     }
 
     void sleep(long timeInSeconds) throws InterruptedException {
-        LOGGER.log(Level.FINE, "Sleeping for next " + timeInSeconds + " seconds.");
+        LOGGER.log(Level.INFO, "Sleeping for next " + timeInSeconds + " seconds.");
         watchPumpSupplier.accept(Thread.currentThread());
         Thread.sleep((timeInSeconds - 1) * 1000);
     }
@@ -76,14 +78,14 @@ public class WateringJob implements Runnable {
     void set(String waterPumpRefCd, String zoneRefCode, boolean state) {
         commandExecutor.accept(zoneRefCode, state);
         commandExecutor.accept(waterPumpRefCd, state);
-        LOGGER.log(Level.FINE, "Zone with REF_CD= " + record.getZoneRefCode() + (state ? " opened." : " closed."));
+        LOGGER.log(LEVEL, "Zone with REF_CD= " + record.getZoneRefCode() + (state ? " opened." : " closed."));
 
     }
 
     void closeZones(String zoneRefCode) {
         Set<String> allZones = zones.get();
         from(allZones).filter(zone -> !zone.equals(zoneRefCode)).forEach(z -> commandExecutor.accept(z, false));
-        LOGGER.log(Level.FINE, "All zones closed.");
+        LOGGER.log(LEVEL, "All zones closed.");
     }
 
     public static void setCommandExecutor(BiConsumer<String, Boolean> commandExecutor) {
