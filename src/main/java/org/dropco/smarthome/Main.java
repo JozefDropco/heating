@@ -102,10 +102,10 @@ public class Main {
             return -10.0;
         });
         WateringJob.setWatchPumpSupplier(thread -> {
-            String pinName = settingsDao.getString(WateringJob.WATER_PUMP_REF_CD);
+            String pinName = settingsDao.getString(WateringJob.WATER_PUMP_FEEDBACK_REF_CD);
             GpioPinDigitalInput input = inputMap.get(pinName);
             if (input == null) {
-                input = gpio.provisionDigitalInputPin(RaspiPin.getPinByName(pinName), WateringJob.WATER_PUMP_REF_CD);
+                input = gpio.provisionDigitalInputPin(RaspiPin.getPinByName(pinName), WateringJob.WATER_PUMP_FEEDBACK_REF_CD);
                 inputMap.put(pinName, input);
             }
             AtomicBoolean wasActive = new AtomicBoolean(input.getState() == PinState.HIGH);

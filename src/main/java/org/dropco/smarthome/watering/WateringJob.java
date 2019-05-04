@@ -20,6 +20,7 @@ public class WateringJob implements Runnable {
     public static final String RAIN_SENSOR = "RAIN_SENSOR";
     public static final String TEMP_THRESHOLD = "TEMP_THRESHOLD";
     public static final String WATER_PUMP_REF_CD = "WATER_PUMP";
+    public static final String WATER_PUMP_FEEDBACK_REF_CD = "WATER_PUMP_FEEDBACK";
 
     private static Supplier<Set<String>> zones;
     private static BiConsumer<String, Boolean> commandExecutor;
