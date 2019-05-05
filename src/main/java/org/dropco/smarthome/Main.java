@@ -73,6 +73,7 @@ public class Main {
         Thread heaterThread = new Thread(new HeatingWorker(value -> solarOverHeated.set(value), settingsDao));
         WateringJob.setCommandExecutor((key, value) -> {
             String pinName = settingsDao.getString(key);
+            System.out.println((value ? "Opening" : "Closing") + " pin for key=" + key + " on " + pinName);
             GpioPinDigitalOutput output = outputMap.get(pinName);
             if (output == null) {
                 output = gpio.provisionDigitalOutputPin(RaspiPin.getPinByName(pinName), key, PinState.LOW);
@@ -82,14 +83,14 @@ public class Main {
         });
         WateringJob.setZones(new WateringDao()::getActiveZones);
         WateringJob.setTemperatureThreshold(() -> settingsDao.getDouble(WateringJob.TEMP_THRESHOLD));
-        WateringJob.setRaining(()->{
+        WateringJob.setRaining(() -> {
             String pinName = settingsDao.getString(WateringJob.RAIN_SENSOR);
             GpioPinDigitalInput input = inputMap.get(pinName);
             if (input == null) {
                 input = gpio.provisionDigitalInputPin(RaspiPin.getPinByName(pinName), WateringJob.RAIN_SENSOR);
                 inputMap.put(pinName, input);
             }
-            return input.getState()==PinState.LOW;
+            return input.getState() == PinState.LOW;
         });
         WateringJob.setTemperature(() -> {
             W1Master master = new W1Master();
@@ -165,6 +166,7 @@ public class Main {
         if (output == null) {
             output = gpio.provisionDigitalOutputPin(RaspiPin.getPinByName(pinName), pin, PinState.LOW);
             outputMap.put(pinName, output);
-        } return output;
+        }
+        return output;
     }
 }
