@@ -102,7 +102,7 @@ public class Main {
             }
             return -10.0;
         });
-        WateringJob.setWatchPumpSupplier(thread -> {
+        WateringJob.setWatchPumpSupplier((noWater,thread) -> {
             String pinName = settingsDao.getString(WateringJob.WATER_PUMP_FEEDBACK_REF_CD);
             GpioPinDigitalInput input = inputMap.get(pinName);
             if (input == null) {
@@ -115,6 +115,7 @@ public class Main {
             });
             GpioFactory.getExecutorServiceFactory().getScheduledExecutorService().schedule(() -> {
                 if (!wasActive.get()) {
+                    noWater.set(true);
                     thread.interrupt();
                 }
             }, settingsDao.getLong(WateringJob.WATER_PUMP_WAIT_TIME), TimeUnit.MILLISECONDS);

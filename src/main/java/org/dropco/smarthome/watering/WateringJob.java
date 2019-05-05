@@ -4,6 +4,7 @@ import org.dropco.smarthome.ServiceMode;
 import org.dropco.smarthome.watering.db.WateringRecord;
 
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -27,8 +28,8 @@ public class WateringJob implements Runnable {
     private static BiConsumer<String, Boolean> commandExecutor;
     private static Supplier<Boolean> raining;
     private static Supplier<Double> temperature;
-    private static Consumer<Thread> watchPumpSupplier;
-
+    private static BiConsumer<AtomicBoolean,Thread> watchPumpSupplier;
+    private AtomicBoolean noWater = new AtomicBoolean(false);
     private WateringRecord record;
     private static Supplier<Double> temperatureThreshold;
 
@@ -46,18 +47,20 @@ public class WateringJob implements Runnable {
                     try {
                         Thread.sleep(1000);
                         closeZones(record.getZoneRefCode());
-                        sleep(timeInSeconds);
+                        sleep(timeInSeconds - 1);
                         if (!record.isContinuous()) {
                             set(WATER_PUMP_REF_CD, record.getZoneRefCode(), false);
                         }
                     } catch (InterruptedException ex) {
-                        LOGGER.log(Level.INFO, "Sleep interrupted. Retry mechanism in action");
-                        if (record.getHour() != record.getRetryHour() || record.getMinute() != record.getRetryMinute()) {
-                            record.setHour(record.getRetryHour());
-                            record.setMinute(record.getRetryMinute());
-                            WateringScheduler.schedule(record);
+                        if (noWater.get()) {
+                            LOGGER.log(Level.INFO, "Sleep interrupted. Retry mechanism in action");
+                            if (record.getHour() != record.getRetryHour() || record.getMinute() != record.getRetryMinute()) {
+                                record.setHour(record.getRetryHour());
+                                record.setMinute(record.getRetryMinute());
+                                WateringScheduler.schedule(record);
+                            }
+                            set(WATER_PUMP_REF_CD, record.getZoneRefCode(), false);
                         }
-                        set(WATER_PUMP_REF_CD, record.getZoneRefCode(), false);
                     }
                 } else {
                     LOGGER.log(Level.INFO, "Temperature is too low for watering.");
@@ -71,8 +74,8 @@ public class WateringJob implements Runnable {
 
     void sleep(long timeInSeconds) throws InterruptedException {
         LOGGER.log(Level.INFO, "Sleeping for next " + timeInSeconds + " seconds.");
-        watchPumpSupplier.accept(Thread.currentThread());
-        Thread.sleep((timeInSeconds - 1) * 1000);
+        watchPumpSupplier.accept(noWater,Thread.currentThread());
+        Thread.sleep(timeInSeconds * 1000);
     }
 
     void set(String waterPumpRefCd, String zoneRefCode, boolean state) {
@@ -97,7 +100,7 @@ public class WateringJob implements Runnable {
     }
 
 
-    public static void setWatchPumpSupplier(Consumer<Thread> watchPumpSupplier) {
+    public static void setWatchPumpSupplier(BiConsumer<AtomicBoolean,Thread> watchPumpSupplier) {
         WateringJob.watchPumpSupplier = watchPumpSupplier;
     }
 
