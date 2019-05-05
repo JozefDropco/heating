@@ -32,7 +32,7 @@ public class WateringScheduler {
         for (WateringRecord record : todays) {
             schedule(record);
         }
-        long delay = ONE_DAY_IN_MILLIS - millisRemaining(Calendar.getInstance(), 0, 0);
+        long delay = ONE_DAY_IN_MILLIS - Math.abs(millisRemaining(Calendar.getInstance(), 0, 0));
         logger.log(Level.INFO, "Scheduling for next day is delayed for " + delay);
         EXECUTOR_SERVICE.schedule(() -> schedule(), delay, TimeUnit.MILLISECONDS);
 
