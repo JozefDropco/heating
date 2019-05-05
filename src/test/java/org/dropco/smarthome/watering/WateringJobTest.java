@@ -68,7 +68,7 @@ public class WateringJobTest {
         WateringJob.setTemperatureThreshold(() -> 5.0);
         WateringJob.setRaining(() -> false);
         WateringJob.setZones(() -> Sets.newHashSet("zone1", "zone2", "zone3"));
-        WateringJob.setWatchPumpSupplier(thread -> {
+        WateringJob.setWatchPumpSupplier((noWater,thread) -> {
         });
         BiConsumer<String, Boolean> cmdExecutor = new CmdExecutor();
         BiConsumer<String, Boolean> commandExecutor = spy(cmdExecutor);
@@ -93,7 +93,7 @@ public class WateringJobTest {
         WateringJob.setTemperatureThreshold(() -> 5.0);
         WateringJob.setRaining(() -> false);
         WateringJob.setZones(() -> Sets.newHashSet("zone1", "zone2", "zone3"));
-        WateringJob.setWatchPumpSupplier(thread -> {
+        WateringJob.setWatchPumpSupplier((noWater,thread) -> {
         });
         BiConsumer<String, Boolean> cmdExecutor = new CmdExecutor();
         BiConsumer<String, Boolean> commandExecutor = spy(cmdExecutor);
@@ -119,8 +119,8 @@ public class WateringJobTest {
         WateringJob.setTemperatureThreshold(() -> 5.0);
         WateringJob.setRaining(() -> false);
         WateringJob.setZones(() -> Sets.newHashSet("zone1", "zone2", "zone3"));
-        WateringJob.setWatchPumpSupplier(thread -> {
-            WateringJob.setWatchPumpSupplier(thread1 -> {
+        WateringJob.setWatchPumpSupplier((noWater,thread) -> {
+            WateringJob.setWatchPumpSupplier((noWater1,thread1) -> {
             });
             thread.interrupt();
         });
