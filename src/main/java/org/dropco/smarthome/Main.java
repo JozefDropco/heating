@@ -100,7 +100,7 @@ public class Main {
             if (externalTemp.isPresent()) {
                 return externalTemp.get().getTemperature(TemperatureScale.CELSIUS);
             }
-            return -10.0;
+            return 10.0;
         });
         WateringJob.setWatchPumpSupplier((noWater,thread) -> {
             String pinName = settingsDao.getString(WateringJob.WATER_PUMP_FEEDBACK_REF_CD);
