@@ -54,14 +54,14 @@ public class SettingsDao {
     }
 
     private void loadLongCache() {
-        List<Tuple> fetch = new MySQLQuery<StringSetting>(getConnection()).select(LONG.all()).from(LONG).where(condition).fetch();
+        List<Tuple> fetch = new MySQLQuery<StringSetting>(getConnection()).select(LONG.all()).from(LONG).fetch();
         for (Tuple result: fetch){
             longCacheMap.put(result.get(LONG.refCd),result.get(LONG.value));
         }
     }
 
     private void loadDoubleCache() {
-        List<Tuple> fetch = new MySQLQuery<StringSetting>(getConnection()).select(DOUBLE.all()).from(DOUBLE).where(condition).fetch();
+        List<Tuple> fetch = new MySQLQuery<StringSetting>(getConnection()).select(DOUBLE.all()).from(DOUBLE).fetch();
         for (Tuple result: fetch){
             doubleCacheMap.put(result.get(DOUBLE.refCd),result.get(DOUBLE.value));
         }
