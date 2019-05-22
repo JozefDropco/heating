@@ -4,7 +4,6 @@ import com.google.common.collect.Sets;
 import org.dropco.smarthome.watering.db.WateringRecord;
 import org.junit.Test;
 import org.mockito.ArgumentMatchers;
-import org.mockito.Mockito;
 
 import java.util.function.BiConsumer;
 
@@ -68,7 +67,7 @@ public class WateringJobTest {
         WateringJob.setTemperatureThreshold(() -> 5.0);
         WateringJob.setRaining(() -> false);
         WateringJob.setZones(() -> Sets.newHashSet("zone1", "zone2", "zone3"));
-        WateringJob.setWatchPumpSupplier((noWater,thread) -> {
+        WateringJob.setWatch((noWater, thread) -> {
         });
         BiConsumer<String, Boolean> cmdExecutor = new CmdExecutor();
         BiConsumer<String, Boolean> commandExecutor = spy(cmdExecutor);
@@ -93,7 +92,7 @@ public class WateringJobTest {
         WateringJob.setTemperatureThreshold(() -> 5.0);
         WateringJob.setRaining(() -> false);
         WateringJob.setZones(() -> Sets.newHashSet("zone1", "zone2", "zone3"));
-        WateringJob.setWatchPumpSupplier((noWater,thread) -> {
+        WateringJob.setWatch((noWater, thread) -> {
         });
         BiConsumer<String, Boolean> cmdExecutor = new CmdExecutor();
         BiConsumer<String, Boolean> commandExecutor = spy(cmdExecutor);
@@ -119,8 +118,8 @@ public class WateringJobTest {
         WateringJob.setTemperatureThreshold(() -> 5.0);
         WateringJob.setRaining(() -> false);
         WateringJob.setZones(() -> Sets.newHashSet("zone1", "zone2", "zone3"));
-        WateringJob.setWatchPumpSupplier((noWater,thread) -> {
-            WateringJob.setWatchPumpSupplier((noWater1,thread1) -> {
+        WateringJob.setWatch((noWater, thread) -> {
+            WateringJob.setWatch((noWater1, thread1) -> {
             });
             thread.interrupt();
         });

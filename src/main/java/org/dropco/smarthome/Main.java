@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -82,29 +83,25 @@ public class Main {
             output.setState(value);
         });
         WateringJob.setZones(new WateringDao()::getActiveZones);
-        WateringJob.setTemperatureThreshold(() -> settingsDao.getDouble(WateringJob.TEMP_THRESHOLD));
-        WateringJob.setRaining(() -> {
+        WateringJob.setWatch((noWater, thread) -> {
             String pinName = settingsDao.getString(WateringJob.RAIN_SENSOR);
             GpioPinDigitalInput input = inputMap.get(pinName);
             if (input == null) {
                 input = gpio.provisionDigitalInputPin(RaspiPin.getPinByName(pinName), WateringJob.RAIN_SENSOR);
                 inputMap.put(pinName, input);
             }
-            return input.getState() == PinState.LOW;
-        });
-        WateringJob.setTemperature(() -> {
-            W1Master master = new W1Master();
-            List<TemperatureSensor> sensors = master.getDevices(TemperatureSensor.class);
-            String deviceId = new HeatingDao().getDeviceId(HeatingRefCode.EXTERNAL_TEMPERATURE_PLACE_REF_CD);
-            Optional<TemperatureSensor> externalTemp = FluentIterable.from(sensors).filter(sensor -> ((W1Device) sensor).getId().trim().equals(deviceId)).first();
-            if (externalTemp.isPresent()) {
-                return externalTemp.get().getTemperature(TemperatureScale.CELSIUS);
+            if (input.getState() == PinState.LOW) {
+                thread.interrupt();
             }
-            return 10.0;
-        });
-        WateringJob.setWatchPumpSupplier((noWater,thread) -> {
-            String pinName = settingsDao.getString(WateringJob.WATER_PUMP_FEEDBACK_REF_CD);
-            GpioPinDigitalInput input = inputMap.get(pinName);
+            input.addListener((GpioPinListenerDigital) event -> {
+                if (event.getState() == PinState.LOW) thread.interrupt();
+            });
+            if (input.getState() == PinState.LOW) {
+                thread.interrupt();
+            }
+
+            pinName = settingsDao.getString(WateringJob.WATER_PUMP_FEEDBACK_REF_CD);
+            input = inputMap.get(pinName);
             if (input == null) {
                 input = gpio.provisionDigitalInputPin(RaspiPin.getPinByName(pinName), WateringJob.WATER_PUMP_FEEDBACK_REF_CD);
                 inputMap.put(pinName, input);
@@ -113,16 +110,43 @@ public class Main {
             input.addListener((GpioPinListenerDigital) event -> {
                 if (event.getState() == PinState.HIGH) wasActive.set(true);
             });
-            GpioFactory.getExecutorServiceFactory().getScheduledExecutorService().schedule(() -> {
+            ScheduledExecutorService executorService = GpioFactory.getExecutorServiceFactory().getScheduledExecutorService();
+            executorService.schedule(() -> {
                 if (!wasActive.get()) {
                     noWater.set(true);
                     thread.interrupt();
                 }
             }, settingsDao.getLong(WateringJob.WATER_PUMP_WAIT_TIME), TimeUnit.MILLISECONDS);
+
+            double threshold = settingsDao.getDouble(WateringJob.TEMP_THRESHOLD);
+            if (getExternalTemp() < threshold) {
+                thread.interrupt();
+            }
+            executorService.schedule(new Runnable() {
+                @Override
+                public void run() {
+                    if (getExternalTemp() < threshold) {
+                        thread.interrupt();
+                    }
+                    if (thread.isAlive())
+                        executorService.schedule(this, 5, TimeUnit.SECONDS);
+                }
+            }, 5, TimeUnit.SECONDS);
         });
         new WateringScheduler(new WateringDao()).schedule();
         heaterThread.start();
         webServer.join();
+    }
+
+    private static double getExternalTemp() {
+        W1Master master = new W1Master();
+        List<TemperatureSensor> sensors = master.getDevices(TemperatureSensor.class);
+        String deviceId = new HeatingDao().getDeviceId(HeatingRefCode.EXTERNAL_TEMPERATURE_PLACE_REF_CD);
+        Optional<TemperatureSensor> externalTemp = FluentIterable.from(sensors).filter(sensor -> ((W1Device) sensor).getId().trim().equals(deviceId)).first();
+        if (externalTemp.isPresent()) {
+            return externalTemp.get().getTemperature(TemperatureScale.CELSIUS);
+        }
+        return 10.0;
     }
 
     static ExtendedGpioProvider getExtendedProvider() {
