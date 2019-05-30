@@ -22,13 +22,11 @@ public class WateringJobTest {
         record.setRetryMinute(10);
         record.setContinuous(true);
         WateringJob job = new WateringJob(record);
-        WateringJob.setTemperature(() -> -5.0);
-        WateringJob.setTemperatureThreshold(() -> 5.0);
-        WateringJob.setRaining(() -> false);
+        WateringJob.setWatch((atomicBoolean, thread) -> thread.interrupt());
         BiConsumer<String, Boolean> cmdExecutor = new CmdExecutor();
         BiConsumer<String, Boolean> commandExecutor = spy(cmdExecutor);
         WateringJob.setCommandExecutor(commandExecutor);
-        job.run();
+        new Thread(job).start();
         verify(commandExecutor, times(0)).accept(anyString(), anyBoolean());
     }
 
@@ -42,12 +40,11 @@ public class WateringJobTest {
         record.setRetryMinute(10);
         record.setContinuous(true);
         WateringJob job = new WateringJob(record);
-        WateringJob.setTemperature(() -> 15.0);
-        WateringJob.setRaining(() -> true);
+        WateringJob.setWatch((atomicBoolean, thread) -> thread.interrupt());
         BiConsumer<String, Boolean> cmdExecutor = new CmdExecutor();
         BiConsumer<String, Boolean> commandExecutor = spy(cmdExecutor);
         WateringJob.setCommandExecutor(commandExecutor);
-        job.run();
+        new Thread(job).start();
         verify(commandExecutor, times(0)).accept(anyString(), anyBoolean());
     }
 
@@ -63,9 +60,7 @@ public class WateringJobTest {
         record.setZoneRefCode("zone1");
         record.setContinuous(true);
         WateringJob job = new WateringJob(record);
-        WateringJob.setTemperature(() -> 15.0);
-        WateringJob.setTemperatureThreshold(() -> 5.0);
-        WateringJob.setRaining(() -> false);
+        WateringJob.setWatch((atomicBoolean, thread) -> {});
         WateringJob.setZones(() -> Sets.newHashSet("zone1", "zone2", "zone3"));
         WateringJob.setWatch((noWater, thread) -> {
         });
@@ -88,9 +83,7 @@ public class WateringJobTest {
         record.setZoneRefCode("zone1");
         record.setContinuous(false);
         WateringJob job = new WateringJob(record);
-        WateringJob.setTemperature(() -> 15.0);
-        WateringJob.setTemperatureThreshold(() -> 5.0);
-        WateringJob.setRaining(() -> false);
+        WateringJob.setWatch((atomicBoolean, thread) -> {});
         WateringJob.setZones(() -> Sets.newHashSet("zone1", "zone2", "zone3"));
         WateringJob.setWatch((noWater, thread) -> {
         });
@@ -114,9 +107,7 @@ public class WateringJobTest {
         record.setZoneRefCode("zone1");
         record.setContinuous(false);
         WateringJob job = new WateringJob(record);
-        WateringJob.setTemperature(() -> 15.0);
-        WateringJob.setTemperatureThreshold(() -> 5.0);
-        WateringJob.setRaining(() -> false);
+        WateringJob.setWatch((atomicBoolean, thread) -> {});
         WateringJob.setZones(() -> Sets.newHashSet("zone1", "zone2", "zone3"));
         WateringJob.setWatch((noWater, thread) -> {
             WateringJob.setWatch((noWater1, thread1) -> {
