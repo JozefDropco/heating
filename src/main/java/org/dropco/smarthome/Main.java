@@ -69,8 +69,8 @@ public class Main {
         overHeatedHandler(solarOverHeated, safetySolarPanel);
         startStrongWindDetector(solarOverHeated, safetySolarPanel);
         SolarSystemScheduler solarSystemScheduler = new SolarSystemScheduler(solarSystemDao);
-        solarSystemScheduler.moveToLastPositioon(safetySolarPanel);
-        solarSystemScheduler.schedule(safetySolarPanel);
+        //solarSystemScheduler.moveToLastPositioon(safetySolarPanel);
+        //solarSystemScheduler.schedule(safetySolarPanel);
         Thread heaterThread = new Thread(new HeatingWorker(value -> solarOverHeated.set(value), settingsDao));
         WateringJob.setCommandExecutor((key, value) -> {
             String pinName = settingsDao.getString(key);
@@ -134,7 +134,7 @@ public class Main {
             }, 5, TimeUnit.SECONDS);
         });
         new WateringScheduler(new WateringDao()).schedule();
-        heaterThread.start();
+        //heaterThread.start();
         webServer.join();
     }
 
