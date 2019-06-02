@@ -32,6 +32,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Main {
 
@@ -47,6 +49,7 @@ public class Main {
     private static Map<String, GpioPinDigitalOutput> outputMap = Collections.synchronizedMap(new HashMap<>());
     private static Map<String, GpioPinDigitalInput> inputMap = Collections.synchronizedMap(new HashMap<>());
 
+    private static final Logger logger = Logger.getLogger(Main.class.getName());
     public static void main(String[] args) throws Exception {
         // Create JAX-RS application.
 
@@ -91,12 +94,16 @@ public class Main {
                 inputMap.put(pinName, input);
             }
             if (input.getState() == PinState.LOW) {
+                logger.log(Level.INFO, "Stop watering as its raining outside");
                 thread.interrupt();
             }
             input.addListener((GpioPinListenerDigital) event -> {
-                if (event.getState() == PinState.LOW) thread.interrupt();
+                if (event.getState() == PinState.LOW) {
+                    logger.log(Level.INFO, "Stop watering as its raining outside");
+                    thread.interrupt();}
             });
             if (input.getState() == PinState.LOW) {
+                logger.log(Level.INFO, "Stop watering as its raining outside");
                 thread.interrupt();
             }
 
@@ -108,24 +115,34 @@ public class Main {
             }
             AtomicBoolean wasActive = new AtomicBoolean(input.getState() == PinState.HIGH);
             input.addListener((GpioPinListenerDigital) event -> {
-                if (event.getState() == PinState.HIGH) wasActive.set(true);
+                if (event.getState() == PinState.HIGH) {
+                    wasActive.set(true);
+                } else {
+                    logger.log(Level.INFO, "Stop watering as the pump is running dry");
+                    noWater.set(true);
+                    thread.interrupt();
+                }
             });
             ScheduledExecutorService executorService = GpioFactory.getExecutorServiceFactory().getScheduledExecutorService();
             executorService.schedule(() -> {
                 if (!wasActive.get()) {
+                    logger.log(Level.INFO, "Stop watering as the pump is running dry");
                     noWater.set(true);
                     thread.interrupt();
                 }
             }, settingsDao.getLong(WateringJob.WATER_PUMP_WAIT_TIME), TimeUnit.MILLISECONDS);
 
             double threshold = settingsDao.getDouble(WateringJob.TEMP_THRESHOLD);
-            if (getExternalTemp() < threshold) {
+            double externalTemp = getExternalTemp();
+            if (externalTemp < threshold) {
+                logger.log(Level.INFO, "Stop watering as the temperature is below threshold of "+threshold+" Celzius (actual:"+externalTemp+" Celzius)");
                 thread.interrupt();
             }
             executorService.schedule(new Runnable() {
                 @Override
                 public void run() {
                     if (getExternalTemp() < threshold) {
+                        logger.log(Level.INFO, "Stop watering as the temperature is below threshold of "+threshold+" Celzius (actual:"+externalTemp+" Celzius)");
                         thread.interrupt();
                     }
                     if (thread.isAlive())
