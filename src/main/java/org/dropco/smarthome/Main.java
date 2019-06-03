@@ -21,6 +21,7 @@ import org.dropco.smarthome.solar.move.SafetySolarPanel;
 import org.dropco.smarthome.solar.move.SolarPanelMover;
 import org.dropco.smarthome.watering.WateringJob;
 import org.dropco.smarthome.watering.WateringScheduler;
+import org.dropco.smarthome.watering.WateringThreadManager;
 import org.dropco.smarthome.watering.db.WateringDao;
 import org.dropco.smarthome.web.WebServer;
 
@@ -34,6 +35,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static org.dropco.smarthome.watering.WateringJob.WATERING_PUMP_STOP_DELAY;
 
 public class Main {
 
@@ -50,6 +53,7 @@ public class Main {
     private static Map<String, GpioPinDigitalInput> inputMap = Collections.synchronizedMap(new HashMap<>());
 
     private static final Logger logger = Logger.getLogger(Main.class.getName());
+
     public static void main(String[] args) throws Exception {
         // Create JAX-RS application.
 
@@ -86,73 +90,103 @@ public class Main {
             output.setState(value);
         });
         WateringJob.setZones(new WateringDao()::getActiveZones);
-        WateringJob.setWatch((noWater, thread) -> {
-            String pinName = settingsDao.getString(WateringJob.RAIN_SENSOR);
-            GpioPinDigitalInput input = inputMap.get(pinName);
-            if (input == null) {
-                input = gpio.provisionDigitalInputPin(RaspiPin.getPinByName(pinName), WateringJob.RAIN_SENSOR);
-                inputMap.put(pinName, input);
-            }
+        AtomicBoolean noWater = new AtomicBoolean(false);
+        WateringJob.setNoWater(noWater);
+        ScheduledExecutorService executorService = GpioFactory.getExecutorServiceFactory().getScheduledExecutorService();
+        WateringJob.setCheckBeforeRun(() -> {
+            GpioPinDigitalInput input = getRainSensor();
             if (input.getState() == PinState.LOW) {
                 logger.log(Level.INFO, "Stop watering as its raining outside");
-                thread.interrupt();
+                WateringThreadManager.stop();
+                return false;
             }
-            input.addListener((GpioPinListenerDigital) event -> {
-                if (event.getState() == PinState.LOW) {
-                    logger.log(Level.INFO, "Stop watering as its raining outside");
-                    thread.interrupt();}
-            });
-            if (input.getState() == PinState.LOW) {
-                logger.log(Level.INFO, "Stop watering as its raining outside");
-                thread.interrupt();
-            }
-
-            pinName = settingsDao.getString(WateringJob.WATER_PUMP_FEEDBACK_REF_CD);
-            input = inputMap.get(pinName);
-            if (input == null) {
-                input = gpio.provisionDigitalInputPin(RaspiPin.getPinByName(pinName), WateringJob.WATER_PUMP_FEEDBACK_REF_CD);
-                inputMap.put(pinName, input);
-            }
-            AtomicBoolean wasActive = new AtomicBoolean(input.getState() == PinState.HIGH);
-            input.addListener((GpioPinListenerDigital) event -> {
-                if (event.getState() == PinState.HIGH) {
-                    wasActive.set(true);
-                } else {
-                    logger.log(Level.INFO, "Stop watering as the pump is running dry");
-                    noWater.set(true);
-                    thread.interrupt();
-                }
-            });
-            ScheduledExecutorService executorService = GpioFactory.getExecutorServiceFactory().getScheduledExecutorService();
-            executorService.schedule(() -> {
-                if (!wasActive.get()) {
-                    logger.log(Level.INFO, "Stop watering as the pump is running dry");
-                    noWater.set(true);
-                    thread.interrupt();
-                }
-            }, settingsDao.getLong(WateringJob.WATER_PUMP_WAIT_TIME), TimeUnit.MILLISECONDS);
-
             double threshold = settingsDao.getDouble(WateringJob.TEMP_THRESHOLD);
             double externalTemp = getExternalTemp();
             if (externalTemp < threshold) {
-                logger.log(Level.INFO, "Stop watering as the temperature is below threshold of "+threshold+" Celzius (actual:"+externalTemp+" Celzius)");
-                thread.interrupt();
+                logger.log(Level.INFO, "Stop watering as the temperature is below threshold of " + threshold + " Celzius (actual:" + externalTemp + " Celzius)");
+                WateringThreadManager.stop();
+                return false;
             }
             executorService.schedule(new Runnable() {
                 @Override
                 public void run() {
                     if (getExternalTemp() < threshold) {
-                        logger.log(Level.INFO, "Stop watering as the temperature is below threshold of "+threshold+" Celzius (actual:"+externalTemp+" Celzius)");
-                        thread.interrupt();
+                        logger.log(Level.INFO, "Stop watering as the temperature is below threshold of " + threshold + " Celzius (actual:" + externalTemp + " Celzius)");
+                        WateringThreadManager.stop();
                     }
-                    if (thread.isAlive())
+                    if (WateringThreadManager.getCurrent().isAlive())
                         executorService.schedule(this, 5, TimeUnit.SECONDS);
                 }
             }, 5, TimeUnit.SECONDS);
+            return true;
         });
+        GpioPinDigitalInput input = getRainSensor();
+        if (input.getState() == PinState.LOW) {
+            logger.log(Level.INFO, "Stop watering as its raining outside");
+            WateringThreadManager.stop();
+        }
+        input.addListener((GpioPinListenerDigital) event -> {
+            if (event.getState() == PinState.LOW) {
+                logger.log(Level.INFO, "Stop watering as its raining outside");
+                WateringThreadManager.stop();
+            }
+        });
+        if (input.getState() == PinState.LOW) {
+            logger.log(Level.INFO, "Stop watering as its raining outside");
+            WateringThreadManager.stop();
+        }
+
+        input = getWaterPumpFeedback();
+        AtomicBoolean wasActive = new AtomicBoolean(input.getState() == PinState.HIGH);
+        input.addListener((GpioPinListenerDigital) event -> {
+            if (event.getState() == PinState.HIGH) {
+                wasActive.set(true);
+            } else {
+                logger.log(Level.INFO, "Stop watering as the pump is running dry");
+                noWater.set(true);
+                WateringThreadManager.stop();
+            }
+        });
+        executorService.schedule(() -> {
+            if (!wasActive.get()) {
+                logger.log(Level.INFO, "Stop watering as the pump is running dry");
+                noWater.set(true);
+                WateringThreadManager.stop();
+            }
+        }, settingsDao.getLong(WateringJob.WATER_PUMP_WAIT_TIME), TimeUnit.MILLISECONDS);
+
+        double threshold = settingsDao.getDouble(WateringJob.TEMP_THRESHOLD);
+        double externalTemp = getExternalTemp();
+        if (externalTemp < threshold) {
+            logger.log(Level.INFO, "Stop watering as the temperature is below threshold of " + threshold + " Celzius (actual:" + externalTemp + " Celzius)");
+            WateringThreadManager.stop();
+        }
+        WateringJob.setWaterPumpDelay(settingsDao.getLong(WATERING_PUMP_STOP_DELAY));
         new WateringScheduler(new WateringDao()).schedule();
         //heaterThread.start();
         webServer.join();
+    }
+
+    private static GpioPinDigitalInput getWaterPumpFeedback() {
+        String pinName;
+        GpioPinDigitalInput input;
+        pinName = settingsDao.getString(WateringJob.WATER_PUMP_FEEDBACK_REF_CD);
+        input = inputMap.get(pinName);
+        if (input == null) {
+            input = gpio.provisionDigitalInputPin(RaspiPin.getPinByName(pinName), WateringJob.WATER_PUMP_FEEDBACK_REF_CD);
+            inputMap.put(pinName, input);
+        }
+        return input;
+    }
+
+    private static GpioPinDigitalInput getRainSensor() {
+        String pinName = settingsDao.getString(WateringJob.RAIN_SENSOR);
+        GpioPinDigitalInput input = inputMap.get(pinName);
+        if (input == null) {
+            input = gpio.provisionDigitalInputPin(RaspiPin.getPinByName(pinName), WateringJob.RAIN_SENSOR);
+            inputMap.put(pinName, input);
+        }
+        return input;
     }
 
     private static double getExternalTemp() {

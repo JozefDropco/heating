@@ -36,4 +36,7 @@ public class WateringThreadManager {
         }
     }
 
+    public static Thread getCurrent() {
+        return lastThread.get();
+    }
 }
