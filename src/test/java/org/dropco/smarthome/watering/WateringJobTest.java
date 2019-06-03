@@ -5,6 +5,7 @@ import org.dropco.smarthome.watering.db.WateringRecord;
 import org.junit.Test;
 import org.mockito.ArgumentMatchers;
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 
 import static org.mockito.Mockito.*;
@@ -22,7 +23,8 @@ public class WateringJobTest {
         record.setRetryMinute(10);
         record.setContinuous(true);
         WateringJob job = new WateringJob(record);
-        WateringJob.setWatch((atomicBoolean, thread) -> thread.interrupt());
+        WateringJob.setNoWater(new AtomicBoolean());
+        WateringThreadManager.stop();
         BiConsumer<String, Boolean> cmdExecutor = new CmdExecutor();
         BiConsumer<String, Boolean> commandExecutor = spy(cmdExecutor);
         WateringJob.setCommandExecutor(commandExecutor);
@@ -40,7 +42,8 @@ public class WateringJobTest {
         record.setRetryMinute(10);
         record.setContinuous(true);
         WateringJob job = new WateringJob(record);
-        WateringJob.setWatch((atomicBoolean, thread) -> thread.interrupt());
+        WateringJob.setNoWater(new AtomicBoolean());
+        WateringThreadManager.stop();
         BiConsumer<String, Boolean> cmdExecutor = new CmdExecutor();
         BiConsumer<String, Boolean> commandExecutor = spy(cmdExecutor);
         WateringJob.setCommandExecutor(commandExecutor);
@@ -60,10 +63,9 @@ public class WateringJobTest {
         record.setZoneRefCode("zone1");
         record.setContinuous(true);
         WateringJob job = new WateringJob(record);
-        WateringJob.setWatch((atomicBoolean, thread) -> {});
+        WateringJob.setCheckBeforeRun(()->true);
+        WateringJob.setNoWater(new AtomicBoolean());
         WateringJob.setZones(() -> Sets.newHashSet("zone1", "zone2", "zone3"));
-        WateringJob.setWatch((noWater, thread) -> {
-        });
         BiConsumer<String, Boolean> cmdExecutor = new CmdExecutor();
         BiConsumer<String, Boolean> commandExecutor = spy(cmdExecutor);
         WateringJob.setCommandExecutor(commandExecutor);
@@ -83,10 +85,9 @@ public class WateringJobTest {
         record.setZoneRefCode("zone1");
         record.setContinuous(false);
         WateringJob job = new WateringJob(record);
-        WateringJob.setWatch((atomicBoolean, thread) -> {});
+        WateringJob.setNoWater(new AtomicBoolean());
+        WateringJob.setCheckBeforeRun(()->true);
         WateringJob.setZones(() -> Sets.newHashSet("zone1", "zone2", "zone3"));
-        WateringJob.setWatch((noWater, thread) -> {
-        });
         BiConsumer<String, Boolean> cmdExecutor = new CmdExecutor();
         BiConsumer<String, Boolean> commandExecutor = spy(cmdExecutor);
         WateringJob.setCommandExecutor(commandExecutor);
@@ -107,17 +108,15 @@ public class WateringJobTest {
         record.setZoneRefCode("zone1");
         record.setContinuous(false);
         WateringJob job = new WateringJob(record);
-        WateringJob.setWatch((atomicBoolean, thread) -> {});
+        WateringJob.setNoWater(new AtomicBoolean());
         WateringJob.setZones(() -> Sets.newHashSet("zone1", "zone2", "zone3"));
-        WateringJob.setWatch((noWater, thread) -> {
-            WateringJob.setWatch((noWater1, thread1) -> {
-            });
-            thread.interrupt();
-        });
+        WateringThreadManager.stop();
+        WateringJob.setCheckBeforeRun(()->true);
         BiConsumer<String, Boolean> cmdExecutor = new CmdExecutor();
         BiConsumer<String, Boolean> commandExecutor = spy(cmdExecutor);
         WateringJob.setCommandExecutor(commandExecutor);
         job.run();
+
     }
 
     public class CmdExecutor implements BiConsumer<String, Boolean> {
