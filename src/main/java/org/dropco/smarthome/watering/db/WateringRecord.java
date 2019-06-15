@@ -7,8 +7,8 @@ public class WateringRecord {
     private int minute;
     private String zoneRefCode;
     private long timeInSeconds;
-    private int retryHour;
-    private int retryMinute;
+    private Integer retryHour;
+    private Integer retryMinute;
     private boolean continuous;
     private boolean active;
 
@@ -60,19 +60,19 @@ public class WateringRecord {
         this.timeInSeconds = timeInSeconds;
     }
 
-    public int getRetryHour() {
+    public Integer getRetryHour() {
         return retryHour;
     }
 
-    public void setRetryHour(int retryHour) {
+    public void setRetryHour(Integer retryHour) {
         this.retryHour = retryHour;
     }
 
-    public int getRetryMinute() {
+    public Integer getRetryMinute() {
         return retryMinute;
     }
 
-    public void setRetryMinute(int retryMinute) {
+    public void setRetryMinute(Integer retryMinute) {
         this.retryMinute = retryMinute;
     }
 
