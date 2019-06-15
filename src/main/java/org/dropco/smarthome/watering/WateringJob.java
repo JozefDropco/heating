@@ -53,7 +53,7 @@ public class WateringJob implements Runnable {
             } catch (InterruptedException ex) {
                 if (noWater.get()) {
                     LOGGER.log(Level.INFO, "Sleep interrupted. Retry mechanism in action");
-                    if (record.getHour() != record.getRetryHour() || record.getMinute() != record.getRetryMinute()) {
+                    if (record.getRetryHour()!=null && record.getRetryMinute()!=null) {
                         record.setHour(record.getRetryHour());
                         record.setMinute(record.getRetryMinute());
                         WateringScheduler.schedule(record);
