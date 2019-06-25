@@ -47,16 +47,16 @@ public class WateringZone extends com.querydsl.sql.RelationalPathBase<WateringZo
 
     public void addMetadata() {
         addMetadata(id, ColumnMetadata.named("ID").withIndex(1).ofType(Types.NUMERIC).withSize(50).withDigits(0).notNull());
-        addMetadata(hour, ColumnMetadata.named("HOUR").withIndex(3).ofType(Types.NUMERIC).withSize(50).withDigits(0).notNull());
+        addMetadata(hour, ColumnMetadata.named("HOUR").withIndex(2).ofType(Types.NUMERIC).withSize(50).withDigits(0).notNull());
         addMetadata(retryHour, ColumnMetadata.named("RETRY_HOUR").withIndex(3).ofType(Types.NUMERIC).withSize(50).withDigits(0).notNull());
         addMetadata(minute, ColumnMetadata.named("MINUTE").withIndex(4).ofType(Types.NUMERIC).withSize(50).withDigits(0).notNull());
-        addMetadata(retryMinute, ColumnMetadata.named("RETRY_MINUTE").withIndex(4).ofType(Types.NUMERIC).withSize(50).withDigits(0).notNull());
-        addMetadata(modulo, ColumnMetadata.named("MODULO").withIndex(5).ofType(Types.NUMERIC).withSize(50).withDigits(0).notNull());
-        addMetadata(reminder, ColumnMetadata.named("REMINDER").withIndex(8).ofType(Types.NUMERIC).withSize(50).withDigits(0).notNull());
-        addMetadata(timeInSeconds, ColumnMetadata.named("TIME_IN_SEC").withIndex(6).ofType(Types.NUMERIC).withSize(50).withDigits(0).notNull());
-        addMetadata(pinZoneRefCd, ColumnMetadata.named("PIN_ZONE_REF_CD").withIndex(7).ofType(Types.VARCHAR).withSize(50).withDigits(0).notNull());
-        addMetadata(active, ColumnMetadata.named("ENABLED").withIndex(9).ofType(Types.BOOLEAN).withSize(50).withDigits(0).notNull());
-        addMetadata(continuous, ColumnMetadata.named("CONTINOUOUS").withIndex(10).ofType(Types.BOOLEAN).notNull());
+        addMetadata(retryMinute, ColumnMetadata.named("RETRY_MINUTE").withIndex(5).ofType(Types.NUMERIC).withSize(50).withDigits(0).notNull());
+        addMetadata(modulo, ColumnMetadata.named("MODULO").withIndex(6).ofType(Types.NUMERIC).withSize(50).withDigits(0).notNull());
+        addMetadata(reminder, ColumnMetadata.named("REMINDER").withIndex(7).ofType(Types.NUMERIC).withSize(50).withDigits(0).notNull());
+        addMetadata(timeInSeconds, ColumnMetadata.named("TIME_IN_SEC").withIndex(8).ofType(Types.NUMERIC).withSize(50).withDigits(0).notNull());
+        addMetadata(pinZoneRefCd, ColumnMetadata.named("PIN_ZONE_REF_CD").withIndex(9).ofType(Types.VARCHAR).withSize(50).withDigits(0).notNull());
+        addMetadata(active, ColumnMetadata.named("ENABLED").withIndex(10).ofType(Types.BOOLEAN).withSize(50).withDigits(0).notNull());
+        addMetadata(continuous, ColumnMetadata.named("CONTINOUOUS").withIndex(11).ofType(Types.BOOLEAN).notNull());
     }
 
 }
