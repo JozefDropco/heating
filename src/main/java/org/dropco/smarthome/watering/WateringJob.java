@@ -35,6 +35,7 @@ public class WateringJob implements Runnable {
     @Override
     public void run() {
         thisThread = Thread.currentThread();
+        long before = System.currentTimeMillis();
         try {
             RainSensor.subscribe(rainSubscriber);
             WaterPumpFeedback.subscribe(pumpSubscriber);
@@ -45,12 +46,14 @@ public class WateringJob implements Runnable {
             set(record.getZoneRefCode(), false);
         } catch (InterruptedException ex) {
             if (!WaterPumpFeedback.isPumpOk()) {
+                int elapsedSeconds= Math.abs((int) ((System.currentTimeMillis()-before)/1000));
                 LOGGER.log(Level.INFO, "Sleep interrupted. Retry mechanism in action");
                 if (record.getRetryHour() != null && record.getRetryMinute() != null) {
                     record.setHour(record.getRetryHour());
                     record.setMinute(record.getRetryMinute());
                     record.setRetryHour(null);
                     record.setRetryMinute(null);
+                    record.setTimeInSeconds(record.getTimeInSeconds()-elapsedSeconds);
                     WateringScheduler.schedule(record);
                 }
                 set(record.getZoneRefCode(), false);

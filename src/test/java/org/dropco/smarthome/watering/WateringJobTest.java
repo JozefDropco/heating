@@ -7,6 +7,7 @@ import org.dropco.smarthome.microservice.OutsideTemperature;
 import org.dropco.smarthome.microservice.RainSensor;
 import org.dropco.smarthome.microservice.WaterPumpFeedback;
 import org.dropco.smarthome.watering.db.WateringRecord;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.ArgumentMatchers;
@@ -160,7 +161,8 @@ public class WateringJobTest {
         WateringThreadManager .water(record);
         Thread.sleep(5000);
         PROVIDER.setState(input.getPin(), PinState.LOW);
-
+        Thread.sleep(2000);
+        Assert.assertTrue(20>record.getTimeInSeconds());
     }
 
     public class CmdExecutor implements BiConsumer<String, Boolean> {

@@ -25,14 +25,28 @@ public class WateringThreadManager {
                     thread.start();
                 } else {
                     LOGGER.log(Level.INFO, "Pump is not ok");
+                    tryReschedule(wateringRecord);
                 }
             } else {
                 LOGGER.log(Level.INFO, "Outside is not warm enough");
+                tryReschedule(wateringRecord);
             }
         } else {
             LOGGER.log(Level.INFO, "Service mode started, ignoring watering");
+            tryReschedule(wateringRecord);
         }
 
+    }
+
+    private static void tryReschedule(WateringRecord record) {
+        if (record.getRetryHour() != null && record.getRetryMinute() != null) {
+            record.setHour(record.getRetryHour());
+            record.setMinute(record.getRetryMinute());
+            record.setRetryHour(null);
+            record.setRetryMinute(null);
+            LOGGER.log(Level.INFO, "Retry mechanism triggerd. Rescheduled for "+record);
+            WateringScheduler.schedule(record);
+        }
     }
 
     public static void stop() {
