@@ -1,8 +1,6 @@
 package org.dropco.smarthome.microservice;
 
 import com.google.common.collect.Lists;
-import com.pi4j.io.gpio.GpioController;
-import com.pi4j.io.gpio.GpioFactory;
 import com.pi4j.io.gpio.GpioPinDigitalInput;
 import com.pi4j.io.gpio.PinState;
 import com.pi4j.io.gpio.event.GpioPinListenerDigital;
@@ -14,12 +12,10 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class RainSensor {
-    private static final GpioController gpio = GpioFactory.getInstance();
     private static final AtomicBoolean raining = new AtomicBoolean(false);
     private static final PinState RAIN_STATE = PinState.LOW;
     private static Logger logger = Logger.getLogger(RainSensor.class.getName());
     private static final List<Consumer<Boolean>> subscribers = Lists.newArrayList();
-    public static final String PIN_NAME = "GPIO 12";
 
     public static void start(GpioPinDigitalInput input) {
         raining.set(input.getState() == RAIN_STATE);

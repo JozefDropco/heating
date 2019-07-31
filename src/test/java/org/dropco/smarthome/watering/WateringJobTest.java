@@ -7,9 +7,7 @@ import org.dropco.smarthome.microservice.OutsideTemperature;
 import org.dropco.smarthome.microservice.RainSensor;
 import org.dropco.smarthome.microservice.WaterPumpFeedback;
 import org.dropco.smarthome.watering.db.WateringRecord;
-import org.junit.Assert;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.*;
 import org.mockito.ArgumentMatchers;
 
 import java.util.function.BiConsumer;
@@ -18,6 +16,7 @@ import static org.mockito.Mockito.*;
 
 
 public class WateringJobTest {
+    GpioPinDigitalInput input1,input2;
 
     private static final GpioProviderBase PROVIDER = new GpioProviderBase() {
         public void setState(Pin pin, PinState state) {
@@ -44,7 +43,18 @@ public class WateringJobTest {
     public static void init(){
         GpioFactory.setDefaultProvider(PROVIDER);
     }
+    @Before
+    public void before(){
+        input1= GpioFactory.getInstance().provisionDigitalInputPin(RaspiPin.GPIO_06, "dsa");
+        input2 = GpioFactory.getInstance().provisionDigitalInputPin(RaspiPin.GPIO_03, "wpf");
 
+    }
+
+    @After
+    public void after(){
+        GpioFactory.getInstance().unprovisionPin(input1,input2);
+
+    }
     @Test
     public void testUnderZero() throws InterruptedException {
         WateringRecord record =
@@ -57,12 +67,10 @@ public class WateringJobTest {
         record.setTimeInSeconds(10);
         WateringThreadManager.stop();
         WateringJob.setZones(()->Sets.newHashSet("1","2","3"));
-        GpioPinDigitalInput input = GpioFactory.getInstance().provisionDigitalInputPin(RaspiPin.GPIO_06, "dsa");
-        RainSensor.start(input);
-        PROVIDER.setState(input.getPin(), PinState.LOW);
-        input = GpioFactory.getInstance().provisionDigitalInputPin(RaspiPin.GPIO_03, "wpf");
-        WaterPumpFeedback.start(input);
-        PROVIDER.setState(input.getPin(), PinState.HIGH);
+        RainSensor.start(input1);
+        PROVIDER.setState(input1.getPin(), PinState.LOW);
+        WaterPumpFeedback.start(input2);
+        PROVIDER.setState(input2.getPin(), PinState.HIGH);
         BiConsumer<String, Boolean> cmdExecutor = new CmdExecutor();
         BiConsumer<String, Boolean> commandExecutor = spy(cmdExecutor);
         WateringJob.setCommandExecutor(commandExecutor);
@@ -85,12 +93,10 @@ public class WateringJobTest {
         record.setZoneRefCode("1");
         record.setTimeInSeconds(180);
         WateringJob.setZones(()->Sets.newHashSet("1","2","3"));
-        GpioPinDigitalInput input = GpioFactory.getInstance().provisionDigitalInputPin(RaspiPin.GPIO_06, "dsa");
-        RainSensor.start(input);
-        PROVIDER.setState(input.getPin(), PinState.LOW);
-         input = GpioFactory.getInstance().provisionDigitalInputPin(RaspiPin.GPIO_03, "wpf");
-        WaterPumpFeedback.start(input);
-        PROVIDER.setState(input.getPin(), PinState.HIGH);
+         RainSensor.start(input1);
+        PROVIDER.setState(input1.getPin(), PinState.LOW);
+        WaterPumpFeedback.start(input2);
+        PROVIDER.setState(input2.getPin(), PinState.HIGH);
         BiConsumer<String, Boolean> cmdExecutor = new CmdExecutor();
         BiConsumer<String, Boolean> commandExecutor = spy(cmdExecutor);
 
@@ -149,18 +155,17 @@ public class WateringJobTest {
         record.setRetryHour(10);
         record.setRetryMinute(11);
         record.setZoneRefCode("zone1");
-        GpioPinDigitalInput input = GpioFactory.getInstance().provisionDigitalInputPin(RaspiPin.GPIO_06, "dsa");
-        RainSensor.start(input);
-        input = GpioFactory.getInstance().provisionDigitalInputPin(RaspiPin.GPIO_03, "wpf");
-        WaterPumpFeedback.start(input);
-        PROVIDER.setState(input.getPin(), PinState.HIGH);
+        RainSensor.start(input1);
+        PROVIDER.setState(input1.getPin(), PinState.LOW);
+        WaterPumpFeedback.start(input2);
+        PROVIDER.setState(input2.getPin(), PinState.HIGH);
         WateringJob.setZones(() -> Sets.newHashSet("zone1", "zone2", "zone3"));
         BiConsumer<String, Boolean> cmdExecutor = new CmdExecutor();
         BiConsumer<String, Boolean> commandExecutor = spy(cmdExecutor);
         WateringJob.setCommandExecutor(commandExecutor);
         WateringThreadManager .water(record);
         Thread.sleep(5000);
-        PROVIDER.setState(input.getPin(), PinState.LOW);
+        PROVIDER.setState(input2.getPin(), PinState.LOW);
         Thread.sleep(2000);
         Assert.assertTrue(20>record.getTimeInSeconds());
     }
