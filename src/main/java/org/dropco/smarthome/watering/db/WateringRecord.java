@@ -9,7 +9,6 @@ public class WateringRecord {
     private long timeInSeconds;
     private Integer retryHour;
     private Integer retryMinute;
-    private boolean continuous;
     private boolean active;
 
     public int getReminder() {
@@ -74,14 +73,6 @@ public class WateringRecord {
 
     public void setRetryMinute(Integer retryMinute) {
         this.retryMinute = retryMinute;
-    }
-
-    public boolean isContinuous() {
-        return continuous;
-    }
-
-    public void setContinuous(boolean continuous) {
-        this.continuous = continuous;
     }
 
     public boolean isActive() {

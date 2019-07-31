@@ -31,7 +31,6 @@ public class WateringZone extends com.querydsl.sql.RelationalPathBase<WateringZo
     public final StringPath pinZoneRefCd = createString("pinZoneRefCd");
     public final NumberPath<Long> timeInSeconds = createNumber("timeInSeconds",Long.class);
     public final BooleanPath active = createBoolean("active");
-    public final BooleanPath continuous = createBoolean("continuous");
 
     public final com.querydsl.sql.PrimaryKey<WateringZone> posPk = createPrimaryKey(id);
 
@@ -56,7 +55,6 @@ public class WateringZone extends com.querydsl.sql.RelationalPathBase<WateringZo
         addMetadata(timeInSeconds, ColumnMetadata.named("TIME_IN_SEC").withIndex(8).ofType(Types.NUMERIC).withSize(50).withDigits(0).notNull());
         addMetadata(pinZoneRefCd, ColumnMetadata.named("PIN_ZONE_REF_CD").withIndex(9).ofType(Types.VARCHAR).withSize(50).withDigits(0).notNull());
         addMetadata(active, ColumnMetadata.named("ENABLED").withIndex(10).ofType(Types.BOOLEAN).withSize(50).withDigits(0).notNull());
-        addMetadata(continuous, ColumnMetadata.named("CONTINOUOUS").withIndex(11).ofType(Types.BOOLEAN).notNull());
     }
 
 }

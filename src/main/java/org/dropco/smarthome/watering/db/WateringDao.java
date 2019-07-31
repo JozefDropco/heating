@@ -3,11 +3,8 @@ package org.dropco.smarthome.watering.db;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Sets;
 import com.querydsl.core.Tuple;
-import com.querydsl.core.types.Template;
-import com.querydsl.core.types.TemplateFactory;
 import com.querydsl.sql.mysql.MySQLQuery;
 import org.dropco.smarthome.database.DBConnection;
-import org.dropco.smarthome.database.querydsl.SolarPosition;
 import org.dropco.smarthome.database.querydsl.WateringZone;
 
 import java.sql.Connection;
@@ -46,7 +43,6 @@ public class WateringDao {
         record.setTimeInSeconds(tuple.get(WATERING_ZONE.timeInSeconds));
         record.setZoneRefCode(tuple.get(WATERING_ZONE.pinZoneRefCd));
         record.setActive(tuple.get(WATERING_ZONE.active));
-        record.setContinuous(tuple.get(WATERING_ZONE.continuous));
         return record;
     }
 

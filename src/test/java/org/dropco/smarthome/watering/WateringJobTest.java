@@ -1,11 +1,16 @@
 package org.dropco.smarthome.watering;
 
 import com.google.common.collect.Sets;
+import com.pi4j.io.gpio.*;
+import com.pi4j.io.gpio.exception.InvalidPinException;
+import org.dropco.smarthome.microservice.OutsideTemperature;
+import org.dropco.smarthome.microservice.RainSensor;
+import org.dropco.smarthome.microservice.WaterPumpFeedback;
 import org.dropco.smarthome.watering.db.WateringRecord;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.mockito.ArgumentMatchers;
 
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 
 import static org.mockito.Mockito.*;
@@ -13,42 +18,85 @@ import static org.mockito.Mockito.*;
 
 public class WateringJobTest {
 
+    private static final GpioProviderBase PROVIDER = new GpioProviderBase() {
+        public void setState(Pin pin, PinState state) {
+            if (!hasPin(pin)) {
+                throw new InvalidPinException(pin);
+            }
+
+            GpioProviderPinCache pinCache = getPinCache(pin);
+
+            // for digital output pins, we will echo the event feedback
+            dispatchPinDigitalStateChangeEvent(pin, state);
+
+            // cache pin state
+            pinCache.setState(state);
+        }
+
+        @Override
+        public String getName() {
+            return "RaspberryPi GPIO Provider";
+        }
+    };
+
+    @BeforeClass
+    public static void init(){
+        GpioFactory.setDefaultProvider(PROVIDER);
+    }
+
     @Test
-    public void testUnderZero() {
+    public void testUnderZero() throws InterruptedException {
         WateringRecord record =
                 new WateringRecord();
         record.setMinute(10);
         record.setHour(10);
         record.setRetryHour(11);
         record.setRetryMinute(10);
-        record.setContinuous(true);
-        WateringJob job = new WateringJob(record);
-        WateringJob.setNoWater(new AtomicBoolean());
+        record.setZoneRefCode("1");
+        record.setTimeInSeconds(10);
         WateringThreadManager.stop();
+        WateringJob.setZones(()->Sets.newHashSet("1","2","3"));
+        GpioPinDigitalInput input = GpioFactory.getInstance().provisionDigitalInputPin(RaspiPin.GPIO_06, "dsa");
+        RainSensor.start(input);
+        PROVIDER.setState(input.getPin(), PinState.LOW);
+        input = GpioFactory.getInstance().provisionDigitalInputPin(RaspiPin.GPIO_03, "wpf");
+        WaterPumpFeedback.start(input);
+        PROVIDER.setState(input.getPin(), PinState.HIGH);
         BiConsumer<String, Boolean> cmdExecutor = new CmdExecutor();
         BiConsumer<String, Boolean> commandExecutor = spy(cmdExecutor);
         WateringJob.setCommandExecutor(commandExecutor);
-        new Thread(job).start();
+        OutsideTemperature.start("");
+        OutsideTemperature.temperature.set(-5);
+        WateringThreadManager.water(record);
+
+        Thread.sleep(5*1000);
         verify(commandExecutor, times(0)).accept(anyString(), anyBoolean());
     }
 
     @Test
-    public void testRaining() {
+    public void testRaining() throws InterruptedException {
         WateringRecord record =
                 new WateringRecord();
         record.setMinute(10);
         record.setHour(10);
         record.setRetryHour(11);
         record.setRetryMinute(10);
-        record.setContinuous(true);
-        WateringJob job = new WateringJob(record);
-        WateringJob.setNoWater(new AtomicBoolean());
-        WateringThreadManager.stop();
+        record.setZoneRefCode("1");
+        record.setTimeInSeconds(180);
+        WateringJob.setZones(()->Sets.newHashSet("1","2","3"));
+        GpioPinDigitalInput input = GpioFactory.getInstance().provisionDigitalInputPin(RaspiPin.GPIO_06, "dsa");
+        RainSensor.start(input);
+        PROVIDER.setState(input.getPin(), PinState.LOW);
+         input = GpioFactory.getInstance().provisionDigitalInputPin(RaspiPin.GPIO_03, "wpf");
+        WaterPumpFeedback.start(input);
+        PROVIDER.setState(input.getPin(), PinState.HIGH);
         BiConsumer<String, Boolean> cmdExecutor = new CmdExecutor();
         BiConsumer<String, Boolean> commandExecutor = spy(cmdExecutor);
+
         WateringJob.setCommandExecutor(commandExecutor);
-        new Thread(job).start();
-        verify(commandExecutor, times(0)).accept(anyString(), anyBoolean());
+        WateringThreadManager.water(record);
+        Thread.sleep(5000);
+        verify(commandExecutor, times(0)).accept(anyString(), ArgumentMatchers.eq(true));
     }
 
     @Test
@@ -61,10 +109,7 @@ public class WateringJobTest {
         record.setRetryHour(11);
         record.setRetryMinute(10);
         record.setZoneRefCode("zone1");
-        record.setContinuous(true);
         WateringJob job = new WateringJob(record);
-        WateringJob.setCheckBeforeRun(()->true);
-        WateringJob.setNoWater(new AtomicBoolean());
         WateringJob.setZones(() -> Sets.newHashSet("zone1", "zone2", "zone3"));
         BiConsumer<String, Boolean> cmdExecutor = new CmdExecutor();
         BiConsumer<String, Boolean> commandExecutor = spy(cmdExecutor);
@@ -83,16 +128,13 @@ public class WateringJobTest {
         record.setRetryHour(11);
         record.setRetryMinute(10);
         record.setZoneRefCode("zone1");
-        record.setContinuous(false);
         WateringJob job = new WateringJob(record);
-        WateringJob.setNoWater(new AtomicBoolean());
-        WateringJob.setCheckBeforeRun(()->true);
         WateringJob.setZones(() -> Sets.newHashSet("zone1", "zone2", "zone3"));
         BiConsumer<String, Boolean> cmdExecutor = new CmdExecutor();
         BiConsumer<String, Boolean> commandExecutor = spy(cmdExecutor);
         WateringJob.setCommandExecutor(commandExecutor);
         job.run();
-        verify(commandExecutor, times(6)).accept(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean());
+        verify(commandExecutor, times(4)).accept(ArgumentMatchers.anyString(), ArgumentMatchers.anyBoolean());
     }
 
 
@@ -102,20 +144,22 @@ public class WateringJobTest {
                 new WateringRecord();
         record.setMinute(10);
         record.setHour(10);
-        record.setTimeInSeconds(5);
+        record.setTimeInSeconds(20);
         record.setRetryHour(10);
         record.setRetryMinute(11);
         record.setZoneRefCode("zone1");
-        record.setContinuous(false);
-        WateringJob job = new WateringJob(record);
-        WateringJob.setNoWater(new AtomicBoolean());
+        GpioPinDigitalInput input = GpioFactory.getInstance().provisionDigitalInputPin(RaspiPin.GPIO_06, "dsa");
+        RainSensor.start(input);
+        input = GpioFactory.getInstance().provisionDigitalInputPin(RaspiPin.GPIO_03, "wpf");
+        WaterPumpFeedback.start(input);
+        PROVIDER.setState(input.getPin(), PinState.HIGH);
         WateringJob.setZones(() -> Sets.newHashSet("zone1", "zone2", "zone3"));
-        WateringThreadManager.stop();
-        WateringJob.setCheckBeforeRun(()->true);
         BiConsumer<String, Boolean> cmdExecutor = new CmdExecutor();
         BiConsumer<String, Boolean> commandExecutor = spy(cmdExecutor);
         WateringJob.setCommandExecutor(commandExecutor);
-        job.run();
+        WateringThreadManager .water(record);
+        Thread.sleep(5000);
+        PROVIDER.setState(input.getPin(), PinState.LOW);
 
     }
 

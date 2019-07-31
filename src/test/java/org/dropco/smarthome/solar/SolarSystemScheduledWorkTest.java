@@ -25,8 +25,8 @@ public class SolarSystemScheduledWorkTest {
         thread.start();
         thread.join();
         Thread.sleep(11000);
-        Assert.assertEquals(0,currentPos.getVerticalPositionInSeconds());
-        Assert.assertEquals(-10,currentPos.getHorizontalPositionInSeconds());
+        Assert.assertEquals(0,(long)currentPos.getVerticalPositionInSeconds());
+        Assert.assertEquals(-10,(long)currentPos.getHorizontalPositionInSeconds());
 
     }
 
@@ -52,8 +52,8 @@ public class SolarSystemScheduledWorkTest {
         thread.start();
         thread.join();
         Thread.sleep(50000);
-        Assert.assertEquals(0, currentPos[0].getHorizontalPositionInSeconds());
-        Assert.assertEquals(-40, currentPos[0].getVerticalPositionInSeconds());
+        Assert.assertEquals(0, (long)currentPos[0].getHorizontalPositionInSeconds());
+        Assert.assertEquals(-40,(long) currentPos[0].getVerticalPositionInSeconds());
         Assert.assertFalse(thread.isAlive());
     }
 
@@ -79,13 +79,13 @@ public class SolarSystemScheduledWorkTest {
         thread.start();
         thread.join();
         Thread.sleep(50000);
-        Assert.assertEquals(0, currentPos[0].getHorizontalPositionInSeconds());
-        Assert.assertEquals(-40, currentPos[0].getVerticalPositionInSeconds());
+        Assert.assertEquals(0,(long) currentPos[0].getHorizontalPositionInSeconds());
+        Assert.assertEquals(-40,(long) currentPos[0].getVerticalPositionInSeconds());
         Assert.assertFalse(thread.isAlive());
         solarPanel.backToNormal();
         Thread.sleep(45000);
-        Assert.assertEquals(0, currentPos[0].getHorizontalPositionInSeconds());
-        Assert.assertEquals(0, currentPos[0].getVerticalPositionInSeconds());
+        Assert.assertEquals(0, (long)currentPos[0].getHorizontalPositionInSeconds());
+        Assert.assertEquals(0,(long) currentPos[0].getVerticalPositionInSeconds());
 
     }
 
