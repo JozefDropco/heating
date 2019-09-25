@@ -38,11 +38,15 @@ public class WateringJob implements Runnable {
         long before = System.currentTimeMillis();
         try {
             RainSensor.subscribe(rainSubscriber);
-            WaterPumpFeedback.subscribe(pumpSubscriber);
 
             set(record.getZoneRefCode(), !RainSensor.isRaining());
             closeOtherZones(record.getZoneRefCode());
-            sleep(record.getTimeInSeconds());
+            sleep(3);
+            if (!WaterPumpFeedback.isPumpOk()){
+                thisThread.interrupt();
+            }
+            WaterPumpFeedback.subscribe(pumpSubscriber);
+            sleep(record.getTimeInSeconds()-3);
             set(record.getZoneRefCode(), false);
         } catch (InterruptedException ex) {
             if (!WaterPumpFeedback.isPumpOk()) {
