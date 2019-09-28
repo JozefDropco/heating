@@ -12,12 +12,12 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class WaterPumpFeedback {
-    public static final AtomicBoolean pumpOk = new AtomicBoolean(false);
+    public static final AtomicBoolean running = new AtomicBoolean(false);
     private static Logger logger = Logger.getLogger(WaterPumpFeedback.class.getName());
     private static final List<Consumer<Boolean>> subscribers = Lists.newArrayList();
 
     public static void start(GpioPinDigitalInput input) {
-        pumpOk.set(input.getState() == PinState.HIGH);
+        running.set(input.getState() == PinState.HIGH);
         input.addListener((GpioPinListenerDigital) event -> {
                     handlePumpState(event.getState());
                 }
@@ -28,11 +28,11 @@ public class WaterPumpFeedback {
 
     static void handlePumpState(PinState state) {
         boolean newValue = state == PinState.HIGH;
-        boolean oldValue = pumpOk.getAndSet(newValue);
-        if (pumpOk.get()) {
-            logger.log(Level.INFO, "Water pump is OK");
+        boolean oldValue = running.getAndSet(newValue);
+        if (running.get()) {
+            logger.log(Level.INFO, "Water pump is running");
         } else {
-            logger.log(Level.INFO, "Water pump is not OK");
+            logger.log(Level.INFO, "Water pump is not running");
         }
         if (newValue != oldValue) {
             subscribers.forEach(subscriber -> {
@@ -45,8 +45,8 @@ public class WaterPumpFeedback {
         }
     }
 
-    public static boolean isPumpOk() {
-        return pumpOk.get();
+    public static boolean getRunning() {
+        return running.get();
     }
 
     public static void subscribe(Consumer<Boolean> subscriber) {

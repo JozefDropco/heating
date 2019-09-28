@@ -23,9 +23,25 @@ public class WateringJob implements Runnable {
     private static BiConsumer<String, Boolean> commandExecutor;
     private Thread thisThread;
     private WateringRecord record;
-    private Consumer<Boolean> rainSubscriber = isRaining -> set(record.getZoneRefCode(), !isRaining && WaterPumpFeedback.isPumpOk());
-    private Consumer<Boolean> pumpSubscriber = pumpOk -> {
-        if (!pumpOk) thisThread.interrupt();
+    private Consumer<Boolean> rainSubscriber = isRaining -> {
+        set(record.getZoneRefCode(), !isRaining);
+        if (!isRaining) {
+            try {
+                sleep(3);
+            } catch (InterruptedException e) {
+                LOGGER.log(Level.SEVERE, "Sleep interrupted");
+            }
+            if (!WaterPumpFeedback.getRunning()) {
+                LOGGER.log(Level.INFO, "Pump is not running, stop watering the zone " + record);
+                thisThread.interrupt();
+            }
+        }
+    };
+    private Consumer<Boolean> pumpSubscriber = running -> {
+        if (!running) {
+            LOGGER.log(Level.INFO, "Pump is not running, stop watering the zone " + record);
+            thisThread.interrupt();
+        }
     };
 
     WateringJob(WateringRecord record) {
@@ -42,22 +58,23 @@ public class WateringJob implements Runnable {
             set(record.getZoneRefCode(), !RainSensor.isRaining());
             closeOtherZones(record.getZoneRefCode());
             sleep(3);
-            if (!WaterPumpFeedback.isPumpOk()){
+            if (!WaterPumpFeedback.getRunning()) {
+                LOGGER.log(Level.INFO, "Pump is not running, stop watering the zone " + record);
                 thisThread.interrupt();
             }
             WaterPumpFeedback.subscribe(pumpSubscriber);
-            sleep(record.getTimeInSeconds()-3);
+            sleep(record.getTimeInSeconds() - 3);
             set(record.getZoneRefCode(), false);
         } catch (InterruptedException ex) {
-            if (!WaterPumpFeedback.isPumpOk()) {
-                int elapsedSeconds= Math.abs((int) ((System.currentTimeMillis()-before)/1000));
+            if (!WaterPumpFeedback.getRunning()) {
+                int elapsedSeconds = Math.abs((int) ((System.currentTimeMillis() - before) / 1000));
                 LOGGER.log(Level.INFO, "Sleep interrupted. Retry mechanism in action");
                 if (record.getRetryHour() != null && record.getRetryMinute() != null) {
                     record.setHour(record.getRetryHour());
                     record.setMinute(record.getRetryMinute());
                     record.setRetryHour(null);
                     record.setRetryMinute(null);
-                    record.setTimeInSeconds(record.getTimeInSeconds()-elapsedSeconds);
+                    record.setTimeInSeconds(record.getTimeInSeconds() - elapsedSeconds);
                     WateringScheduler.schedule(record);
                 }
                 set(record.getZoneRefCode(), false);

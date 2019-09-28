@@ -18,7 +18,7 @@ public class WateringThreadManager {
         stop();
         if (!ServiceMode.isServiceMode()) {
             if (isWarmEnough()) {
-                if (WaterPumpFeedback.isPumpOk()) {
+                if (WaterPumpFeedback.getRunning()) {
                     Thread thread = new Thread(new WateringJob(wateringRecord));
                     stop(thread);
                     LOGGER.log(Level.INFO, "Starting new thread with id=" + thread.getId() + " which will start to water zone=" + wateringRecord.getZoneRefCode() + ", seconds=" + wateringRecord.getTimeInSeconds());
