@@ -10,6 +10,7 @@ import org.dropco.smarthome.watering.db.WateringRecord;
 import org.junit.*;
 import org.mockito.ArgumentMatchers;
 
+import java.io.IOException;
 import java.util.function.BiConsumer;
 
 import static org.mockito.Mockito.*;
@@ -56,7 +57,7 @@ public class WateringJobTest {
 
     }
     @Test
-    public void testUnderZero() throws InterruptedException {
+    public void testUnderZero() throws InterruptedException, IOException {
         WateringRecord record =
                 new WateringRecord();
         record.setMinute(10);

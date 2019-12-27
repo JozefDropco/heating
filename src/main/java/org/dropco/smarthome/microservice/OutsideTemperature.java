@@ -10,11 +10,15 @@ import com.pi4j.io.w1.W1Device;
 import com.pi4j.io.w1.W1Master;
 import com.pi4j.temperature.TemperatureScale;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.logging.Level;
+import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 public class OutsideTemperature {
@@ -22,8 +26,8 @@ public class OutsideTemperature {
     private static Logger logger = Logger.getLogger(OutsideTemperature.class.getName());
     private static final List<Consumer<Double>> subscribers = Lists.newArrayList();
 
-    public static void start(final String externalTempDeviceId) {
-
+    public static void start(final String externalTempDeviceId) throws IOException {
+        Logger.getLogger(W1Master.class.getName()).setLevel(Level.WARNING);
         GpioFactory.getExecutorServiceFactory().getScheduledExecutorService().scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
