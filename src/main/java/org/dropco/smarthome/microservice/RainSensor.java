@@ -19,6 +19,7 @@ public class RainSensor {
 
     public static void start(GpioPinDigitalInput input) {
         raining.set(input.getState() == RAIN_STATE);
+        input.setDebounce(1000);
         input.addListener((GpioPinListenerDigital) event -> {
                     handleRainSensor(event.getState());
                 }
