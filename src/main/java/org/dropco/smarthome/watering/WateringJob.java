@@ -32,14 +32,14 @@ public class WateringJob implements Runnable {
                 LOGGER.log(Level.SEVERE, "Sleep interrupted");
             }
             if (!WaterPumpFeedback.getRunning()) {
-                LOGGER.log(Level.INFO, "Pump is not running, stop watering the zone " + record);
+                LOGGER.log(Level.INFO, "Čerpadlo nebeží, vypínam zónu " + record.getName());
                 thisThread.interrupt();
             }
         }
     };
     private Consumer<Boolean> pumpSubscriber = running -> {
         if (!running) {
-            LOGGER.log(Level.INFO, "Pump is not running, stop watering the zone " + record);
+            LOGGER.log(Level.INFO, "Čerpadlo nebeží, vypínam zónu " + record.getName());
             thisThread.interrupt();
         }
     };
@@ -59,7 +59,7 @@ public class WateringJob implements Runnable {
             closeOtherZones(record.getZoneRefCode());
             sleep(3);
             if (!WaterPumpFeedback.getRunning()) {
-                LOGGER.log(Level.INFO, "Pump is not running, stop watering the zone " + record);
+                LOGGER.log(Level.INFO, "Čerpadlo nebeží, vypínam zónu " + record.getName());
                 thisThread.interrupt();
             }
             WaterPumpFeedback.subscribe(pumpSubscriber);
@@ -68,15 +68,7 @@ public class WateringJob implements Runnable {
         } catch (InterruptedException ex) {
             if (!WaterPumpFeedback.getRunning()) {
                 int elapsedSeconds = Math.abs((int) ((System.currentTimeMillis() - before) / 1000));
-                LOGGER.log(Level.INFO, "Sleep interrupted. Retry mechanism in action");
-                if (record.getRetryHour() != null && record.getRetryMinute() != null) {
-                    record.setHour(record.getRetryHour());
-                    record.setMinute(record.getRetryMinute());
-                    record.setRetryHour(null);
-                    record.setRetryMinute(null);
-                    record.setTimeInSeconds(record.getTimeInSeconds() - elapsedSeconds);
-                    WateringScheduler.schedule(record);
-                }
+                WateringThreadManager.tryReschedule(record,elapsedSeconds);
                 set(record.getZoneRefCode(), false);
             }
         } finally {
@@ -88,20 +80,20 @@ public class WateringJob implements Runnable {
 
 
     void sleep(long timeInSeconds) throws InterruptedException {
-        LOGGER.log(Level.INFO, "Sleeping for next " + timeInSeconds + " seconds.");
+        LOGGER.log(Level.INFO, "Polievanie " + timeInSeconds + " sekúnd.");
         Thread.sleep(timeInSeconds * 1000);
     }
 
     void set(String zoneRefCode, boolean state) {
         commandExecutor.accept(zoneRefCode, state);
-        LOGGER.log(LEVEL, "Zone with REF_CD= " + record.getZoneRefCode() + (state ? " opened." : " closed."));
+        LOGGER.log(LEVEL, "Zóna " + record.getName() + (state ? " otvorená." : " zatvorená."));
 
     }
 
     void closeOtherZones(String zoneRefCode) {
         Set<String> allZones = zones.get();
         from(allZones).filter(zone -> !zone.equals(zoneRefCode)).forEach(z -> commandExecutor.accept(z, false));
-        LOGGER.log(LEVEL, "All other zones closed.");
+        LOGGER.log(LEVEL, "Ostatné zóny uzatvorené.");
     }
 
 

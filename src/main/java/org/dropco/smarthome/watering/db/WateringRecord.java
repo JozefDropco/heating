@@ -10,6 +10,7 @@ public class WateringRecord {
     private Integer retryHour;
     private Integer retryMinute;
     private boolean active;
+    private String name;
 
     public int getReminder() {
         return reminder;
@@ -81,6 +82,15 @@ public class WateringRecord {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     @Override

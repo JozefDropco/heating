@@ -2,7 +2,6 @@ package org.dropco.smarthome.watering;
 
 import org.dropco.smarthome.ServiceMode;
 import org.dropco.smarthome.microservice.OutsideTemperature;
-import org.dropco.smarthome.microservice.WaterPumpFeedback;
 import org.dropco.smarthome.watering.db.WateringRecord;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -18,33 +17,28 @@ public class WateringThreadManager {
         stop();
         if (!ServiceMode.isServiceMode()) {
             if (isWarmEnough()) {
-                if (WaterPumpFeedback.getRunning()) {
                     Thread thread = new Thread(new WateringJob(wateringRecord));
                     stop(thread);
-                    LOGGER.log(Level.INFO, "Starting new thread with id=" + thread.getId() + " which will start to water zone=" + wateringRecord.getZoneRefCode() + ", seconds=" + wateringRecord.getTimeInSeconds());
                     thread.start();
-                } else {
-                    LOGGER.log(Level.INFO, "Pump is not ok");
-                    tryReschedule(wateringRecord);
-                }
             } else {
-                LOGGER.log(Level.INFO, "Outside is not warm enough");
-                tryReschedule(wateringRecord);
+                LOGGER.log(Level.INFO, "Teplota je nižšia ako "+thresholdTempValue+" stupňov.");
+                tryReschedule(wateringRecord, 0);
             }
         } else {
-            LOGGER.log(Level.INFO, "Service mode started, ignoring watering");
-            tryReschedule(wateringRecord);
+            LOGGER.log(Level.INFO, "Servisný mód zapnutý, polievanie zastavené.");
+            tryReschedule(wateringRecord, 0);
         }
 
     }
 
-    private static void tryReschedule(WateringRecord record) {
+    public static void tryReschedule(WateringRecord record, int elapsedSeconds) {
         if (record.getRetryHour() != null && record.getRetryMinute() != null) {
             record.setHour(record.getRetryHour());
             record.setMinute(record.getRetryMinute());
             record.setRetryHour(null);
             record.setRetryMinute(null);
-            LOGGER.log(Level.INFO, "Retry mechanism triggerd. Rescheduled for "+record);
+            record.setTimeInSeconds(record.getTimeInSeconds() - elapsedSeconds);
+            LOGGER.log(Level.INFO, "Polievanie prerušené, pokus o znovu polievanie. ");
             WateringScheduler.schedule(record);
         }
     }
@@ -56,14 +50,14 @@ public class WateringThreadManager {
     private static void stop(Thread thread) {
         Thread oldThread = lastThread.getAndSet(thread);
         if (oldThread != null) {
-            LOGGER.log(Level.INFO, "Stopping the current thread - " + oldThread.getId());
+            LOGGER.log(Level.INFO, "Zastavujem polievanie");
             oldThread.interrupt();
 
             try {
-                LOGGER.log(Level.INFO, "Waiting for current thread - " + oldThread.getId() + " to stop.");
+                LOGGER.log(Level.INFO, "Čakám na ukončenie polievania");
                 oldThread.join();
             } catch (InterruptedException e) {
-                LOGGER.log(Level.SEVERE, "Waiting for current " + oldThread.getId() + " was interrupted.");
+                LOGGER.log(Level.SEVERE, "Čakanie na ukončenie polievania prerušené");
             }
         }
     }

@@ -30,31 +30,31 @@ public class SafetySolarPanel {
         lastHorizontal = horizontal;
         lastVertical = vertical;
         if (ServiceMode.isServiceMode()){
-            logger.log(Level.INFO, "New position stored but not moved due service mode activated.");
+            logger.log(Level.INFO, "Servisný mód, posun zastavený.");
             return;
         }
         if (!overHeated.get() && !strongWind.get()) {
             SolarPanelThreadManager.move(horizontal, vertical);
         } else {
-            logger.log(Level.INFO, "New position stored but not moved due " + (strongWind.get() ? "strong wind." : "overheated."));
+            logger.log(Level.INFO, "Nová pozícia uložená, ale posun zastavený kvôli " + (strongWind.get() ? "silnému vetru." : " prehriatiu kolektorov."));
         }
     }
 
     public void moveToStrongWindPosition() {
         SolarPanelPosition solarPanelPosition = strongWindProvider.get();
-        logger.log(Level.INFO, "Moving to strong wind position. " + solarPanelPosition);
+        logger.log(Level.INFO, "Presun na pozíciu pri silnom vetre, hor=" + solarPanelPosition.getHorizontalPositionInSeconds()+", ver="+solarPanelPosition.getVerticalPositionInSeconds());
         SolarPanelThreadManager.move(solarPanelPosition.getHorizontalPositionInSeconds(), solarPanelPosition.getVerticalPositionInSeconds());
     }
 
     public void moveToOverheatedPosition() {
         SolarPanelPosition solarPanelPosition = overHeatedPositionProvider.get();
-        logger.log(Level.INFO, "Moving to overheated position. " + solarPanelPosition);
+        logger.log(Level.INFO, "Presun na pozíciu pri prehriatí, hor=" + solarPanelPosition.getHorizontalPositionInSeconds()+", ver="+solarPanelPosition.getVerticalPositionInSeconds());
         SolarPanelThreadManager.move(solarPanelPosition.getHorizontalPositionInSeconds(), solarPanelPosition.getVerticalPositionInSeconds());
     }
 
     public void backToNormal() {
         if (!overHeated.get() && !strongWind.get()) {
-            logger.log(Level.INFO, "Moving back to normal. Horizontal=" + lastHorizontal + ", vertical=" + lastVertical);
+            logger.log(Level.INFO, "Presun späť do normálu, hor=" + lastHorizontal + ", ver=" + lastVertical);
             SolarPanelThreadManager.move(lastHorizontal, lastVertical);
         }
     }

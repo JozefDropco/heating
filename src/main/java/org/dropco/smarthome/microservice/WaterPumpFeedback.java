@@ -31,9 +31,9 @@ public class WaterPumpFeedback {
         boolean newValue = state == PinState.HIGH;
         boolean oldValue = running.getAndSet(newValue);
         if (running.get()) {
-            logger.log(Level.INFO, "Water pump is running");
+            logger.log(Level.INFO, "Čerpadlo beží");
         } else {
-            logger.log(Level.INFO, "Water pump is not running");
+            logger.log(Level.INFO, "Čerpadlo nebeží");
         }
         if (newValue != oldValue) {
             subscribers.forEach(subscriber -> {

@@ -32,9 +32,9 @@ public class RainSensor {
         boolean newValue = state == RAIN_STATE;
         boolean oldValue = raining.getAndSet(newValue);
         if (raining.get()) {
-            logger.log(Level.INFO, "Outside is raining");
+            logger.log(Level.INFO, "Prší");
         } else {
-            logger.log(Level.INFO, "Outside is not raining");
+            logger.log(Level.INFO, "Neprší");
         }
         if (newValue != oldValue) {
             subscribers.forEach(subscriber -> {

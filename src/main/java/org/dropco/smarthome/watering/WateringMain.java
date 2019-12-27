@@ -16,7 +16,6 @@ public class WateringMain {
         WateringThreadManager.thresholdTempValue = new SettingsDao().getDouble("TEMP_THRESHOLD");
         WateringJob.setCommandExecutor((key, value) -> {
             String pinName = settingsDao.getString(key);
-            System.out.println((value ? "Opening" : "Closing") + " pin for key=" + key + " on " + pinName);
             GpioPinDigitalOutput output = outputMap.get(pinName);
             if (output == null) {
                 output = gpio.provisionDigitalOutputPin(RaspiPin.getPinByName(pinName), key, PinState.LOW);

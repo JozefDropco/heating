@@ -18,7 +18,7 @@ public class SolarSystemScheduledWork implements Runnable {
     }
 
     public void run() {
-        logger.log(Level.INFO,"Solar panel will try to move to new position. New position: " + position);
+        logger.log(Level.INFO,"Solárny panel presun na novú pozíciu. Nová pozícia: hor=" + position.getHorizontalPositionInSeconds()+", ver="+position.getVerticalPositionInSeconds());
         solarPanel.move(position.getHorizontalPositionInSeconds(), position.getVerticalPositionInSeconds());
     }
 }
