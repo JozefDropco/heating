@@ -1,6 +1,8 @@
 package org.dropco.smarthome.web;
 
+import org.eclipse.jetty.server.AbstractConnector;
 import org.eclipse.jetty.server.Server;
+import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.handler.ResourceHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
@@ -8,15 +10,20 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 public class WebServer {
 
     private final Server server;
 
     public WebServer() {
+        Logger.getLogger(ContextHandler.class.getName()).setLevel(Level.WARNING);
+        Logger.getLogger(AbstractConnector.class.getName()).setLevel(Level.WARNING);
+        Logger.getLogger(Server.class.getName()).setLevel(Level.WARNING);
         ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
         context.setContextPath("/");
         server = new Server(8080);
-
         ResourceConfig application = new ResourceConfig()
                 .packages(true,"org.dropco.smarthome.web");
         ServletHolder servlet = new ServletHolder(new
