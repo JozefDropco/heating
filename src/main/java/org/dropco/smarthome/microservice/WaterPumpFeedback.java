@@ -18,6 +18,7 @@ public class WaterPumpFeedback {
 
     public static void start(GpioPinDigitalInput input) {
         running.set(input.getState() == PinState.HIGH);
+        input.setDebounce(1000);
         input.addListener((GpioPinListenerDigital) event -> {
                     handlePumpState(event.getState());
                 }
