@@ -38,7 +38,7 @@ public class WebServer {
         ResourceHandler resource_handler = new ResourceHandler();
         resource_handler.setDirectoriesListed(true);
         resource_handler.setWelcomeFiles(new String[]{ "index.html" });
-        String resourceBase = ClassLoader.getSystemClassLoader().getResource(".").getPath() + "resources";
+        String resourceBase = System.getProperty("html");
         Logger.getLogger(WebServer.class.getName()).log(Level.INFO,resourceBase);
         resource_handler.setResourceBase(resourceBase);
 
