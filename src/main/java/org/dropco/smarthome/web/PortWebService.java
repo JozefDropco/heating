@@ -54,7 +54,7 @@ public class PortWebService {
         mutualExclussion.forEach(exclussion-> Main.getOutput(exclussion).setState(false));
         //3. Now we can enable it
         Main.getOutput(refCd).setState(new Gson().fromJson(value,Boolean.class));
-        return Response.ok(mutualExclussion).build();
+        return Response.ok(new Gson().toJson(mutualExclussion)).build();
     }
 
 
