@@ -14,7 +14,6 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 
-import java.nio.file.FileSystems;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -39,7 +38,7 @@ public class WebServer {
         ResourceHandler resource_handler = new ResourceHandler();
         resource_handler.setDirectoriesListed(true);
         resource_handler.setWelcomeFiles(new String[]{ "index.html" });
-        String resourceBase = FileSystems.getDefault().getPath(".").toAbsolutePath().toString() + "/resources";
+        String resourceBase = ClassLoader.getSystemClassLoader().getResource(".").getPath() + "resources";
         Logger.getLogger(WebServer.class.getName()).log(Level.INFO,resourceBase);
         resource_handler.setResourceBase(resourceBase);
 
