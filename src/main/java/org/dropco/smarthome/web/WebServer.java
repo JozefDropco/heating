@@ -39,7 +39,9 @@ public class WebServer {
         ResourceHandler resource_handler = new ResourceHandler();
         resource_handler.setDirectoriesListed(true);
         resource_handler.setWelcomeFiles(new String[]{ "index.html" });
-        resource_handler.setResourceBase(FileSystems.getDefault().getPath(".").toAbsolutePath().toString()+"/resources");
+        String resourceBase = FileSystems.getDefault().getPath(".").toAbsolutePath().toString() + "/resources";
+        Logger.getLogger(WebServer.class.getName()).log(Level.INFO,resourceBase);
+        resource_handler.setResourceBase(resourceBase);
 
         HandlerList container = new HandlerList(new CORSFilter(),resource_handler,context);
         server.setHandler(container);
