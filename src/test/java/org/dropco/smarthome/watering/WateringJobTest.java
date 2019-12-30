@@ -3,6 +3,7 @@ package org.dropco.smarthome.watering;
 import com.google.common.collect.Sets;
 import com.pi4j.io.gpio.*;
 import com.pi4j.io.gpio.exception.InvalidPinException;
+import org.dropco.smarthome.dto.NamedPort;
 import org.dropco.smarthome.microservice.OutsideTemperature;
 import org.dropco.smarthome.microservice.RainSensor;
 import org.dropco.smarthome.microservice.WaterPumpFeedback;
@@ -67,7 +68,7 @@ public class WateringJobTest {
         record.setZoneRefCode("1");
         record.setTimeInSeconds(10);
         WateringThreadManager.stop();
-        WateringJob.setZones(()->Sets.newHashSet("1","2","3"));
+        WateringJob.setZones(()->Sets.newHashSet(new NamedPort("1","1"),new NamedPort("2","2"),new NamedPort("3","3")));
         RainSensor.start(input1);
         PROVIDER.setState(input1.getPin(), PinState.LOW);
         WaterPumpFeedback.start(input2);
@@ -93,8 +94,8 @@ public class WateringJobTest {
         record.setRetryMinute(10);
         record.setZoneRefCode("1");
         record.setTimeInSeconds(180);
-        WateringJob.setZones(()->Sets.newHashSet("1","2","3"));
-         RainSensor.start(input1);
+        WateringJob.setZones(()->Sets.newHashSet(new NamedPort("1","1"),new NamedPort("2","2"),new NamedPort("3","3")));
+        RainSensor.start(input1);
         PROVIDER.setState(input1.getPin(), PinState.LOW);
         WaterPumpFeedback.start(input2);
         PROVIDER.setState(input2.getPin(), PinState.HIGH);
@@ -118,7 +119,7 @@ public class WateringJobTest {
         record.setRetryMinute(10);
         record.setZoneRefCode("zone1");
         WateringJob job = new WateringJob(record);
-        WateringJob.setZones(() -> Sets.newHashSet("zone1", "zone2", "zone3"));
+        WateringJob.setZones(()->Sets.newHashSet(new NamedPort("zone1","1"),new NamedPort("zone2","2"),new NamedPort("zone3","3")));
         BiConsumer<String, Boolean> cmdExecutor = new CmdExecutor();
         BiConsumer<String, Boolean> commandExecutor = spy(cmdExecutor);
         WateringJob.setCommandExecutor(commandExecutor);
@@ -137,7 +138,7 @@ public class WateringJobTest {
         record.setRetryMinute(10);
         record.setZoneRefCode("zone1");
         WateringJob job = new WateringJob(record);
-        WateringJob.setZones(() -> Sets.newHashSet("zone1", "zone2", "zone3"));
+        WateringJob.setZones(()->Sets.newHashSet(new NamedPort("zone1","1"),new NamedPort("zone2","2"),new NamedPort("zone3","3")));
         BiConsumer<String, Boolean> cmdExecutor = new CmdExecutor();
         BiConsumer<String, Boolean> commandExecutor = spy(cmdExecutor);
         WateringJob.setCommandExecutor(commandExecutor);
@@ -160,7 +161,7 @@ public class WateringJobTest {
         PROVIDER.setState(input1.getPin(), PinState.LOW);
         WaterPumpFeedback.start(input2);
         PROVIDER.setState(input2.getPin(), PinState.HIGH);
-        WateringJob.setZones(() -> Sets.newHashSet("zone1", "zone2", "zone3"));
+        WateringJob.setZones(()->Sets.newHashSet(new NamedPort("zone1","1"),new NamedPort("zone2","2"),new NamedPort("zone3","3")));
         BiConsumer<String, Boolean> cmdExecutor = new CmdExecutor();
         BiConsumer<String, Boolean> commandExecutor = spy(cmdExecutor);
         WateringJob.setCommandExecutor(commandExecutor);

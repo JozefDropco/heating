@@ -1,29 +1,26 @@
 package org.dropco.smarthome.watering;
 
-import com.pi4j.io.gpio.*;
+import org.dropco.smarthome.Main;
+import org.dropco.smarthome.ServiceMode;
 import org.dropco.smarthome.database.SettingsDao;
+import org.dropco.smarthome.dto.NamedPort;
 import org.dropco.smarthome.watering.db.WateringDao;
 
-import java.util.Map;
+import java.util.Set;
+import java.util.function.Supplier;
 
 
 public class WateringMain {
 
-    private static final GpioController gpio = GpioFactory.getInstance();
-
-
-    public static void main(SettingsDao settingsDao, Map<String, GpioPinDigitalInput> inputMap, Map<String, GpioPinDigitalOutput> outputMap, String[] args) {
+    public static void main() {
         WateringThreadManager.thresholdTempValue = new SettingsDao().getDouble("TEMP_THRESHOLD");
         WateringJob.setCommandExecutor((key, value) -> {
-            String pinName = settingsDao.getString(key);
-            GpioPinDigitalOutput output = outputMap.get(pinName);
-            if (output == null) {
-                output = gpio.provisionDigitalOutputPin(RaspiPin.getPinByName(pinName), key, PinState.LOW);
-                outputMap.put(pinName, output);
-            }
-            output.setState(value);
+            Main.getOutput(key).setState(value);
         });
-        WateringJob.setZones(new WateringDao()::getActiveZones);
+        Supplier<Set<NamedPort>> getActiveZones = new WateringDao()::getActiveZones;
+        Set<NamedPort> activeZones = getActiveZones.get();
+        activeZones.forEach(ServiceMode::addOutput);
+        WateringJob.setZones(getActiveZones);
         new WateringScheduler(new WateringDao()).schedule();
     }
 

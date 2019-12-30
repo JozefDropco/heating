@@ -1,14 +1,16 @@
 package org.dropco.smarthome.solar;
 
 import com.pi4j.io.gpio.*;
+import org.dropco.smarthome.Main;
+import org.dropco.smarthome.ServiceMode;
 import org.dropco.smarthome.database.SettingsDao;
+import org.dropco.smarthome.dto.NamedPort;
 import org.dropco.smarthome.gpioextension.DelayedGpioPinListener;
 import org.dropco.smarthome.gpioextension.ExtendedGpioProvider;
 import org.dropco.smarthome.gpioextension.ExtendedPin;
 import org.dropco.smarthome.solar.move.SafetySolarPanel;
 import org.dropco.smarthome.solar.move.SolarPanelMover;
 
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
@@ -21,16 +23,18 @@ public class SolarMain {
     public static final String STRONG_WIND_PIN_REF_CD = "STRONG_WIND_PIN";
     private static ExtendedGpioProvider extendedGpioProvider;
 
-    public static void main(SettingsDao settingsDao, Map<String, GpioPinDigitalOutput> outputMap, String[] args) {
+    public static void main(SettingsDao settingsDao) {
+        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.NORTH_PIN_REF_CD,"Kolektory - Sever"));
+        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.SOUTH_PIN_REF_CD,"Kolektory - Juh"));
+        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.EAST_PIN_REF_CD,"Kolektory - Východ"));
+        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.WEST_PIN_REF_CD,"Kolektory - Západ"));
+        ServiceMode.getExclusions().put(SolarSystemRefCode.EAST_PIN_REF_CD,SolarSystemRefCode.WEST_PIN_REF_CD);
+        ServiceMode.getExclusions().put(SolarSystemRefCode.WEST_PIN_REF_CD,SolarSystemRefCode.EAST_PIN_REF_CD);
+        ServiceMode.getExclusions().put(SolarSystemRefCode.NORTH_PIN_REF_CD,SolarSystemRefCode.SOUTH_PIN_REF_CD);
+        ServiceMode.getExclusions().put(SolarSystemRefCode.SOUTH_PIN_REF_CD,SolarSystemRefCode.NORTH_PIN_REF_CD);
         SolarSystemDao solarSystemDao = new SolarSystemDao(settingsDao);
         SolarPanelMover.setCommandExecutor((key, value) -> {
-            String pinName = settingsDao.getString(key);
-            GpioPinDigitalOutput output = outputMap.get(pinName);
-            if (output == null) {
-                output = gpio.provisionDigitalOutputPin(getExtendedProvider(settingsDao,outputMap), ExtendedPin.getPinByName(pinName), key, PinState.LOW);
-                outputMap.put(pinName, output);
-            }
-            output.setState(value);
+            Main.getOutput(getExtendedProvider(),ExtendedPin.class,key).setState(value);
         });
         SolarPanelMover.setCurrentPositionSupplier(() -> solarSystemDao.getLastKnownPosition());
         SolarPanelMover.addListener(panel -> solarSystemDao.updateLastKnownPosition(panel));
@@ -47,11 +51,11 @@ public class SolarMain {
 
 
 
-    static ExtendedGpioProvider getExtendedProvider(SettingsDao settingsDao, Map<String, GpioPinDigitalOutput> outputMap) {
+    static ExtendedGpioProvider getExtendedProvider() {
         if (extendedGpioProvider == null) {
-            GpioPinDigitalOutput dataOutPin = getRaspiPin(settingsDao,outputMap,EXTEND_DATA_OUT_PIN);
-            GpioPinDigitalOutput clockPin = getRaspiPin(settingsDao,outputMap,EXTEND_CLOCK_PIN);
-            GpioPinDigitalOutput gatePin = getRaspiPin(settingsDao,outputMap,EXTEND_GATE_PIN);
+            GpioPinDigitalOutput dataOutPin = Main.getOutput(EXTEND_DATA_OUT_PIN);
+            GpioPinDigitalOutput clockPin = Main.getOutput(EXTEND_CLOCK_PIN);
+            GpioPinDigitalOutput gatePin = Main.getOutput(EXTEND_GATE_PIN);
             extendedGpioProvider = new ExtendedGpioProvider(gpio, dataOutPin, clockPin, gatePin);
         }
         //reload if needed
@@ -84,14 +88,4 @@ public class SolarMain {
         });
     }
 
-
-    private static GpioPinDigitalOutput getRaspiPin(SettingsDao settingsDao, Map<String, GpioPinDigitalOutput> outputMap, String pin) {
-        String pinName = settingsDao.getString(pin);
-        GpioPinDigitalOutput output = outputMap.get(pinName);
-        if (output == null) {
-            output = gpio.provisionDigitalOutputPin(RaspiPin.getPinByName(pinName), pin, PinState.LOW);
-            outputMap.put(pinName, output);
-        }
-        return output;
-    }
 }

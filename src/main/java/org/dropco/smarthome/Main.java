@@ -3,6 +3,7 @@ package org.dropco.smarthome;
 import com.google.common.collect.Sets;
 import com.pi4j.io.gpio.*;
 import org.dropco.smarthome.database.SettingsDao;
+import org.dropco.smarthome.dto.NamedPort;
 import org.dropco.smarthome.heating.HeatingDao;
 import org.dropco.smarthome.heating.HeatingRefCode;
 import org.dropco.smarthome.microservice.OutsideTemperature;
@@ -12,6 +13,7 @@ import org.dropco.smarthome.solar.SolarMain;
 import org.dropco.smarthome.watering.WateringMain;
 import org.dropco.smarthome.web.WebServer;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -34,15 +36,58 @@ public class Main {
         webServer.start();
         Set<String> inputs = Sets.newHashSet(args);
         if (!inputs.contains("--noWatering")) {
-            WaterPumpFeedback.start(gpio.provisionDigitalInputPin(RaspiPin.getPinByName(settingsDao.getString(WaterPumpFeedback.getMicroServicePinKey())), WaterPumpFeedback.getMicroServicePinKey()));
-            RainSensor.start(gpio.provisionDigitalInputPin(RaspiPin.getPinByName(settingsDao.getString(RainSensor.getMicroServicePinKey())), RainSensor.getMicroServicePinKey()));
+            ServiceMode.addInput(new NamedPort(WaterPumpFeedback.getMicroServicePinKey(),"Stav čerpadla"));
+            WaterPumpFeedback.start(getInput(WaterPumpFeedback.getMicroServicePinKey()));
+            ServiceMode.addInput(new NamedPort(WaterPumpFeedback.getMicroServicePinKey(),"Dažďový senzor"));
+            RainSensor.start(getInput(RainSensor.getMicroServicePinKey()));
             OutsideTemperature.start(new HeatingDao().getDeviceId(HeatingRefCode.EXTERNAL_TEMPERATURE_PLACE_REF_CD));
-            WateringMain.main(settingsDao, inputMap, outputMap, args);
+            WateringMain.main();
         }
         if (!inputs.contains("--noSolar")) {
-            SolarMain.main(settingsDao, outputMap, args);
+            SolarMain.main(settingsDao);
         }
         webServer.join();
+    }
+
+    public static GpioPinDigitalInput getInput(String key) {
+        String pinName = settingsDao.getString(key);
+        GpioPinDigitalInput input = inputMap.get(pinName);
+        if (input == null) {
+            input = gpio.provisionDigitalInputPin(RaspiPin.getPinByName(pinName), key);
+            inputMap.put(pinName, input);
+        }
+        return input;
+    }
+
+    public static GpioPinDigitalOutput getOutput(String key) {
+        return getOutput(GpioFactory.getDefaultProvider(),RaspiPin.class,key);
+    }
+
+    public static GpioPinDigitalOutput getOutput(GpioProvider extendedProvider, Class<? extends PinProvider> pinClass, String key) {
+        String pinName = settingsDao.getString(key);
+        GpioPinDigitalOutput output = outputMap.get(pinName);
+        if (output == null) {
+            Pin pin = null;
+            try {
+                pin = (Pin) pinClass.getMethod("getPinByName", String.class).invoke(null, pinName);
+            } catch (IllegalAccessException e) {
+                e.printStackTrace();
+            } catch (InvocationTargetException e) {
+                e.printStackTrace();
+            } catch (NoSuchMethodException e) {
+                e.printStackTrace();
+            }
+            output = gpio.provisionDigitalOutputPin(extendedProvider, pin, key, PinState.LOW);
+            outputMap.put(pinName, output);
+        }
+        return output;
+    }
+    public static Map<String, GpioPinDigitalOutput> getOutputMap() {
+        return outputMap;
+    }
+
+    public static Map<String, GpioPinDigitalInput> getInputMap() {
+        return inputMap;
     }
 
 }

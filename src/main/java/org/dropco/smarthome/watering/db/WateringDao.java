@@ -1,11 +1,14 @@
 package org.dropco.smarthome.watering.db;
 
 import com.google.common.collect.FluentIterable;
-import com.google.common.collect.Sets;
 import com.querydsl.core.Tuple;
+import com.querydsl.sql.SQLTemplates;
+import com.querydsl.sql.dml.SQLInsertClause;
+import com.querydsl.sql.dml.SQLUpdateClause;
 import com.querydsl.sql.mysql.MySQLQuery;
 import org.dropco.smarthome.database.DBConnection;
 import org.dropco.smarthome.database.querydsl.WateringZone;
+import org.dropco.smarthome.dto.NamedPort;
 
 import java.sql.Connection;
 import java.util.List;
@@ -28,13 +31,21 @@ public class WateringDao {
         return FluentIterable.from(lst).transform(tuple -> toRecord(tuple)).toList();
     }
 
-    public Set<String> getActiveZones() {
-        return Sets.newHashSet(new MySQLQuery<WateringZone>(getConnection()).
-                select(WATERING_ZONE.pinZoneRefCd).from(WATERING_ZONE).distinct().fetch());
+    public WateringRecord getRecord(Long id) {
+        return toRecord(new MySQLQuery<WateringZone>(getConnection()).select(WATERING_ZONE.all())
+                .from(WATERING_ZONE).where(WATERING_ZONE.id.eq(id)).
+                        fetchFirst());
+    }
+    public Set<NamedPort> getActiveZones() {
+        List<Tuple> tuples = new MySQLQuery<WateringZone>(getConnection()).
+                select(WATERING_ZONE.pinZoneRefCd, WATERING_ZONE.name).from(WATERING_ZONE).distinct().fetch();
+        return FluentIterable.from(tuples).transform(tuple-> new NamedPort(tuple.get(WATERING_ZONE.pinZoneRefCd),tuple.get(WATERING_ZONE.name))).toSet();
     }
     private WateringRecord toRecord(Tuple tuple) {
         WateringRecord record = new WateringRecord();
+        record.setId(tuple.get(WATERING_ZONE.id));
         record.setHour(tuple.get(WATERING_ZONE.hour));
+        record.setName(tuple.get(WATERING_ZONE.name));
         record.setRetryHour(tuple.get(WATERING_ZONE.retryHour));
         record.setMinute(tuple.get(WATERING_ZONE.minute));
         record.setRetryMinute(tuple.get(WATERING_ZONE.retryMinute));
@@ -50,5 +61,36 @@ public class WateringDao {
         return DBConnection.getConnection();
     }
 
+
+    public void updateRecord(WateringRecord record) {
+        SQLUpdateClause clause = new SQLUpdateClause(getConnection(), SQLTemplates.DEFAULT, WATERING_ZONE);
+        clause.set(WATERING_ZONE.reminder,record.getReminder());
+        clause.set(WATERING_ZONE.modulo,record.getModulo());
+        clause.set(WATERING_ZONE.retryMinute,record.getRetryMinute());
+        clause.set(WATERING_ZONE.retryHour,record.getRetryHour());
+        clause.set(WATERING_ZONE.active,record.isActive());
+        clause.set(WATERING_ZONE.hour,record.getHour());
+        clause.set(WATERING_ZONE.minute,record.getMinute());
+        clause.set(WATERING_ZONE.pinZoneRefCd,record.getZoneRefCode());
+        clause.set(WATERING_ZONE.name,record.getName());
+        clause.set(WATERING_ZONE.timeInSeconds,record.getTimeInSeconds());
+        clause.where(WATERING_ZONE.id.eq(record.getId()));
+        clause.execute();
+    }
+
+    public long insertRecord(WateringRecord record) {
+        SQLInsertClause clause = new SQLInsertClause(getConnection(), SQLTemplates.DEFAULT, WATERING_ZONE);
+        clause.set(WATERING_ZONE.reminder,record.getReminder());
+        clause.set(WATERING_ZONE.modulo,record.getModulo());
+        clause.set(WATERING_ZONE.retryMinute,record.getRetryMinute());
+        clause.set(WATERING_ZONE.retryHour,record.getRetryHour());
+        clause.set(WATERING_ZONE.active,record.isActive());
+        clause.set(WATERING_ZONE.hour,record.getHour());
+        clause.set(WATERING_ZONE.minute,record.getMinute());
+        clause.set(WATERING_ZONE.pinZoneRefCd,record.getZoneRefCode());
+        clause.set(WATERING_ZONE.name,record.getName());
+        clause.set(WATERING_ZONE.timeInSeconds,record.getTimeInSeconds());
+        return clause.executeWithKey(WATERING_ZONE.id);
+    }
 
 }

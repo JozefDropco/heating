@@ -7,20 +7,17 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
-@Path("/ws")
-public class WebService {
+@Path("/ws/serviceMode")
+public class ServiceModeWebService {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("/serviceMode")
-
     public Response getServiceModeState() {
         return Response.ok(getServiceModeJson(ServiceMode.isServiceMode())).build();
     }
 
     @POST
     @Produces(MediaType.APPLICATION_JSON)
-    @Path("/serviceMode")
     public Response setServiceMode(@QueryParam("state") boolean state) {
         if (state) {
             ServiceMode.startServiceMode();

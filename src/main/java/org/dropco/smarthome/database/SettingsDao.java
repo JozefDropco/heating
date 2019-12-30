@@ -1,12 +1,10 @@
 package org.dropco.smarthome.database;
 
 import com.querydsl.core.Tuple;
-import com.querydsl.core.types.Predicate;
 import com.querydsl.sql.mysql.MySQLQuery;
 import org.dropco.smarthome.database.querydsl.StringSetting;
 
 import java.sql.Connection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;

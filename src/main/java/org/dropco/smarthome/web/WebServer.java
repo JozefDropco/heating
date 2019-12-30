@@ -1,5 +1,9 @@
 package org.dropco.smarthome.web;
 
+import com.pi4j.io.gpio.GpioFactory;
+import com.pi4j.io.gpio.SimulatedGpioProvider;
+import org.dropco.smarthome.Main;
+import org.dropco.smarthome.gpioextension.ExtendedGpioProvider;
 import org.eclipse.jetty.server.AbstractConnector;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandler;
@@ -50,6 +54,8 @@ public class WebServer {
     }
 
     public static void main(String[] args) throws Exception {
-        new WebServer().start();
+        ExtendedGpioProvider.simulate();
+        GpioFactory.setDefaultProvider(new SimulatedGpioProvider());
+        Main.main(args);
     }
 }

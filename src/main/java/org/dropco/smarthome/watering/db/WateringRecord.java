@@ -11,6 +11,7 @@ public class WateringRecord {
     private Integer retryMinute;
     private boolean active;
     private String name;
+    private long id;
 
     public int getReminder() {
         return reminder;
@@ -108,4 +109,11 @@ public class WateringRecord {
         return sb.toString();
     }
 
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public long getId() {
+        return id;
+    }
 }

@@ -10,6 +10,7 @@ public class ExtendedGpioProvider extends GpioProviderBase {
     private GpioPinDigitalOutput dataOutPin;
     private GpioPinDigitalOutput clockPin;
     private GpioPinDigitalOutput gatePin;
+    private static Sender sender = new DefaultSender();
 
     private byte value = 0;
 
@@ -39,9 +40,11 @@ public class ExtendedGpioProvider extends GpioProviderBase {
     }
 
     void sent() {
-        gatePin.low();
-        Shift.shiftOut((byte) dataOutPin.getPin().getAddress(), (byte) clockPin.getPin().getAddress(), (byte) Shift.MSBFIRST, value);
-        gatePin.high();
+       sender.sent(this);
+    }
+
+    public static void simulate() {
+        sender = new SimulatedSender();
     }
 
     public void close(){
@@ -56,5 +59,24 @@ public class ExtendedGpioProvider extends GpioProviderBase {
     @Override
     public void setValue(Pin pin, double value) {
         super.setValue(pin, value);
+    }
+
+    private interface Sender{
+
+        void sent(ExtendedGpioProvider provider);
+    }
+    private static class DefaultSender implements Sender{
+        @Override
+        public void sent(ExtendedGpioProvider provider) {
+            provider.gatePin.low();
+            Shift.shiftOut((byte) provider.dataOutPin.getPin().getAddress(), (byte) provider.clockPin.getPin().getAddress(), (byte) Shift.MSBFIRST, provider.value);
+            provider.gatePin.high();
+        }
+    }
+    private static class SimulatedSender implements Sender{
+
+        @Override
+        public void sent(ExtendedGpioProvider provider) {
+        }
     }
 }

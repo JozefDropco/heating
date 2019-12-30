@@ -1,5 +1,6 @@
 package org.dropco.smarthome.watering;
 
+import org.dropco.smarthome.dto.NamedPort;
 import org.dropco.smarthome.microservice.RainSensor;
 import org.dropco.smarthome.microservice.WaterPumpFeedback;
 import org.dropco.smarthome.watering.db.WateringRecord;
@@ -19,7 +20,7 @@ public class WateringJob implements Runnable {
 
     private static final Level LEVEL = Level.INFO;
 
-    private static Supplier<Set<String>> zones;
+    private static Supplier<Set<NamedPort>> zones;
     private static BiConsumer<String, Boolean> commandExecutor;
     private Thread thisThread;
     private WateringRecord record;
@@ -91,8 +92,8 @@ public class WateringJob implements Runnable {
     }
 
     void closeOtherZones(String zoneRefCode) {
-        Set<String> allZones = zones.get();
-        from(allZones).filter(zone -> !zone.equals(zoneRefCode)).forEach(z -> commandExecutor.accept(z, false));
+        Set<NamedPort> allZones = zones.get();
+        from(allZones).filter(zone -> !zone.getRefCd().equals(zoneRefCode)).forEach(z -> commandExecutor.accept(z.getRefCd(), false));
         LOGGER.log(LEVEL, "Ostatné zóny uzatvorené.");
     }
 
@@ -101,7 +102,7 @@ public class WateringJob implements Runnable {
         WateringJob.commandExecutor = commandExecutor;
     }
 
-    public static void setZones(Supplier<Set<String>> zones) {
+    public static void setZones(Supplier<Set<NamedPort>> zones) {
         WateringJob.zones = zones;
     }
 

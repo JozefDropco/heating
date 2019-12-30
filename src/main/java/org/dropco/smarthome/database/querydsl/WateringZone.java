@@ -29,6 +29,7 @@ public class WateringZone extends com.querydsl.sql.RelationalPathBase<WateringZo
     public final NumberPath<Integer> minute = createNumber("minute",Integer.class);
     public final NumberPath<Integer> retryMinute = createNumber("retryMinute",Integer.class);
     public final StringPath pinZoneRefCd = createString("pinZoneRefCd");
+    public final StringPath name = createString("name");
     public final NumberPath<Long> timeInSeconds = createNumber("timeInSeconds",Long.class);
     public final BooleanPath active = createBoolean("active");
 
@@ -55,6 +56,7 @@ public class WateringZone extends com.querydsl.sql.RelationalPathBase<WateringZo
         addMetadata(timeInSeconds, ColumnMetadata.named("TIME_IN_SEC").withIndex(8).ofType(Types.NUMERIC).withSize(50).withDigits(0).notNull());
         addMetadata(pinZoneRefCd, ColumnMetadata.named("PIN_ZONE_REF_CD").withIndex(9).ofType(Types.VARCHAR).withSize(50).withDigits(0).notNull());
         addMetadata(active, ColumnMetadata.named("ENABLED").withIndex(10).ofType(Types.BOOLEAN).withSize(50).withDigits(0).notNull());
+        addMetadata(name, ColumnMetadata.named("NAME").withIndex(11).ofType(Types.VARCHAR).withSize(50).withDigits(0).notNull());
     }
 
 }
