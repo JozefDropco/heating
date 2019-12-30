@@ -23,7 +23,7 @@ public class ServiceModeWebService {
             ServiceMode.startServiceMode();
         } else
             ServiceMode.stopServiceMode();
-        return Response.ok(new org.dropco.smarthome.web.dto.ServiceMode(ServiceMode.isServiceMode())).build();
+        return Response.ok(getServiceModeJson(ServiceMode.isServiceMode())).build();
     }
 
     String getServiceModeJson(boolean state) {
