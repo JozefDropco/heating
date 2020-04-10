@@ -2,6 +2,7 @@ package org.dropco.smarthome.watering.db;
 
 import com.google.common.collect.FluentIterable;
 import com.querydsl.core.Tuple;
+import com.querydsl.sql.MySQLTemplates;
 import com.querydsl.sql.SQLTemplates;
 import com.querydsl.sql.dml.SQLInsertClause;
 import com.querydsl.sql.dml.SQLUpdateClause;
@@ -17,6 +18,8 @@ import java.util.Set;
 import static org.dropco.smarthome.database.querydsl.WateringZone.WATERING_ZONE;
 
 public class WateringDao {
+
+    protected static final SQLTemplates DEFAULT = new MySQLTemplates();
 
     public List<WateringRecord> getAllRecords() {
         List<Tuple> lst = new MySQLQuery<WateringZone>(getConnection()).select(WATERING_ZONE.all())
@@ -63,7 +66,7 @@ public class WateringDao {
 
 
     public void updateRecord(WateringRecord record) {
-        SQLUpdateClause clause = new SQLUpdateClause(getConnection(), SQLTemplates.DEFAULT, WATERING_ZONE);
+        SQLUpdateClause clause = new SQLUpdateClause(getConnection(), DEFAULT, WATERING_ZONE);
         clause.set(WATERING_ZONE.reminder,record.getReminder());
         clause.set(WATERING_ZONE.modulo,record.getModulo());
         clause.set(WATERING_ZONE.retryMinute,record.getRetryMinute());
@@ -79,7 +82,7 @@ public class WateringDao {
     }
 
     public long insertRecord(WateringRecord record) {
-        SQLInsertClause clause = new SQLInsertClause(getConnection(), SQLTemplates.DEFAULT, WATERING_ZONE);
+        SQLInsertClause clause = new SQLInsertClause(getConnection(), DEFAULT, WATERING_ZONE);
         clause.set(WATERING_ZONE.reminder,record.getReminder());
         clause.set(WATERING_ZONE.modulo,record.getModulo());
         clause.set(WATERING_ZONE.retryMinute,record.getRetryMinute());

@@ -9,11 +9,14 @@ import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.HandlerList;
 import org.eclipse.jetty.server.handler.ResourceHandler;
+import org.eclipse.jetty.servlet.FilterHolder;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.glassfish.jersey.server.ResourceConfig;
 import org.glassfish.jersey.servlet.ServletContainer;
 
+import javax.servlet.DispatcherType;
+import java.util.EnumSet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -42,7 +45,11 @@ public class WebServer {
         Logger.getLogger(WebServer.class.getName()).log(Level.INFO,resourceBase);
         resource_handler.setResourceBase(resourceBase);
 
-        HandlerList container = new HandlerList(new CORSFilter(),resource_handler,context);
+        HandlerList container = new HandlerList(resource_handler,context);
+        FilterHolder holder = new FilterHolder(new CrossOriginFilter());
+        holder.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, "GET,POST,PUT,OPTIONS");
+        holder.setInitParameter(CrossOriginFilter.ALLOW_CREDENTIALS_PARAM, "true");
+        context.addFilter(holder, "/*", EnumSet.of(DispatcherType.REQUEST));
         server.setHandler(container);
         server.dumpStdErr();
 

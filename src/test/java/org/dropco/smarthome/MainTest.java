@@ -17,7 +17,7 @@ public class MainTest {
         instance.set(null,new GpioControllerImpl(new GpioProvider() {
             @Override
             public String getName() {
-                return null;
+                return "RaspberryPi GPIO Provider";
             }
 
             @Override
