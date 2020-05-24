@@ -1,7 +1,7 @@
 package org.dropco.smarthome.watering;
 
 import org.dropco.smarthome.ServiceMode;
-import org.dropco.smarthome.microservice.OutsideTemperature;
+import org.dropco.smarthome.temp.TempService;
 import org.dropco.smarthome.watering.db.WateringRecord;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -67,7 +67,7 @@ public class WateringThreadManager {
     }
 
     private static boolean isWarmEnough() {
-        double temperature = OutsideTemperature.getTemperature();
+        double temperature = TempService.getOutsideTemperature();
         if (temperature==-999.0) return true;
         return thresholdTempValue< temperature;
     }

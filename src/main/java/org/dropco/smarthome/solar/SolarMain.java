@@ -10,6 +10,7 @@ import org.dropco.smarthome.gpioextension.ExtendedGpioProvider;
 import org.dropco.smarthome.gpioextension.ExtendedPin;
 import org.dropco.smarthome.solar.move.SafetySolarPanel;
 import org.dropco.smarthome.solar.move.SolarPanelMover;
+import org.dropco.smarthome.solar.move.SolarPanelThreadManager;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -32,6 +33,7 @@ public class SolarMain {
         ServiceMode.getExclusions().put(SolarSystemRefCode.WEST_PIN_REF_CD,SolarSystemRefCode.EAST_PIN_REF_CD);
         ServiceMode.getExclusions().put(SolarSystemRefCode.NORTH_PIN_REF_CD,SolarSystemRefCode.SOUTH_PIN_REF_CD);
         ServiceMode.getExclusions().put(SolarSystemRefCode.SOUTH_PIN_REF_CD,SolarSystemRefCode.NORTH_PIN_REF_CD);
+        ServiceMode.addSubsriber(state-> {if (state) SolarPanelThreadManager.stop();});
         SolarSystemDao solarSystemDao = new SolarSystemDao(settingsDao);
         SolarPanelMover.setCommandExecutor((key, value) -> {
             Main.getOutput(getExtendedProvider(),ExtendedPin.class,key).setState(value);

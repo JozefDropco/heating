@@ -9,4 +9,6 @@ public class SolarSystemRefCode {
     public static final String OVERHEAT_POSITION_REF_CD = "OVERHEAT_POSITION";
     public static final String STRONG_WIND_POSITION_REF_CD = "STRONG_WIND_POSITION";
     public static final String LAST_KNOWN_POSITION_REF_CD = "LAST_KNOWN_POSITION";
+    public static final String SOLAR_PANEL_TEMPERATURE_PLACE_REF_CD = "SOLAR_PANEL_TEMPERATURE_PLACE";
+    public static final String SOLAR_PANEL_TEMPERATURE_THRESHOLD_REF_CD = "SOLAR_PANEL_TEMPERATURE_THRESHOLD";
 }

@@ -4,7 +4,6 @@ import com.google.common.collect.Sets;
 import com.pi4j.io.gpio.*;
 import com.pi4j.io.gpio.exception.InvalidPinException;
 import org.dropco.smarthome.dto.NamedPort;
-import org.dropco.smarthome.microservice.OutsideTemperature;
 import org.dropco.smarthome.microservice.RainSensor;
 import org.dropco.smarthome.microservice.WaterPumpFeedback;
 import org.dropco.smarthome.watering.db.WateringRecord;
@@ -76,8 +75,6 @@ public class WateringJobTest {
         BiConsumer<String, Boolean> cmdExecutor = new CmdExecutor();
         BiConsumer<String, Boolean> commandExecutor = spy(cmdExecutor);
         WateringJob.setCommandExecutor(commandExecutor);
-        OutsideTemperature.start("");
-        OutsideTemperature.temperature.set(-5);
         WateringThreadManager.water(record);
 
         Thread.sleep(5*1000);
