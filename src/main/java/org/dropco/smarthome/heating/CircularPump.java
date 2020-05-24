@@ -54,15 +54,25 @@ public class CircularPump implements Runnable {
             if (!ServiceMode.isServiceMode()) {
                 double difference = tempT1.get() - tempT2.get();
                 if (difference >= getStartThreshold() && state.compareAndSet(false, true)) {
-                    commandExecutor.accept(getCircularPumpPort(), true);
+                    raiseChange(true);
                 }
                 if (difference <= getStopThreshold() && state.compareAndSet(true, false)) {
-                    commandExecutor.accept(getCircularPumpPort(), false);
+                    raiseChange(false);
                 }
             }
             update.acquireUninterruptibly();
         }
     }
+
+    void raiseChange(boolean b) {
+        commandExecutor.accept(getCircularPumpPort(), b);
+        subscribers.forEach(consumer -> consumer.accept(b));
+    }
+
+    void setState(boolean newState){
+        state.set(newState);
+    }
+
 
     String getDeviceId(String key) {
         return new HeatingDao().getDeviceId(key);

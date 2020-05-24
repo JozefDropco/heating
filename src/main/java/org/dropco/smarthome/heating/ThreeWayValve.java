@@ -55,17 +55,24 @@ public class ThreeWayValve implements Runnable {
             if (!ServiceMode.isServiceMode()) {
                 double difference = tempT31.get() - tempT2.get();
                 if (difference >= getStartThreshold() && state.compareAndSet(false, true)) {
-                    commandExecutor.accept(get3WayPort(), true);
-                    subscribers.forEach(consumer -> consumer.accept(true));
+                    raiseChange(true);
                 }
                 double stopThreshold = getStopThreshold();
                 if (difference <= stopThreshold && state.compareAndSet(true, false)) {
-                    commandExecutor.accept(get3WayPort(), false);
-                    subscribers.forEach(consumer -> consumer.accept(false));
+                    raiseChange(false);
                 }
             }
             update.acquireUninterruptibly();
         }
+    }
+
+    void raiseChange(boolean state) {
+        commandExecutor.accept(get3WayPort(), state);
+        subscribers.forEach(consumer -> consumer.accept(state));
+    }
+
+    void setState(boolean newState){
+        state.set(newState);
     }
 
     String getDeviceId(String t2TempKey) {
