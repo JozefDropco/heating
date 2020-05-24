@@ -4,6 +4,7 @@ import com.google.common.collect.Sets;
 import com.pi4j.io.gpio.*;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.dto.NamedPort;
+import org.dropco.smarthome.heating.HeatingWorker;
 import org.dropco.smarthome.microservice.RainSensor;
 import org.dropco.smarthome.microservice.WaterPumpFeedback;
 import org.dropco.smarthome.solar.SolarMain;
@@ -34,13 +35,18 @@ public class Main {
         webServer.start();
         Set<String> inputs = Sets.newHashSet(args);
         if (!inputs.contains("--noWatering")) {
-            ServiceMode.addInput(new NamedPort(WaterPumpFeedback.getMicroServicePinKey(),"Stav čerpadla"));
+            ServiceMode.addInput(new NamedPort(WaterPumpFeedback.getMicroServicePinKey(), "Stav čerpadla"));
             WaterPumpFeedback.start(getInput(WaterPumpFeedback.getMicroServicePinKey()));
-            ServiceMode.addInput(new NamedPort(WaterPumpFeedback.getMicroServicePinKey(),"Dažďový senzor"));
+            ServiceMode.addInput(new NamedPort(WaterPumpFeedback.getMicroServicePinKey(), "Dažďový senzor"));
             RainSensor.start(getInput(RainSensor.getMicroServicePinKey()));
             WateringMain.main();
         }
-        if (!inputs.contains("--noSolar")) {
+        if (inputs.contains("--heating")) {
+            HeatingWorker.start((key, value) -> {
+                Main.getOutput(key).setState(value);
+            });
+        }
+        if (inputs.contains("--solar")) {
             SolarMain.main(settingsDao);
         }
         webServer.join();
@@ -57,7 +63,7 @@ public class Main {
     }
 
     public static GpioPinDigitalOutput getOutput(String key) {
-        return getOutput(GpioFactory.getDefaultProvider(),RaspiPin.class,key);
+        return getOutput(GpioFactory.getDefaultProvider(), RaspiPin.class, key);
     }
 
     public static GpioPinDigitalOutput getOutput(GpioProvider extendedProvider, Class<? extends PinProvider> pinClass, String key) {
@@ -79,6 +85,7 @@ public class Main {
         }
         return output;
     }
+
     public static Map<String, GpioPinDigitalOutput> getOutputMap() {
         return outputMap;
     }

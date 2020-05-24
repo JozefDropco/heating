@@ -1,17 +1,10 @@
 package org.dropco.smarthome.heating;
 
 import java.util.function.BiConsumer;
-import java.util.logging.Logger;
 
-public class HeatingWorker implements Runnable {
+public class HeatingWorker  {
 
-    private static BiConsumer<String, Boolean> commandExecutor;
-
-    private static final Logger logger = Logger.getLogger(HeatingWorker.class.getName());
-
-
-    @Override
-    public void run() {
+    public static void start(BiConsumer<String, Boolean> commandExecutor) {
         new Thread(new CircularPump(commandExecutor)).start();
         new Thread(new ThreeWayValve(commandExecutor)).start();
         new Thread(new Boiler(commandExecutor)).start();
