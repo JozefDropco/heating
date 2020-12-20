@@ -25,19 +25,17 @@ public class SolarMain {
     private static ExtendedGpioProvider extendedGpioProvider;
 
     public static void main(SettingsDao settingsDao) {
-        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.NORTH_PIN_REF_CD,"Kolektory - Sever"));
-        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.SOUTH_PIN_REF_CD,"Kolektory - Juh"));
-        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.EAST_PIN_REF_CD,"Kolektory - Východ"));
-        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.WEST_PIN_REF_CD,"Kolektory - Západ"));
+        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.NORTH_PIN_REF_CD,"Kolektory - Sever"), key -> Main.getOutput(getExtendedProvider(),ExtendedPin.class,key));
+        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.SOUTH_PIN_REF_CD,"Kolektory - Juh"), key -> Main.getOutput(getExtendedProvider(),ExtendedPin.class,key));
+        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.EAST_PIN_REF_CD,"Kolektory - Východ"), key -> Main.getOutput(getExtendedProvider(),ExtendedPin.class,key));
+        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.WEST_PIN_REF_CD,"Kolektory - Západ"), key -> Main.getOutput(getExtendedProvider(),ExtendedPin.class,key));
         ServiceMode.getExclusions().put(SolarSystemRefCode.EAST_PIN_REF_CD,SolarSystemRefCode.WEST_PIN_REF_CD);
         ServiceMode.getExclusions().put(SolarSystemRefCode.WEST_PIN_REF_CD,SolarSystemRefCode.EAST_PIN_REF_CD);
         ServiceMode.getExclusions().put(SolarSystemRefCode.NORTH_PIN_REF_CD,SolarSystemRefCode.SOUTH_PIN_REF_CD);
         ServiceMode.getExclusions().put(SolarSystemRefCode.SOUTH_PIN_REF_CD,SolarSystemRefCode.NORTH_PIN_REF_CD);
         ServiceMode.addSubsriber(state-> {if (state) SolarPanelThreadManager.stop();});
         SolarSystemDao solarSystemDao = new SolarSystemDao(settingsDao);
-        SolarPanelMover.setCommandExecutor((key, value) -> {
-            Main.getOutput(getExtendedProvider(),ExtendedPin.class,key).setState(value);
-        });
+        SolarPanelMover.setCommandExecutor((key, value) -> Main.getOutput(getExtendedProvider(),ExtendedPin.class,key).setState(value));
         SolarPanelMover.setCurrentPositionSupplier(() -> solarSystemDao.getLastKnownPosition());
         SolarPanelMover.addListener(panel -> solarSystemDao.updateLastKnownPosition(panel));
         AtomicBoolean strongWind = new AtomicBoolean(false);

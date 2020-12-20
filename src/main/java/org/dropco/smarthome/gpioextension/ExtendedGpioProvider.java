@@ -3,9 +3,12 @@ package org.dropco.smarthome.gpioextension;
 import com.pi4j.io.gpio.*;
 import com.pi4j.wiringpi.Shift;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 public class ExtendedGpioProvider extends GpioProviderBase {
     public static final String NAME = "org.dropco.smarthome.gpioextension.ExtendedGpioProvider";
-
+    private static Logger logger = Logger.getLogger(ExtendedGpioProvider.class.getName());
     private GpioController gpio;
     private GpioPinDigitalOutput dataOutPin;
     private GpioPinDigitalOutput clockPin;
@@ -40,15 +43,15 @@ public class ExtendedGpioProvider extends GpioProviderBase {
     }
 
     void sent() {
-       sender.sent(this);
+        sender.sent(this);
     }
 
     public static void simulate() {
         sender = new SimulatedSender();
     }
 
-    public void close(){
-        gpio.unprovisionPin(dataOutPin,clockPin,gatePin);
+    public void close() {
+        gpio.unprovisionPin(dataOutPin, clockPin, gatePin);
     }
 
     @Override
@@ -61,19 +64,24 @@ public class ExtendedGpioProvider extends GpioProviderBase {
         super.setValue(pin, value);
     }
 
-    private interface Sender{
+    private interface Sender {
 
         void sent(ExtendedGpioProvider provider);
     }
-    private static class DefaultSender implements Sender{
+
+    private static class DefaultSender implements Sender {
         @Override
         public void sent(ExtendedGpioProvider provider) {
             provider.gatePin.low();
+            logger.log(Level.INFO,"AND nastaveny na 0");
             Shift.shiftOut((byte) provider.dataOutPin.getPin().getAddress(), (byte) provider.clockPin.getPin().getAddress(), (byte) Shift.MSBFIRST, provider.value);
+            logger.log(Level.INFO,"Hodnota "+provider.value+"poslana na posuvny register");
             provider.gatePin.high();
+            logger.log(Level.INFO,"AND nastaveny na 1");
         }
     }
-    private static class SimulatedSender implements Sender{
+
+    private static class SimulatedSender implements Sender {
 
         @Override
         public void sent(ExtendedGpioProvider provider) {

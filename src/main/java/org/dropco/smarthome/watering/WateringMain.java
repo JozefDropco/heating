@@ -20,7 +20,7 @@ public class WateringMain {
         });
         Supplier<Set<NamedPort>> getActiveZones = new WateringDao()::getActiveZones;
         Set<NamedPort> activeZones = getActiveZones.get();
-        activeZones.forEach(ServiceMode::addOutput);
+        activeZones.forEach(port->ServiceMode.addOutput(port,key-> Main.getOutput(key)));
         WateringJob.setZones(getActiveZones);
         ServiceMode.addSubsriber(state-> {if (state) WateringThreadManager.stop();});
         new WateringScheduler(new WateringDao()).schedule();
