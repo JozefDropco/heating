@@ -1,18 +1,28 @@
 package org.dropco.smarthome.solar.move;
 
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class SolarPanelThreadManager {
     private static final Logger LOGGER = Logger.getLogger(SolarPanelThreadManager.class.getName());
+    public static Supplier<Long> delaySupplier;
     private static final AtomicReference<Thread> lastThread = new AtomicReference<>();
 
     static void move(Integer horizontal, Integer vertical) {
         Thread thread = new Thread(new SolarPanelMover(horizontal, vertical));
         stop(thread);
-        LOGGER.log(Level.INFO,"Starting new thread with id="+thread.getId()+" which will start to move to horizontal="+horizontal+", vertical="+vertical);
-        thread.start();
+        LOGGER.log(Level.INFO, thread.getId() + " Natáčanie kolektorov na hor=" + horizontal + ", vert=" + vertical);
+        Long delay = delaySupplier.get();
+        LOGGER.log(Level.INFO, thread.getId() + "Pauza na zastavenie motora " + delay + " sek.");
+        try {
+            Thread.sleep(delay * 1000);
+            thread.start();
+
+        } catch (InterruptedException e) {
+            LOGGER.log(Level.FINE, "Interrupt occurred ", e);
+        }
     }
 
     public static void stop() {
@@ -20,16 +30,16 @@ public class SolarPanelThreadManager {
     }
 
     static void stop(Thread thread) {
-        Thread oldThread =lastThread.getAndSet(thread);
+        Thread oldThread = lastThread.getAndSet(thread);
         if (oldThread != null) {
-            LOGGER.log(Level.INFO,"Stopping the current thread - "+oldThread.getId());
+            LOGGER.log(Level.FINE, "Stopping the current thread - " + oldThread.getId());
             oldThread.interrupt();
 
             try {
-                LOGGER.log(Level.INFO,"Waiting for current thread - "+oldThread.getId()+" to stop.");
+                LOGGER.log(Level.FINE, "Waiting for current thread - " + oldThread.getId() + " to stop.");
                 oldThread.join();
             } catch (InterruptedException e) {
-                LOGGER.log(Level.SEVERE,"Waiting for current "+oldThread.getId()+" was interrupted.");
+                LOGGER.log(Level.FINE, "Waiting for current " + oldThread.getId() + " was interrupted.");
             }
         }
     }

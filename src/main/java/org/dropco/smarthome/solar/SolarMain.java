@@ -25,30 +25,32 @@ public class SolarMain {
     private static ExtendedGpioProvider extendedGpioProvider;
 
     public static void main(SettingsDao settingsDao) {
-        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.NORTH_PIN_REF_CD,"Kolektory - Sever"), key -> Main.getOutput(getExtendedProvider(),ExtendedPin.class,key));
-        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.SOUTH_PIN_REF_CD,"Kolektory - Juh"), key -> Main.getOutput(getExtendedProvider(),ExtendedPin.class,key));
-        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.EAST_PIN_REF_CD,"Kolektory - Východ"), key -> Main.getOutput(getExtendedProvider(),ExtendedPin.class,key));
-        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.WEST_PIN_REF_CD,"Kolektory - Západ"), key -> Main.getOutput(getExtendedProvider(),ExtendedPin.class,key));
-        ServiceMode.getExclusions().put(SolarSystemRefCode.EAST_PIN_REF_CD,SolarSystemRefCode.WEST_PIN_REF_CD);
-        ServiceMode.getExclusions().put(SolarSystemRefCode.WEST_PIN_REF_CD,SolarSystemRefCode.EAST_PIN_REF_CD);
-        ServiceMode.getExclusions().put(SolarSystemRefCode.NORTH_PIN_REF_CD,SolarSystemRefCode.SOUTH_PIN_REF_CD);
-        ServiceMode.getExclusions().put(SolarSystemRefCode.SOUTH_PIN_REF_CD,SolarSystemRefCode.NORTH_PIN_REF_CD);
-        ServiceMode.addSubsriber(state-> {if (state) SolarPanelThreadManager.stop();});
+        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.EAST_PIN_REF_CD, "Kolektory - Východ"), key -> Main.getOutput(getExtendedProvider(), ExtendedPin.class, key));
+        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.WEST_PIN_REF_CD, "Kolektory - Západ"), key -> Main.getOutput(getExtendedProvider(), ExtendedPin.class, key));
+        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.NORTH_PIN_REF_CD, "Kolektory - Sever"), key -> Main.getOutput(getExtendedProvider(), ExtendedPin.class, key));
+        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.SOUTH_PIN_REF_CD, "Kolektory - Juh"), key -> Main.getOutput(getExtendedProvider(), ExtendedPin.class, key));
+        ServiceMode.getExclusions().put(SolarSystemRefCode.EAST_PIN_REF_CD, SolarSystemRefCode.WEST_PIN_REF_CD);
+        ServiceMode.getExclusions().put(SolarSystemRefCode.WEST_PIN_REF_CD, SolarSystemRefCode.EAST_PIN_REF_CD);
+        ServiceMode.getExclusions().put(SolarSystemRefCode.NORTH_PIN_REF_CD, SolarSystemRefCode.SOUTH_PIN_REF_CD);
+        ServiceMode.getExclusions().put(SolarSystemRefCode.SOUTH_PIN_REF_CD, SolarSystemRefCode.NORTH_PIN_REF_CD);
+        ServiceMode.addSubsriber(state -> {
+            if (state) SolarPanelThreadManager.stop();
+        });
         SolarSystemDao solarSystemDao = new SolarSystemDao(settingsDao);
-        SolarPanelMover.setCommandExecutor((key, value) -> Main.getOutput(getExtendedProvider(),ExtendedPin.class,key).setState(value));
+        SolarPanelThreadManager.delaySupplier = (solarSystemDao::getDelay);
+        SolarPanelMover.setCommandExecutor((key, value) -> Main.getOutput(getExtendedProvider(), ExtendedPin.class, key).setState(value));
         SolarPanelMover.setCurrentPositionSupplier(() -> solarSystemDao.getLastKnownPosition());
         SolarPanelMover.addListener(panel -> solarSystemDao.updateLastKnownPosition(panel));
         AtomicBoolean strongWind = new AtomicBoolean(false);
         AtomicBoolean solarOverHeated = new AtomicBoolean(false);
         SafetySolarPanel safetySolarPanel = new SafetySolarPanel(solarOverHeated, strongWind, () -> solarSystemDao.getOverheatedPosition(), () -> solarSystemDao.getStrongWindPosition());
         overHeatedHandler(solarOverHeated, safetySolarPanel);
-        startStrongWindDetector(settingsDao,solarOverHeated, safetySolarPanel);
+        startStrongWindDetector(settingsDao, solarOverHeated, safetySolarPanel);
         SolarSystemScheduler solarSystemScheduler = new SolarSystemScheduler(solarSystemDao);
         solarSystemScheduler.moveToLastPositioon(safetySolarPanel);
         solarSystemScheduler.schedule(safetySolarPanel);
 
     }
-
 
 
     static ExtendedGpioProvider getExtendedProvider() {
@@ -73,7 +75,7 @@ public class SolarMain {
         };
     }
 
-    static void startStrongWindDetector(SettingsDao settingsDao,AtomicBoolean strongWind, SafetySolarPanel safetySolarPanel) {
+    static void startStrongWindDetector(SettingsDao settingsDao, AtomicBoolean strongWind, SafetySolarPanel safetySolarPanel) {
         GpioPinDigitalOutput strongWindPin = gpio.provisionDigitalOutputPin(RaspiPin.getPinByName(settingsDao.getString(STRONG_WIND_PIN_REF_CD)), STRONG_WIND_PIN_REF_CD, PinState.LOW);
         strongWindPin.addListener(new DelayedGpioPinListener(PinState.HIGH, 5000, strongWindPin) {
             @Override

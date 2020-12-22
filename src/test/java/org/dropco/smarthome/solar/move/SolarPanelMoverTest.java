@@ -17,6 +17,7 @@ public class SolarPanelMoverTest {
         SolarPanelMover.setCommandExecutor((cmdRefCd, value) -> {
             result.add(cmdRefCd + value);
         });
+        SolarPanelThreadManager.delaySupplier=()->1l;
         SolarPanelMover.setCurrentPositionSupplier(()->currentPosition);
         long beforeExecTime = System.currentTimeMillis();
         new SolarPanelMover(-5, 0).run();

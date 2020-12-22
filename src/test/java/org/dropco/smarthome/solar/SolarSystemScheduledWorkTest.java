@@ -2,6 +2,7 @@ package org.dropco.smarthome.solar;
 
 import org.dropco.smarthome.solar.move.SafetySolarPanel;
 import org.dropco.smarthome.solar.move.SolarPanelMover;
+import org.dropco.smarthome.solar.move.SolarPanelThreadManager;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -14,6 +15,8 @@ public class SolarSystemScheduledWorkTest {
 
     @Test
     public void run() throws InterruptedException {
+
+        SolarPanelThreadManager.delaySupplier=()->1l;
         AtomicBoolean strongWind = new AtomicBoolean(false);
         AtomicBoolean overheated = new AtomicBoolean(false);
         SolarPanelMover.setCurrentPositionSupplier(startPos()::getPanelPosition);
@@ -32,6 +35,8 @@ public class SolarSystemScheduledWorkTest {
 
     @Test
     public void runStrongWind() throws InterruptedException {
+
+        SolarPanelThreadManager.delaySupplier=()->1l;
         AtomicBoolean strongWind = new AtomicBoolean(false);
         AtomicBoolean overheated = new AtomicBoolean(false);
         final SolarPanelPosition[] currentPos = {new SolarPanelPosition(-30, -15)};
@@ -59,6 +64,8 @@ public class SolarSystemScheduledWorkTest {
 
     @Test
     public void runStrongWindBackToNormal() throws InterruptedException {
+
+        SolarPanelThreadManager.delaySupplier=()->1l;
         AtomicBoolean strongWind = new AtomicBoolean(false);
         AtomicBoolean overheated = new AtomicBoolean(false);
         final SolarPanelPosition[] currentPos = {new SolarPanelPosition(-30, -15)};

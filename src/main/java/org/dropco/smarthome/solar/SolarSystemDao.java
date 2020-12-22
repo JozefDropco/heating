@@ -24,6 +24,7 @@ import static org.dropco.smarthome.database.querydsl.SolarPanelSchedule.SOLAR_SC
 import static org.dropco.smarthome.database.querydsl.SolarPosition.SOLAR_POSITION;
 
 public class SolarSystemDao {
+    protected static final String SOLAR_PANEL_DELAY = "SOLAR_PANEL_DELAY";
     private SettingsDao settingsDao;
     private static final Template toDate = TemplateFactory.DEFAULT.create("STR_TO_DATE(CONCAT({0},'-',{1},'-',{2},' ',{3},':',{4},':',{5}), '%Y-%c-%e %k:%i:%s')");
 
@@ -103,5 +104,9 @@ public class SolarSystemDao {
                 .orderBy(dateTemplate.desc()).
                         fetchFirst();
         return toRecord(tuple);
+    }
+
+    public long getDelay() {
+        return settingsDao.getLong(SOLAR_PANEL_DELAY);
     }
 }

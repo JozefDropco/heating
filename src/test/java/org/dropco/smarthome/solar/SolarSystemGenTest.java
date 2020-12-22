@@ -4,10 +4,12 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.*;
 
+@Ignore
 public class SolarSystemGenTest {
     int index = 4;
     List<Clock> clocks = Lists.newArrayList();

@@ -6,6 +6,7 @@ import com.pi4j.io.gpio.GpioPinDigitalOutput;
 import com.pi4j.io.gpio.PinState;
 import org.dropco.smarthome.Main;
 import org.dropco.smarthome.ServiceMode;
+import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.dto.NamedPort;
 import org.dropco.smarthome.web.dto.Port;
 
@@ -49,7 +50,7 @@ public class PortWebService {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/output/{refCd}")
-    public Response setValue(@PathParam("refCd") String refCd, String value) {
+    public Response setValue(@PathParam("refCd") String refCd, String value) throws InterruptedException {
         //1.check if its output
         boolean match = FluentIterable.from(ServiceMode.getOutputs()).anyMatch(port -> port.getRefCd().equals(refCd));
         if (!match) return Response.status(Response.Status.BAD_REQUEST).build();
@@ -59,6 +60,9 @@ public class PortWebService {
             ServiceMode.getPort(exclussion).setState(false);
             logger.log(Level.INFO, "Port " + exclussion + " vypnuty");
         });
+        if (!mutualExclussion.isEmpty()){
+            Thread.sleep(1000);
+        }
         //3. Now we can enable it
         GpioPinDigitalOutput port = ServiceMode.getPort(refCd);
         port.setState(new Gson().fromJson(value, Boolean.class));
