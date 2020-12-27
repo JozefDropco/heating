@@ -3,6 +3,7 @@ package org.dropco.smarthome;
 import com.pi4j.io.gpio.*;
 import com.pi4j.io.gpio.event.PinListener;
 import com.pi4j.io.gpio.impl.GpioControllerImpl;
+import org.dropco.smarthome.gpioextension.ExtendedGpioProvider;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -125,10 +126,124 @@ public class MainTest {
                 return false;
             }
         }));
+        instance = GpioFactory.class.getDeclaredField("provider");
+        instance.setAccessible(true);
+        instance.set(null,new GpioProvider(){
+            @Override
+            public String getName() {
+                return "RaspberryPi GPIO Provider";
+            }
+
+            @Override
+            public boolean hasPin(Pin pin) {
+                return false;
+            }
+
+            @Override
+            public void export(Pin pin, PinMode pinMode, PinState pinState) {
+
+            }
+
+            @Override
+            public void export(Pin pin, PinMode pinMode) {
+
+            }
+
+            @Override
+            public boolean isExported(Pin pin) {
+                return false;
+            }
+
+            @Override
+            public void unexport(Pin pin) {
+
+            }
+
+            @Override
+            public void setMode(Pin pin, PinMode pinMode) {
+
+            }
+
+            @Override
+            public PinMode getMode(Pin pin) {
+                return null;
+            }
+
+            @Override
+            public void setPullResistance(Pin pin, PinPullResistance pinPullResistance) {
+
+            }
+
+            @Override
+            public PinPullResistance getPullResistance(Pin pin) {
+                return null;
+            }
+
+            @Override
+            public void setState(Pin pin, PinState pinState) {
+
+            }
+
+            @Override
+            public PinState getState(Pin pin) {
+                return PinState.LOW;
+            }
+
+            @Override
+            public void setValue(Pin pin, double v) {
+
+            }
+
+            @Override
+            public double getValue(Pin pin) {
+                return 0;
+            }
+
+            @Override
+            public void setPwm(Pin pin, int i) {
+
+            }
+
+            @Override
+            public void setPwmRange(Pin pin, int i) {
+
+            }
+
+            @Override
+            public int getPwm(Pin pin) {
+                return 0;
+            }
+
+            @Override
+            public void addListener(Pin pin, PinListener pinListener) {
+
+            }
+
+            @Override
+            public void removeListener(Pin pin, PinListener pinListener) {
+
+            }
+
+            @Override
+            public void removeAllListeners() {
+
+            }
+
+            @Override
+            public void shutdown() {
+
+            }
+
+            @Override
+            public boolean isShutdown() {
+                return false;
+            }
+        });
+        ExtendedGpioProvider.simulate();
     }
 
     @Test
     public void run() throws Exception {
-        Main.main(new String[0]);
+        Main.main(new String[]{"--solar"});
     }
 }

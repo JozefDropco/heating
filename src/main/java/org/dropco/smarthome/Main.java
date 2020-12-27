@@ -35,9 +35,9 @@ public class Main {
         webServer.start();
         Set<String> inputs = Sets.newHashSet(args);
         if (!inputs.contains("--noWatering")) {
-            ServiceMode.addInput(new NamedPort(WaterPumpFeedback.getMicroServicePinKey(), "Stav čerpadla"));
+            ServiceMode.addInput(new NamedPort(WaterPumpFeedback.getMicroServicePinKey(), "Stav čerpadla"), ()->Main.getInput(WaterPumpFeedback.getMicroServicePinKey()).isHigh());
             WaterPumpFeedback.start(getInput(WaterPumpFeedback.getMicroServicePinKey()));
-            ServiceMode.addInput(new NamedPort(WaterPumpFeedback.getMicroServicePinKey(), "Dažďový senzor"));
+            ServiceMode.addInput(new NamedPort(RainSensor.getMicroServicePinKey(), "Dažďový senzor"), ()->Main.getInput(RainSensor.getMicroServicePinKey()).isHigh());
             RainSensor.start(getInput(RainSensor.getMicroServicePinKey()));
             WateringMain.main();
         }

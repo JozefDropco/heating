@@ -6,6 +6,7 @@ public class SolarPanelStepRecord {
     private int hour;
     private int minute;
     private SolarPanelPosition panelPosition;
+    private boolean ignoreDaylight;
 
     public int getMonth() {
         return month;
@@ -45,6 +46,19 @@ public class SolarPanelStepRecord {
 
     public void setPanelPosition(SolarPanelPosition panelPosition) {
         this.panelPosition = panelPosition;
+    }
+
+    /***
+     * Gets the ignoreDaylight
+     * @return
+     */
+    public boolean getIgnoreDaylight() {
+        return ignoreDaylight;
+    }
+
+    public SolarPanelStepRecord setIgnoreDaylight(boolean ignoreDaylight) {
+        this.ignoreDaylight = ignoreDaylight;
+        return this;
     }
 
     @Override

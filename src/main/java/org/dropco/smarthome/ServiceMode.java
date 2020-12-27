@@ -11,6 +11,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class ServiceMode {
     private static final AtomicBoolean serviceMode =new AtomicBoolean(false);
@@ -18,6 +19,7 @@ public class ServiceMode {
     private static final Set<NamedPort> inputs = new LinkedHashSet<>();
     private static final Map<String,NamedPort> namedPortMap = new HashMap<>();
     private static final Map<String, Function<String, GpioPinDigitalOutput>> outputGetterMap = new HashMap<>();
+    private static final Map<String, Supplier<Boolean>> inputStateGetterMap = new HashMap<>();
     private static final Multimap<String,String> exclusions = Multimaps.newListMultimap(Maps.newHashMap(), ArrayList::new);
     private static final List<Consumer<Boolean>> subscribers = Lists.newArrayList();
     public static void startServiceMode(){
@@ -45,9 +47,10 @@ public class ServiceMode {
         outputGetterMap.put(port.getRefCd(),portGetter);
     }
 
-    public static  void addInput(NamedPort port) {
+    public static  void addInput(NamedPort port, Supplier<Boolean> stateGetter) {
         inputs.add(port);
         namedPortMap.put(port.getRefCd(),port);
+        inputStateGetterMap.put(port.getRefCd(),stateGetter);
     }
 
     public static Set<NamedPort> getInputs() {
@@ -73,4 +76,12 @@ public class ServiceMode {
     public static GpioPinDigitalOutput getPort(String refCd) {
         return outputGetterMap.get(refCd).apply(refCd);
     }
+    /***
+     * Gets the digitalInput
+     * @return
+     */
+    public static Boolean getInputState(String refCd) {
+        return inputStateGetterMap.getOrDefault(refCd,()->false).get();
+    }
+
 }

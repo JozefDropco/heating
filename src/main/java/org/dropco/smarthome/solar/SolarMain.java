@@ -22,13 +22,19 @@ public class SolarMain {
     public static final String EXTEND_CLOCK_PIN = "EXTEND_CLOCK_PIN";
     public static final String EXTEND_GATE_PIN = "EXTEND_GATE_PIN";
     public static final String STRONG_WIND_PIN_REF_CD = "STRONG_WIND_PIN";
+    public static final String DAY_LIGHT_PIN_REF_CD = "DAY_LIGHT_PIN";
+    protected static final String LIGHT_THRESHOLD = "LIGHT_THRESHOLD";
+
     private static ExtendedGpioProvider extendedGpioProvider;
 
     public static void main(SettingsDao settingsDao) {
+        AtomicBoolean strongWind = new AtomicBoolean(false);
         ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.EAST_PIN_REF_CD, "Kolektory - Východ"), key -> Main.getOutput(getExtendedProvider(), ExtendedPin.class, key));
         ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.WEST_PIN_REF_CD, "Kolektory - Západ"), key -> Main.getOutput(getExtendedProvider(), ExtendedPin.class, key));
         ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.NORTH_PIN_REF_CD, "Kolektory - Sever"), key -> Main.getOutput(getExtendedProvider(), ExtendedPin.class, key));
         ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.SOUTH_PIN_REF_CD, "Kolektory - Juh"), key -> Main.getOutput(getExtendedProvider(), ExtendedPin.class, key));
+        ServiceMode.addInput(new NamedPort(STRONG_WIND_PIN_REF_CD, "Silný vietor"), ()->strongWind.get());
+        ServiceMode.addInput(new NamedPort(DAY_LIGHT_PIN_REF_CD, "Jas"), ()->DayLight.enoughLight());
         ServiceMode.getExclusions().put(SolarSystemRefCode.EAST_PIN_REF_CD, SolarSystemRefCode.WEST_PIN_REF_CD);
         ServiceMode.getExclusions().put(SolarSystemRefCode.WEST_PIN_REF_CD, SolarSystemRefCode.EAST_PIN_REF_CD);
         ServiceMode.getExclusions().put(SolarSystemRefCode.NORTH_PIN_REF_CD, SolarSystemRefCode.SOUTH_PIN_REF_CD);
@@ -41,14 +47,14 @@ public class SolarMain {
         SolarPanelMover.setCommandExecutor((key, value) -> Main.getOutput(getExtendedProvider(), ExtendedPin.class, key).setState(value));
         SolarPanelMover.setCurrentPositionSupplier(() -> solarSystemDao.getLastKnownPosition());
         SolarPanelMover.addListener(panel -> solarSystemDao.updateLastKnownPosition(panel));
-        AtomicBoolean strongWind = new AtomicBoolean(false);
         AtomicBoolean solarOverHeated = new AtomicBoolean(false);
         SafetySolarPanel safetySolarPanel = new SafetySolarPanel(solarOverHeated, strongWind, () -> solarSystemDao.getOverheatedPosition(), () -> solarSystemDao.getStrongWindPosition());
         overHeatedHandler(solarOverHeated, safetySolarPanel);
         startStrongWindDetector(settingsDao, solarOverHeated, safetySolarPanel);
         SolarSystemScheduler solarSystemScheduler = new SolarSystemScheduler(solarSystemDao);
-        solarSystemScheduler.moveToLastPositioon(safetySolarPanel);
+        solarSystemScheduler.moveToLastPosition(safetySolarPanel);
         solarSystemScheduler.schedule(safetySolarPanel);
+        DayLight.connect(Main.getInput(DAY_LIGHT_PIN_REF_CD),()-> (int)settingsDao.getLong(LIGHT_THRESHOLD));
 
     }
 

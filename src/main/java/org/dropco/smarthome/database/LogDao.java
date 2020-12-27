@@ -1,15 +1,20 @@
 package org.dropco.smarthome.database;
 
+import com.querydsl.core.Tuple;
 import com.querydsl.sql.SQLTemplates;
 import com.querydsl.sql.dml.SQLInsertClause;
+import com.querydsl.sql.mysql.MySQLQuery;
+import org.dropco.smarthome.database.querydsl.StringSetting;
 import org.dropco.smarthome.database.querydsl.TemperatureLog;
 
 import java.util.Date;
+import java.util.List;
 
 import static org.dropco.smarthome.database.DBConnection.getConnection;
+import static org.dropco.smarthome.database.querydsl.LongSetting.LONG;
 
 public class LogDao {
-    TemperatureLog _log = new TemperatureLog("log");
+   public static TemperatureLog _log = new TemperatureLog("log");
 
     public void logTemperature(String deviceId, String placeRefCd, Date date, double temperature) {
         new SQLInsertClause(getConnection(), SQLTemplates.DEFAULT, _log)
@@ -19,4 +24,11 @@ public class LogDao {
                 .set(_log.value, temperature)
                 .execute();
     }
+
+    public List<Tuple> retrieveTemperaturesWithPlaces() {
+       return new MySQLQuery<StringSetting>(getConnection()).select(_log.all()).from(_log).where(_log.placeRefCd.isNotNull()).orderBy(_log.placeRefCd.asc(),_log.devideId.asc(),_log.timestamp.asc()).fetch();
+
+
+    }
+
 }

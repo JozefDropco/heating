@@ -1,5 +1,6 @@
 package org.dropco.smarthome.database.querydsl;
 
+import com.querydsl.core.types.dsl.BooleanPath;
 import com.querydsl.core.types.dsl.NumberPath;
 import com.querydsl.sql.ColumnMetadata;
 
@@ -25,6 +26,7 @@ public class SolarPanelSchedule extends com.querydsl.sql.RelationalPathBase<Sola
     public final NumberPath<Integer> minute = createNumber("minute",Integer.class);
     public final NumberPath<Integer> day = createNumber("day",Integer.class);
     public final NumberPath<Long> position = createNumber("position",Long.class);
+    public final BooleanPath ignoreDayLight = createBoolean("ignoreDayLight");
 
     public final com.querydsl.sql.PrimaryKey<SolarPanelSchedule> posPk = createPrimaryKey(id);
 
@@ -45,6 +47,7 @@ public class SolarPanelSchedule extends com.querydsl.sql.RelationalPathBase<Sola
         addMetadata(minute, ColumnMetadata.named("MINUTE").withIndex(4).ofType(Types.NUMERIC).withSize(50).withDigits(0).notNull());
         addMetadata(day, ColumnMetadata.named("DAY").withIndex(5).ofType(Types.NUMERIC).withSize(50).withDigits(0).notNull());
         addMetadata(position, ColumnMetadata.named("POSITION").withIndex(6).ofType(Types.NUMERIC).withSize(50).withDigits(0).notNull());
+        addMetadata(ignoreDayLight, ColumnMetadata.named("IGNORE_DAY_LIGHT").withIndex(7).ofType(Types.BOOLEAN).notNull());
     }
 
 }

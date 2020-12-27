@@ -19,10 +19,10 @@ public class SolarSystemScheduler {
         this.solarSystemDao = solarSystemDao;
     }
 
-    public void moveToLastPositioon(SafetySolarPanel safetySolarPanel){
+    public void moveToLastPosition(SafetySolarPanel safetySolarPanel){
         SolarPanelStepRecord solarPanelStepRecord = solarSystemDao.getRecentRecord(Calendar.getInstance());
         logger.log(Level.INFO, "Making sure solar panel is in last position after restart "+solarPanelStepRecord);
-        new Thread(new SolarSystemScheduledWork(safetySolarPanel,solarPanelStepRecord.getPanelPosition())).start();
+        new Thread(new SolarSystemScheduledWork(safetySolarPanel, solarPanelStepRecord.getIgnoreDaylight(), solarPanelStepRecord.getPanelPosition())).start();
     }
     public void schedule(SafetySolarPanel safetySolarPanel) {
         ScheduledExecutorService executorService = GpioFactory.getExecutorServiceFactory().getScheduledExecutorService();
@@ -30,8 +30,8 @@ public class SolarSystemScheduler {
         List<SolarPanelStepRecord> todayRecords = solarSystemDao.getTodayRecords(calendar);
         for (SolarPanelStepRecord record : todayRecords) {
             long delay = millisRemaining(Calendar.getInstance(), record.getMonth(), record.getDay(), record.getHour(), record.getMinute());
-            logger.log(Level.INFO, "Scheduling "+record + " with delay of "+ delay);
-            executorService.schedule(new SolarSystemScheduledWork(safetySolarPanel, record.getPanelPosition()), delay, TimeUnit.MILLISECONDS);
+            logger.log(Level.FINE, "Scheduling "+record + " with delay of "+ delay);
+            executorService.schedule(new SolarSystemScheduledWork(safetySolarPanel,record.getIgnoreDaylight(), record.getPanelPosition()), delay, TimeUnit.MILLISECONDS);
         }
         calendar.set(Calendar.HOUR_OF_DAY, 0);
         calendar.set(Calendar.MINUTE, 0);
@@ -39,8 +39,11 @@ public class SolarSystemScheduler {
         calendar.set(Calendar.MILLISECOND, 0);
         calendar.add(Calendar.DAY_OF_YEAR, 1);
         long delay = millisRemaining(Calendar.getInstance(), calendar.get(Calendar.MONTH)+1, calendar.get(Calendar.DAY_OF_MONTH), calendar.get(Calendar.HOUR_OF_DAY), calendar.get(Calendar.MINUTE));
-        logger.log(Level.INFO, "Scheduling for next day is delayed for "+ delay);
-        executorService.schedule(() -> schedule(safetySolarPanel), delay, TimeUnit.MILLISECONDS);
+        logger.log(Level.FINE, "Scheduling for next day is delayed for "+ delay);
+        executorService.schedule(() -> {
+            DayLight.clear();
+            schedule(safetySolarPanel);
+        }, delay, TimeUnit.MILLISECONDS);
 
     }
 

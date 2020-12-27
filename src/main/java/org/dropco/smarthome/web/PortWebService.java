@@ -3,10 +3,7 @@ package org.dropco.smarthome.web;
 import com.google.common.collect.FluentIterable;
 import com.google.gson.Gson;
 import com.pi4j.io.gpio.GpioPinDigitalOutput;
-import com.pi4j.io.gpio.PinState;
-import org.dropco.smarthome.Main;
 import org.dropco.smarthome.ServiceMode;
-import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.dto.NamedPort;
 import org.dropco.smarthome.web.dto.Port;
 
@@ -28,9 +25,7 @@ public class PortWebService {
     public Response inputs() {
         Set<NamedPort> inputs = ServiceMode.getInputs();
         return Response.ok(new Gson().toJson(FluentIterable.from(inputs).transform(port -> {
-            PinState state = Main.getInput(port.getRefCd()).getState();
-            boolean isHigh = false;
-            if (state != null) isHigh = state.isHigh();
+            boolean isHigh = ServiceMode.getInputState(port.getRefCd());
             return new Port(port.getRefCd(), port.getName(), Boolean.toString(isHigh));
         }).toList())).build();
     }

@@ -62,7 +62,7 @@ public class SolarSystemDao {
 
 
     public List<SolarPanelStepRecord> getTodayRecords(Calendar cal) {
-        Expression<?>[] list = new Expression[]{SOLAR_POSITION.horizontalPosition, SOLAR_POSITION.verticalPosition, SOLAR_SCHEDULE.hour, SOLAR_SCHEDULE.minute, SOLAR_SCHEDULE.month, SOLAR_SCHEDULE.day};
+        Expression<?>[] list = new Expression[]{SOLAR_POSITION.horizontalPosition, SOLAR_POSITION.verticalPosition, SOLAR_SCHEDULE.hour, SOLAR_SCHEDULE.minute, SOLAR_SCHEDULE.month, SOLAR_SCHEDULE.day,SOLAR_SCHEDULE.ignoreDayLight};
         DateTemplate<Date> dateTemplate = Expressions.dateTemplate(Date.class, toDate, cal.get(Calendar.YEAR), SOLAR_SCHEDULE.month, SOLAR_SCHEDULE.day, SOLAR_SCHEDULE.hour, SOLAR_SCHEDULE.minute, 0);
         Date currentTime = cal.getTime();
         Calendar calendar = Calendar.getInstance();
@@ -85,6 +85,7 @@ public class SolarSystemDao {
         record.setMonth(tuple.get(SOLAR_SCHEDULE.month));
         record.setMinute(tuple.get(SOLAR_SCHEDULE.minute));
         record.setDay(tuple.get(SOLAR_SCHEDULE.day));
+        record.setIgnoreDaylight(tuple.get(SOLAR_SCHEDULE.ignoreDayLight));
         SolarPanelPosition position = new SolarPanelPosition();
         position.setHorizontalPositionInSeconds(tuple.get(SOLAR_POSITION.horizontalPosition));
         position.setVerticalPositionInSeconds(tuple.get(SOLAR_POSITION.verticalPosition));
@@ -97,7 +98,7 @@ public class SolarSystemDao {
     }
 
     public SolarPanelStepRecord getRecentRecord(Calendar instance) {
-        Expression<?>[] list = new Expression[]{SOLAR_POSITION.horizontalPosition, SOLAR_POSITION.verticalPosition, SOLAR_SCHEDULE.hour, SOLAR_SCHEDULE.minute, SOLAR_SCHEDULE.month, SOLAR_SCHEDULE.day};
+        Expression<?>[] list = new Expression[]{SOLAR_POSITION.horizontalPosition, SOLAR_POSITION.verticalPosition, SOLAR_SCHEDULE.hour, SOLAR_SCHEDULE.minute, SOLAR_SCHEDULE.month, SOLAR_SCHEDULE.day,SOLAR_SCHEDULE.ignoreDayLight};
         DateTemplate<Date> dateTemplate = Expressions.dateTemplate(Date.class, toDate, instance.get(Calendar.YEAR), SOLAR_SCHEDULE.month, SOLAR_SCHEDULE.day, SOLAR_SCHEDULE.hour, SOLAR_SCHEDULE.minute, 0);
         BooleanExpression where = dateTemplate.loe(instance.getTime());
         Tuple tuple = new MySQLQuery<SolarPosition>(getConnection()).select(list).from(SOLAR_SCHEDULE).join(SOLAR_POSITION).on(SOLAR_SCHEDULE.position.eq(SOLAR_POSITION.id)).where(where)
