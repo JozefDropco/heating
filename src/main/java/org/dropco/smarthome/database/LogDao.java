@@ -25,8 +25,13 @@ public class LogDao {
                 .execute();
     }
 
-    public List<Tuple> retrieveTemperaturesWithPlaces() {
-       return new MySQLQuery<StringSetting>(getConnection()).select(_log.all()).from(_log).where(_log.placeRefCd.isNotNull()).orderBy(_log.placeRefCd.asc(),_log.devideId.asc(),_log.timestamp.asc()).fetch();
+    public List<Tuple> retrieveTemperaturesWithPlaces(Date from, Date to) {
+       return new MySQLQuery<StringSetting>(getConnection()).select(_log.all()).from(_log).
+               where(_log.placeRefCd.isNotNull()
+                       .and(_log.timestamp.goe(from))
+               .and(_log.timestamp.loe(to))
+               )
+               .orderBy(_log.placeRefCd.asc(),_log.devideId.asc(),_log.timestamp.asc()).fetch();
 
 
     }

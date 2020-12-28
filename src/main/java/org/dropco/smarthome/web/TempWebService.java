@@ -17,6 +17,8 @@ import org.dropco.smarthome.web.dto.Port;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -27,8 +29,12 @@ public class TempWebService {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response namedPlaces() {
-        List<Tuple> temperatures = new LogDao().retrieveTemperaturesWithPlaces();
+    public Response temperaturesPerPlace(@QueryParam("from") String fromDate, @QueryParam("to") String toDate) throws ParseException {
+        //2020-12-21
+        SimpleDateFormat format = new SimpleDateFormat("yyy-MM-dd");
+        Date from =format.parse(fromDate);
+        Date to = format.parse(toDate);
+        List<Tuple> temperatures = new LogDao().retrieveTemperaturesWithPlaces(from,to);
         Map<String , Series> seriesMap = Maps.newHashMap();
         for (Tuple tuple: temperatures){
             Series currSeries = seriesMap.computeIfAbsent(tuple.get(LogDao._log.placeRefCd), key -> {
