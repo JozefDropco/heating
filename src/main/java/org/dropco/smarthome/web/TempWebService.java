@@ -68,6 +68,58 @@ public class TempWebService {
         return Response.ok(new GsonBuilder().setDateFormat("MM-dd-yyyy HH:mm:ss z").create().toJson(result)).build();
     }
 
+    @GET
+    @Path("/freeDeviceIds")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response freeDeviceIds() {
+        List<String> unassignedDeviceIds = new LogDao().listUnassignedDeviceIds();
+        return Response.ok(new Gson().toJson(unassignedDeviceIds)).build();
+    }
+
+    @POST
+    @Path("/measurePlace")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response saveMeasurePlace(String payload) {
+        MeasurePlace measurePlace = new Gson().fromJson(payload,MeasurePlace.class);
+        String refCd = getRefCd(measurePlace.name);
+        new HeatingDao().saveMeasurePlace(measurePlace.name, refCd,measurePlace.deviceId);
+        new LogDao().updateLogs(measurePlace.deviceId,refCd);
+        return Response.ok().build();
+    }
+
+    @PUT
+    @Path("/measurePlace/{refCd}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response editMeasurePlace(@PathParam("refCd")String refCd, String payload) {
+        MeasurePlace measurePlace = new Gson().fromJson(payload,MeasurePlace.class);
+        new HeatingDao().updateMeasurePlace(measurePlace.name,measurePlace.deviceId,refCd);
+        new LogDao().updateLogs(measurePlace.deviceId,refCd);
+        return Response.ok().build();
+    }
+
+    @DELETE
+    @Path("/measurePlace/{refCd}")
+    @Consumes(MediaType.APPLICATION_JSON)
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response deleteMeasurePlace(@PathParam("refCd")String refCd) {
+        new HeatingDao().deleteMeasurePlace(refCd);
+        return Response.ok().build();
+    }
+
+    private String getRefCd(String refCode) {
+        refCode = refCode.toUpperCase().replace(' ', '_').replace('-', '_');
+        refCode = refCode.replaceAll("A", "");
+        refCode = refCode.replaceAll("E", "");
+        refCode = refCode.replaceAll("I", "");
+        refCode = refCode.replaceAll("O", "");
+        refCode = refCode.replaceAll("U", "");
+        refCode = refCode.replaceAll("Y", "");
+        refCode = refCode.replaceAll("_{2,}", "");
+        if (refCode.endsWith("_")) return refCode.substring(0, refCode.length() - 1);
+        return refCode;
+    }
 
     private static class MeasurePlace{
         private String refCd;

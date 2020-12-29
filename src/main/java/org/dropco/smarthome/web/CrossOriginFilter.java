@@ -116,7 +116,7 @@ public class CrossOriginFilter implements Filter
     public static final String OLD_CHAIN_PREFLIGHT_PARAM = "forwardPreflight";
     public static final String CHAIN_PREFLIGHT_PARAM = "chainPreflight";
     private static final String ANY_ORIGIN = "*";
-    private static final List<String> SIMPLE_HTTP_METHODS = Arrays.asList("GET", "POST", "HEAD");
+    private static final List<String> SIMPLE_HTTP_METHODS = Arrays.asList("GET", "POST", "HEAD","PUT","DELETE");
 
     private boolean anyOriginAllowed;
     private List<String> allowedOrigins = new ArrayList<String>();
