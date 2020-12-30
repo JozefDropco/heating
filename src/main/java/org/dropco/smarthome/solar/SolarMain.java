@@ -34,9 +34,9 @@ public class SolarMain {
         ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.NORTH_PIN_REF_CD, "Kolektory - Sever"), key -> Main.getOutput(getExtendedProvider(), ExtendedPin.class, key));
         ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.SOUTH_PIN_REF_CD, "Kolektory - Juh"), key -> Main.getOutput(getExtendedProvider(), ExtendedPin.class, key));
         ServiceMode.addInput(new NamedPort(STRONG_WIND_PIN_REF_CD, "Silný vietor"), ()->Main.getInput(STRONG_WIND_PIN_REF_CD).isHigh());
-        ServiceMode.addInput(new NamedPort(STRONG_WIND_PIN_REF_CD, "Silný vietor - limit splnený"), ()->strongWind.get());
+        ServiceMode.addInput(new NamedPort("STRONG_WIND_LIMIT", "Silný vietor - limit splnený"), ()->strongWind.get());
         ServiceMode.addInput(new NamedPort(DAY_LIGHT_PIN_REF_CD, "Jas"), ()->Main.getInput(DAY_LIGHT_PIN_REF_CD).isHigh());
-        ServiceMode.addInput(new NamedPort(DAY_LIGHT_PIN_REF_CD, "Jas - limit splnený"), ()->DayLight.enoughLight());
+        ServiceMode.addInput(new NamedPort("DAY_LIGHT_LIMIT", "Jas - limit splnený"), ()->DayLight.enoughLight());
         ServiceMode.getExclusions().put(SolarSystemRefCode.EAST_PIN_REF_CD, SolarSystemRefCode.WEST_PIN_REF_CD);
         ServiceMode.getExclusions().put(SolarSystemRefCode.WEST_PIN_REF_CD, SolarSystemRefCode.EAST_PIN_REF_CD);
         ServiceMode.getExclusions().put(SolarSystemRefCode.NORTH_PIN_REF_CD, SolarSystemRefCode.SOUTH_PIN_REF_CD);
