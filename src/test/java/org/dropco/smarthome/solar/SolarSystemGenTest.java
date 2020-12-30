@@ -194,7 +194,7 @@ public class SolarSystemGenTest {
         Integer horizontal;
         Integer vertical;
 
-        public Position(Integer horizontal, Integer vertical) {
+        public Position(Integer vertical, Integer horizontal) {
             this.horizontal = horizontal;
             this.vertical = vertical;
         }
