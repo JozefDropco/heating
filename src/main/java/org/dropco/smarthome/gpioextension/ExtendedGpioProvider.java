@@ -73,11 +73,11 @@ public class ExtendedGpioProvider extends GpioProviderBase {
         @Override
         public void sent(ExtendedGpioProvider provider) {
             provider.gatePin.low();
-            logger.log(Level.INFO,"AND nastaveny na 0");
+            logger.log(Level.FINE,"AND nastaveny na 0");
             Shift.shiftOut((byte) provider.dataOutPin.getPin().getAddress(), (byte) provider.clockPin.getPin().getAddress(), (byte) Shift.MSBFIRST, provider.value);
-            logger.log(Level.INFO,"Hodnota "+provider.value+"poslana na posuvny register");
+            logger.log(Level.FINE,"Hodnota "+provider.value+" poslana na posuvny register");
             provider.gatePin.high();
-            logger.log(Level.INFO,"AND nastaveny na 1");
+            logger.log(Level.FINE,"AND nastaveny na 1");
         }
     }
 
