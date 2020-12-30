@@ -36,10 +36,10 @@ public class SolarPanelMover implements Runnable {
         if (vertical != null)
             diffVertical = vertical - currentPosition.getVerticalPositionInSeconds();
 
-        setState(SOUTH_PIN_REF_CD, diffHorizontal < 0, "SOUTH", diffHorizontal < 0);
-        setState(NORTH_PIN_REF_CD, diffHorizontal > 0, "NORTH", diffHorizontal > 0);
-        setState(WEST_PIN_REF_CD, diffVertical < 0, "WEST", diffVertical < 0);
-        setState(EAST_PIN_REF_CD, diffVertical > 0, "EAST", diffVertical > 0);
+        setState(WEST_PIN_REF_CD, diffHorizontal < 0, "WEST", diffHorizontal < 0);
+        setState(EAST_PIN_REF_CD, diffHorizontal > 0, "EAST", diffHorizontal > 0);
+        setState(SOUTH_PIN_REF_CD, diffVertical < 0,"SOUTH" , diffVertical < 0);
+        setState(NORTH_PIN_REF_CD, diffVertical > 0, "NORTH", diffVertical > 0);
         int absHorizontal = abs(diffHorizontal);
         int absVertical = abs(diffVertical);
         int sleepTime = min(absHorizontal, absVertical);
@@ -62,7 +62,7 @@ public class SolarPanelMover implements Runnable {
                         diffHorizontal += secondsSlept;
                         if (diffHorizontal >= 0) {
                             diffHorizontal = 0;
-                            setState(SOUTH_PIN_REF_CD, false, "SOUTH", true);
+                            setState(WEST_PIN_REF_CD, false, "WEST", true);
                         }
                     } else {
                         if (diffHorizontal > 0) {
@@ -70,7 +70,7 @@ public class SolarPanelMover implements Runnable {
                             diffHorizontal -= secondsSlept;
                             if (diffHorizontal <= 0) {
                                 diffHorizontal = 0;
-                                setState(NORTH_PIN_REF_CD, false, "NORTH", true);
+                                setState(EAST_PIN_REF_CD, false, "EAST", true);
                             }
                         }
                     }
@@ -79,7 +79,7 @@ public class SolarPanelMover implements Runnable {
                         diffVertical += secondsSlept;
                         if (diffVertical >= 0) {
                             diffVertical = 0;
-                            setState(WEST_PIN_REF_CD, false, "WEST", true);
+                            setState(SOUTH_PIN_REF_CD, false, "SOUTH", true);
                         }
                     } else {
                         if (diffVertical > 0) {
@@ -87,7 +87,7 @@ public class SolarPanelMover implements Runnable {
                             diffVertical -= secondsSlept;
                             if (diffVertical <= 0) {
                                 diffVertical = 0;
-                                setState(EAST_PIN_REF_CD, false, "EAST", true);
+                                setState(NORTH_PIN_REF_CD, false, "NORTH", true);
                             }
                         }
                     }
@@ -95,7 +95,7 @@ public class SolarPanelMover implements Runnable {
                 if (!Thread.interrupted() && !interrupted) {
                     sleepTime = Math.max(abs(diffHorizontal), abs(diffVertical));
                 } else {
-                    setState(SOUTH_PIN_REF_CD, false, "SORTH", true);
+                    setState(SOUTH_PIN_REF_CD, false, "SOUTH", true);
                     setState(NORTH_PIN_REF_CD, false, "NORTH", true);
                     setState(WEST_PIN_REF_CD, false, "WEST", true);
                     setState(EAST_PIN_REF_CD, false, "EAST", true);
