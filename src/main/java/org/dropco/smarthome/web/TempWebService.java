@@ -31,7 +31,7 @@ public class TempWebService {
     @Produces(MediaType.APPLICATION_JSON)
     public Response temperaturesPerPlace(@QueryParam("from") String fromDate, @QueryParam("to") String toDate) throws ParseException {
         //2020-12-21
-        SimpleDateFormat format = new SimpleDateFormat("yyy-MM-dd");
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
         Date from =format.parse(fromDate);
         Date to = format.parse(toDate);
         List<Tuple> temperatures = new LogDao().retrieveTemperaturesWithPlaces(from,to);
