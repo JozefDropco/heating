@@ -17,12 +17,11 @@ public class SolarSystemScheduledWorkTest {
     public void run() throws InterruptedException {
 
         SolarPanelThreadManager.delaySupplier=()->1l;
-        AtomicBoolean strongWind = new AtomicBoolean(false);
         AtomicBoolean overheated = new AtomicBoolean(false);
         SolarPanelMover.setCurrentPositionSupplier(startPos()::getPanelPosition);
         SolarPanelMover.setCommandExecutor((s, aBoolean) -> {});
         SolarPanelMover.addListener(position -> currentPos = position);
-        SafetySolarPanel solarPanel =solarPanel(overheated, strongWind, startPos()::getPanelPosition);
+        SafetySolarPanel solarPanel =solarPanel(overheated, startPos()::getPanelPosition);
         SolarSystemScheduledWork worker = new SolarSystemScheduledWork(solarPanel, true, new SolarPanelPosition(0,-10));
         Thread thread = new Thread(worker);
         thread.start();
@@ -37,7 +36,6 @@ public class SolarSystemScheduledWorkTest {
     public void runStrongWind() throws InterruptedException {
 
         SolarPanelThreadManager.delaySupplier=()->1l;
-        AtomicBoolean strongWind = new AtomicBoolean(false);
         AtomicBoolean overheated = new AtomicBoolean(false);
         final SolarPanelPosition[] currentPos = {new SolarPanelPosition(-30, -15)};
         SolarPanelMover.setCommandExecutor((s, aBoolean) -> {});
@@ -45,12 +43,12 @@ public class SolarSystemScheduledWorkTest {
         SolarPanelMover.addListener(position -> {
             currentPos[0] =position;
         });
-        SafetySolarPanel solarPanel =solarPanel(overheated, strongWind, ()->new SolarPanelPosition(-40,0));
+        SafetySolarPanel solarPanel =solarPanel(overheated,  ()->new SolarPanelPosition(-40,0));
         SolarSystemScheduledWork worker = new SolarSystemScheduledWork(solarPanel, true, new SolarPanelPosition(0,-20));
         Thread thread = new Thread(worker);
         thread.start();
         Thread.sleep(5 * 1000);
-        strongWind.set(true);
+        StrongWind.set(true);
         solarPanel.moveToStrongWindPosition();
         worker = new SolarSystemScheduledWork(solarPanel, true, new SolarPanelPosition(-200,-20));
         thread = new Thread(worker);
@@ -66,7 +64,6 @@ public class SolarSystemScheduledWorkTest {
     public void runStrongWindBackToNormal() throws InterruptedException {
 
         SolarPanelThreadManager.delaySupplier=()->1l;
-        AtomicBoolean strongWind = new AtomicBoolean(false);
         AtomicBoolean overheated = new AtomicBoolean(false);
         final SolarPanelPosition[] currentPos = {new SolarPanelPosition(-30, -15)};
         SolarPanelMover.setCommandExecutor((s, aBoolean) -> {});
@@ -74,12 +71,12 @@ public class SolarSystemScheduledWorkTest {
         SolarPanelMover.addListener(position -> {
             currentPos[0] =position;
         });
-        SafetySolarPanel solarPanel =solarPanel(overheated, strongWind, ()->new SolarPanelPosition(-40,0));
+        SafetySolarPanel solarPanel =solarPanel(overheated, ()->new SolarPanelPosition(-40,0));
         SolarSystemScheduledWork worker = new SolarSystemScheduledWork(solarPanel, true, new SolarPanelPosition(0,-20));
         Thread thread = new Thread(worker);
         thread.start();
         Thread.sleep(5 * 1000);
-        strongWind.set(true);
+        StrongWind.set(true);
         solarPanel.moveToStrongWindPosition();
         worker = new SolarSystemScheduledWork(solarPanel, true, new SolarPanelPosition(0,0));
         thread = new Thread(worker);
@@ -96,8 +93,8 @@ public class SolarSystemScheduledWorkTest {
 
     }
 
-    private SafetySolarPanel solarPanel(AtomicBoolean overHeated, AtomicBoolean strongWind, Supplier<SolarPanelPosition> positionProvider) {
-        return new SafetySolarPanel(overHeated, strongWind, positionProvider,positionProvider);
+    private SafetySolarPanel solarPanel(AtomicBoolean overHeated, Supplier<SolarPanelPosition> positionProvider) {
+        return new SafetySolarPanel(overHeated, positionProvider,positionProvider);
     }
 
     private SolarPanelStepRecord startPos() {

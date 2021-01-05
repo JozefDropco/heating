@@ -28,13 +28,12 @@ public class SolarMain {
     private static ExtendedGpioProvider extendedGpioProvider;
 
     public static void main(SettingsDao settingsDao) {
-        AtomicBoolean strongWind = new AtomicBoolean(false);
         ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.EAST_PIN_REF_CD, "Kolektory - Východ"), key -> Main.getOutput(getExtendedProvider(), ExtendedPin.class, key));
         ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.WEST_PIN_REF_CD, "Kolektory - Západ"), key -> Main.getOutput(getExtendedProvider(), ExtendedPin.class, key));
         ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.NORTH_PIN_REF_CD, "Kolektory - Sever"), key -> Main.getOutput(getExtendedProvider(), ExtendedPin.class, key));
         ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.SOUTH_PIN_REF_CD, "Kolektory - Juh"), key -> Main.getOutput(getExtendedProvider(), ExtendedPin.class, key));
         ServiceMode.addInput(new NamedPort(STRONG_WIND_PIN_REF_CD, "Silný vietor"), ()->Main.getInput(STRONG_WIND_PIN_REF_CD).isHigh());
-        ServiceMode.addInput(new NamedPort("STRONG_WIND_LIMIT", "Silný vietor - limit splnený"), ()->strongWind.get());
+        ServiceMode.addInput(new NamedPort("STRONG_WIND_LIMIT", "Silný vietor - limit splnený"), ()->StrongWind.isWindy());
         ServiceMode.addInput(new NamedPort(DAY_LIGHT_PIN_REF_CD, "Jas"), ()->Main.getInput(DAY_LIGHT_PIN_REF_CD).isHigh());
         ServiceMode.addInput(new NamedPort("DAY_LIGHT_LIMIT", "Jas - limit splnený"), ()->DayLight.enoughLight());
         ServiceMode.getExclusions().put(SolarSystemRefCode.EAST_PIN_REF_CD, SolarSystemRefCode.WEST_PIN_REF_CD);
@@ -51,9 +50,9 @@ public class SolarMain {
         SolarPanelMover.setCurrentPositionSupplier(() -> solarSystemDao.getLastKnownPosition());
         SolarPanelMover.addListener(panel -> solarSystemDao.updateLastKnownPosition(panel));
         AtomicBoolean solarOverHeated = new AtomicBoolean(false);
-        SafetySolarPanel safetySolarPanel = new SafetySolarPanel(solarOverHeated, strongWind, () -> solarSystemDao.getOverheatedPosition(), () -> solarSystemDao.getStrongWindPosition());
+        SafetySolarPanel safetySolarPanel = new SafetySolarPanel(solarOverHeated, () -> solarSystemDao.getOverheatedPosition(), () -> solarSystemDao.getStrongWindPosition());
         overHeatedHandler(solarOverHeated, safetySolarPanel);
-        startStrongWindDetector(solarOverHeated, safetySolarPanel);
+        StrongWind.connect(Main.getInput(STRONG_WIND_PIN_REF_CD),safetySolarPanel);
         SolarSystemScheduler solarSystemScheduler = new SolarSystemScheduler(solarSystemDao);
         solarSystemScheduler.moveToLastPosition(safetySolarPanel);
         solarSystemScheduler.schedule(safetySolarPanel);
@@ -81,21 +80,6 @@ public class SolarMain {
             else
                 safetySolarPanel.backToNormal();
         };
-    }
-
-    static void startStrongWindDetector(AtomicBoolean strongWind, SafetySolarPanel safetySolarPanel) {
-        GpioPinDigitalInput strongWindPin = Main.getInput(STRONG_WIND_PIN_REF_CD);
-        strongWindPin.addListener(new DelayedGpioPinListener(PinState.HIGH, 5000, strongWindPin) {
-            @Override
-            public void handleStateChange(boolean state) {
-                strongWind.set(state);
-                if (state) {
-                    safetySolarPanel.moveToStrongWindPosition();
-                } else {
-                    safetySolarPanel.backToNormal();
-                }
-            }
-        });
     }
 
 }

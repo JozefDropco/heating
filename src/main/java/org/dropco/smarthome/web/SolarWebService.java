@@ -4,8 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.dropco.smarthome.database.SettingsDao;
-import org.dropco.smarthome.solar.SolarPanelStepRecord;
-import org.dropco.smarthome.solar.SolarSystemDao;
+import org.dropco.smarthome.solar.*;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -37,6 +36,32 @@ public class SolarWebService {
 
         return Response.ok(new Gson().toJson(Lists.transform(records, this::toSolarDTO))).build();
     }
+
+    @GET
+    @Path("/daylight")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getDayLight()  {
+        return Response.ok(new Gson().toJson(DayLight.enoughLight())).build();
+    }
+
+    @GET
+    @Path("/strongWind")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getStrongWind() throws ParseException {
+        return Response.ok(new Gson().toJson(StrongWind.isWindy())).build();
+    }
+
+    @GET
+    @Path("/currentPosition")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getCurrentPosition() throws ParseException {
+        SolarPanelPosition lastKnownPosition = new SolarSystemDao(new SettingsDao()).getLastKnownPosition();
+        Position pos = new Position();
+        pos.x=lastKnownPosition.getHorizontalPositionInSeconds();
+        pos.y=lastKnownPosition.getVerticalPositionInSeconds();
+        return Response.ok(new Gson().toJson(pos)).build();
+    }
+
     @PUT
     @Path("/cmd/update")
     @Produces(MediaType.APPLICATION_JSON)
@@ -83,6 +108,9 @@ public class SolarWebService {
         return solarDTO;
     }
 
+    public static class Position{
+        int x,y;
+    }
     public static class SolarDTO {
         private int hour, minute;
         private Integer hor, vert;

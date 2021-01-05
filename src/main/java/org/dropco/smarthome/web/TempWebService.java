@@ -17,6 +17,8 @@ import org.dropco.smarthome.web.dto.Port;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -46,7 +48,7 @@ public class TempWebService {
             });
             Data data = new Data();
             data.x=tuple.get(LogDao._log.timestamp);
-            data.y=tuple.get(LogDao._log.value);
+            data.y=new BigDecimal(tuple.get(LogDao._log.value).toString()).setScale(1, RoundingMode .HALF_UP).doubleValue();
             currSeries.data.add(data);
         }
         return Response.ok(new GsonBuilder().setDateFormat("MM-dd-yyyy HH:mm:ss z").create().toJson(seriesMap.values())).build();
