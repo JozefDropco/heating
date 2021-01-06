@@ -38,6 +38,7 @@ public class TempWebService {
         Date to = format.parse(toDate);
         List<Tuple> temperatures = new LogDao().retrieveTemperaturesWithPlaces(from,to);
         Map<String , Series> seriesMap = Maps.newHashMap();
+        Date dataLastDate = new Date(from.getTime());
         for (Tuple tuple: temperatures){
             Series currSeries = seriesMap.computeIfAbsent(tuple.get(LogDao._log.placeRefCd), key -> {
                 Series series = new Series();
@@ -48,10 +49,56 @@ public class TempWebService {
             });
             Data data = new Data();
             data.x=tuple.get(LogDao._log.timestamp);
+            if (dataLastDate.before(data.x)){
+                dataLastDate=data.x;
+            }
             data.y=new BigDecimal(tuple.get(LogDao._log.value).toString()).setScale(1, RoundingMode .HALF_UP).doubleValue();
             currSeries.data.add(data);
         }
-        return Response.ok(new GsonBuilder().setDateFormat("MM-dd-yyyy HH:mm:ss z").create().toJson(seriesMap.values())).build();
+
+        TempResult tempResult = new TempResult();
+        tempResult.lastDate=dataLastDate;
+        tempResult.series=seriesMap.values();
+        return Response.ok(new GsonBuilder().setDateFormat("MM-dd-yyyy HH:mm:ss z").create().toJson(tempResult)).build();
+    }
+
+    @GET
+    @Path("/delta")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response delta(@QueryParam("last") String lastDate) throws ParseException {
+        //2020-12-21
+        SimpleDateFormat format = new SimpleDateFormat("MM-dd-yyyy HH:mm:ss z");
+        Date last =format.parse(lastDate);
+
+        Calendar instance = Calendar.getInstance();
+        instance.setTime(last);
+        instance.add(Calendar.HOUR_OF_DAY,1);
+        last = instance.getTime();
+        instance.add(Calendar.DAY_OF_YEAR,1);
+        Date to = instance.getTime();
+        List<Tuple> temperatures = new LogDao().retrieveTemperaturesWithPlaces(last,to);
+        Map<String , Series> seriesMap = Maps.newHashMap();
+        Date dataLastDate = new Date(last.getTime());
+        for (Tuple tuple: temperatures){
+            Series currSeries = seriesMap.computeIfAbsent(tuple.get(LogDao._log.placeRefCd), key -> {
+                Series series = new Series();
+                series.placeRefCd = key;
+                series.deviceId = tuple.get(LogDao._log.devideId);
+                series.name = new HeatingDao().getMeasurePlaceByRefCd(key).get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.name);
+                return series;
+            });
+            Data data = new Data();
+            data.x=tuple.get(LogDao._log.timestamp);
+            if (dataLastDate.before(data.x)){
+                dataLastDate=data.x;
+            }
+            data.y=new BigDecimal(tuple.get(LogDao._log.value).toString()).setScale(1, RoundingMode .HALF_UP).doubleValue();
+            currSeries.data.add(data);
+        }
+        TempResult tempResult = new TempResult();
+        tempResult.lastDate=dataLastDate;
+        tempResult.series=seriesMap.values();
+        return Response.ok(new GsonBuilder().setDateFormat("MM-dd-yyyy HH:mm:ss z").create().toJson(tempResult)).build();
     }
 
     @GET
@@ -129,6 +176,11 @@ public class TempWebService {
         private String deviceId;
     }
 
+
+    private static class  TempResult{
+         Date lastDate;
+        Collection<Series> series;
+    }
     private static class Series{
         String name;
         String placeRefCd;
