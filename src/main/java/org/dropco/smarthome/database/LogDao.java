@@ -44,8 +44,8 @@ public class LogDao {
                        .and(_log.timestamp.goe(from))
                .and(_log.timestamp.loe(to))
                )
-               .groupBy(_log.placeRefCd,_log.devideId,removeMinutes)
-               .orderBy(_log.placeRefCd.asc(),_log.devideId.asc(),_log.timestamp.asc()).fetch();
+               .groupBy(_log.placeRefCd,removeMinutes,_log.devideId)
+               .orderBy(_log.placeRefCd.asc(),_log.timestamp.asc(), _log.devideId.asc()).fetch();
 
 
     }
