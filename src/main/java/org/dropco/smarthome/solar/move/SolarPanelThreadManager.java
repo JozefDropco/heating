@@ -10,7 +10,7 @@ public class SolarPanelThreadManager {
     public static Supplier<Long> delaySupplier;
     private static final AtomicReference<Thread> lastThread = new AtomicReference<>();
 
-    static void move(Integer horizontal, Integer vertical) {
+    public static void move(Integer horizontal, Integer vertical) {
         Thread thread = new Thread(new SolarPanelMover(horizontal, vertical));
         stop(thread);
         LOGGER.log(Level.INFO, thread.getId() + " Natáčanie kolektorov na hor=" + horizontal + ", vert=" + vertical);

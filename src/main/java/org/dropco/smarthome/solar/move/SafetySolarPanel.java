@@ -3,6 +3,7 @@ package org.dropco.smarthome.solar.move;
 import org.dropco.smarthome.ServiceMode;
 import org.dropco.smarthome.solar.DayLight;
 import org.dropco.smarthome.solar.SolarPanelPosition;
+import org.dropco.smarthome.solar.SolarTemperatureWatch;
 import org.dropco.smarthome.solar.StrongWind;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -12,16 +13,11 @@ import java.util.logging.Logger;
 
 public class SafetySolarPanel {
     private static final Logger logger = Logger.getLogger(SafetySolarPanel.class.getName());
-    private AtomicBoolean overHeated;
-    private final Supplier<SolarPanelPosition> overHeatedPositionProvider;
     private final Supplier<SolarPanelPosition> strongWindProvider;
     private Integer lastHorizontal;
     private Integer lastVertical;
 
-    public SafetySolarPanel(AtomicBoolean overHeated, Supplier<SolarPanelPosition> overHeatedPositionProvider,
-                            Supplier<SolarPanelPosition> strongWindProvider) {
-        this.overHeated = overHeated;
-        this.overHeatedPositionProvider = overHeatedPositionProvider;
+    public SafetySolarPanel(Supplier<SolarPanelPosition> strongWindProvider) {
         this.strongWindProvider = strongWindProvider;
     }
 
@@ -32,7 +28,7 @@ public class SafetySolarPanel {
             logger.log(Level.INFO, "Servisný mód, posun zastavený.");
             return;
         }
-        if (!overHeated.get() && !StrongWind.isWindy()) {
+        if (!SolarTemperatureWatch.isOverHeated() && !StrongWind.isWindy()) {
             if (ignoreDaylight || DayLight.inst().enoughLight())
                 SolarPanelThreadManager.move(horizontal, vertical);
             else
@@ -48,15 +44,11 @@ public class SafetySolarPanel {
         SolarPanelThreadManager.move(solarPanelPosition.getHorizontalPositionInSeconds(), solarPanelPosition.getVerticalPositionInSeconds());
     }
 
-    public void moveToOverheatedPosition() {
-        SolarPanelPosition solarPanelPosition = overHeatedPositionProvider.get();
-        logger.log(Level.INFO, "Presun na pozíciu pri prehriatí, hor=" + solarPanelPosition.getHorizontalPositionInSeconds() + ", ver=" + solarPanelPosition.getVerticalPositionInSeconds());
-        SolarPanelThreadManager.move(solarPanelPosition.getHorizontalPositionInSeconds(), solarPanelPosition.getVerticalPositionInSeconds());
-    }
+
 
     public void backToNormal() {
-        if (!overHeated.get() && !StrongWind.isWindy()) {
-            logger.log(Level.INFO, "Presun späť do normálu, hor=" + lastHorizontal + ", ver=" + lastVertical);
+        if (!SolarTemperatureWatch.isOverHeated() && !StrongWind.isWindy()) {
+            logger.log(Level.INFO, "Návrat do normálu, hor=" + lastHorizontal + ", ver=" + lastVertical);
             SolarPanelThreadManager.move(lastHorizontal, lastVertical);
         }
     }

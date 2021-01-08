@@ -9,12 +9,10 @@ import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.dto.NamedPort;
 import org.dropco.smarthome.gpioextension.ExtendedGpioProvider;
 import org.dropco.smarthome.gpioextension.ExtendedPin;
+import org.dropco.smarthome.heating.db.HeatingDao;
 import org.dropco.smarthome.solar.move.SafetySolarPanel;
 import org.dropco.smarthome.solar.move.SolarPanelMover;
 import org.dropco.smarthome.solar.move.SolarPanelThreadManager;
-
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
 
 public class SolarMain {
 
@@ -25,6 +23,7 @@ public class SolarMain {
     public static final String STRONG_WIND_PIN_REF_CD = "STRONG_WIND_PIN";
     public static final String DAY_LIGHT_PIN_REF_CD = "DAY_LIGHT_PIN";
     protected static final String LIGHT_THRESHOLD = "LIGHT_THRESHOLD";
+    protected static final String SOLAR_OVERHEATED = "SOLAR_OVERHEATED";
 
     private static ExtendedGpioProvider extendedGpioProvider;
 
@@ -51,10 +50,10 @@ public class SolarMain {
         SolarPanelMover.setCommandExecutor((key, value) -> Main.getOutput(getExtendedProvider(), ExtendedPin.class, key).setState(value));
         SolarPanelMover.setCurrentPositionSupplier(() -> solarSystemDao.getLastKnownPosition());
         SolarPanelMover.addListener(panel -> solarSystemDao.updateLastKnownPosition(panel));
-        AtomicBoolean solarOverHeated = new AtomicBoolean(false);
-        SafetySolarPanel safetySolarPanel = new SafetySolarPanel(solarOverHeated, () -> solarSystemDao.getOverheatedPosition(), () -> solarSystemDao.getStrongWindPosition());
-        overHeatedHandler(solarOverHeated, safetySolarPanel);
+        SafetySolarPanel safetySolarPanel = new SafetySolarPanel(() -> solarSystemDao.getStrongWindPosition());
         StrongWind.connect(Main.getInput(STRONG_WIND_PIN_REF_CD), safetySolarPanel);
+        new SolarTemperatureWatch(() -> solarSystemDao.getOverheatedPosition(), new HeatingDao(),
+                () -> settingsDao.getDouble(SOLAR_OVERHEATED)).attach(safetySolarPanel);
         SolarSystemScheduler solarSystemScheduler = new SolarSystemScheduler(solarSystemDao);
         solarSystemScheduler.moveToLastPosition(safetySolarPanel);
         solarSystemScheduler.schedule(safetySolarPanel);
@@ -75,15 +74,5 @@ public class SolarMain {
         return extendedGpioProvider;
     }
 
-
-    static Consumer<Boolean> overHeatedHandler(AtomicBoolean solarOverHeated, SafetySolarPanel safetySolarPanel) {
-        return overHeated -> {
-            solarOverHeated.set(overHeated);
-            if (overHeated)
-                safetySolarPanel.moveToOverheatedPosition();
-            else
-                safetySolarPanel.backToNormal();
-        };
-    }
 
 }

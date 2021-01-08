@@ -3,7 +3,10 @@ package org.dropco.smarthome.web;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import org.dropco.smarthome.Main;
+import org.dropco.smarthome.ServiceMode;
 import org.dropco.smarthome.database.SettingsDao;
+import org.dropco.smarthome.heating.db.HeatingDao;
 import org.dropco.smarthome.solar.*;
 
 import javax.ws.rs.*;
@@ -11,6 +14,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
@@ -37,29 +41,37 @@ public class SolarWebService {
         return Response.ok(new Gson().toJson(Lists.transform(records, this::toSolarDTO))).build();
     }
 
-    @GET
-    @Path("/daylight")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getDayLight()  {
-        return Response.ok(new Gson().toJson(DayLight.inst().enoughLight())).build();
-    }
+
 
     @GET
-    @Path("/strongWind")
-    @Produces(MediaType.APPLICATION_JSON)
-    public Response getStrongWind() throws ParseException {
-        return Response.ok(new Gson().toJson(StrongWind.isWindy())).build();
-    }
-
-    @GET
-    @Path("/currentPosition")
+    @Path("/currentState")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getCurrentPosition() throws ParseException {
         SolarPanelPosition lastKnownPosition = new SolarSystemDao(new SettingsDao()).getLastKnownPosition();
         Position pos = new Position();
         pos.x=lastKnownPosition.getHorizontalPositionInSeconds();
         pos.y=lastKnownPosition.getVerticalPositionInSeconds();
-        return Response.ok(new Gson().toJson(pos)).build();
+        State src = new State();
+        src.pos=pos;
+        src.dayLight=DayLight.inst().enoughLight();
+        src.windy=StrongWind.isWindy();
+        src.overHeated  = SolarTemperatureWatch.isOverHeated();
+        List<SolarPanelStepRecord> todayRecords = new SolarSystemDao(new SettingsDao()).getTodayRecords(Calendar.getInstance());
+
+        src.remainingPositions = Lists.transform(todayRecords,this::toSolarDTO);
+        if (ServiceMode.getPort(SolarSystemRefCode.NORTH_PIN_REF_CD).isHigh()){
+            src.movement.add("NORTH");
+        }
+        if (ServiceMode.getPort(SolarSystemRefCode.SOUTH_PIN_REF_CD).isHigh()){
+            src.movement.add("SOUTH");
+        }
+        if (ServiceMode.getPort(SolarSystemRefCode.WEST_PIN_REF_CD).isHigh()){
+            src.movement.add("WEST");
+        }
+        if (ServiceMode.getPort(SolarSystemRefCode.EAST_PIN_REF_CD).isHigh()){
+            src.movement.add("EAST");
+        }
+        return Response.ok(new Gson().toJson(src)).build();
     }
 
     @PUT
@@ -108,6 +120,15 @@ public class SolarWebService {
         return solarDTO;
     }
 
+    public static class State{
+        public List<SolarDTO> remainingPositions;
+        private boolean windy;
+        private boolean dayLight;
+        private boolean overHeated;
+        private Position pos;
+        private List<String> movement = new ArrayList<>();
+
+    }
     public static class Position{
         int x,y;
     }

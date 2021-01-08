@@ -1,6 +1,9 @@
 package org.dropco.smarthome.web;
 
 import com.google.gson.Gson;
+import org.dropco.smarthome.microservice.RainSensor;
+import org.dropco.smarthome.microservice.WaterPumpFeedback;
+import org.dropco.smarthome.watering.WateringThreadManager;
 import org.dropco.smarthome.watering.db.WateringDao;
 import org.dropco.smarthome.watering.db.WateringRecord;
 
@@ -44,4 +47,22 @@ public class WateringWebService {
         record.setId(id);
         return Response.ok(new Gson().toJson(record)).build();
     }
+
+    @GET
+    @Produces(MediaType.APPLICATION_JSON)
+    @Path("state")
+    public Response getState(){
+        State state = new State();
+        state.isRainy= RainSensor.isRaining();
+        state.pumpRunning = WaterPumpFeedback.getRunning();
+        state.warmEnough = WateringThreadManager.isWarmEnough();
+        return Response.ok(new Gson().toJson(state)).build();
+    }
+
+    private static class State{
+        private boolean warmEnough;
+        private boolean isRainy;
+        private boolean pumpRunning;
+    }
+
 }

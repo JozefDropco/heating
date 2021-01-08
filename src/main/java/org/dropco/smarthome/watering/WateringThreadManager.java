@@ -66,7 +66,7 @@ public class WateringThreadManager {
         return lastThread.get();
     }
 
-    private static boolean isWarmEnough() {
+    public static boolean isWarmEnough() {
         double temperature = TempService.getOutsideTemperature();
         if (temperature==-999.0) return true;
         return thresholdTempValue< temperature;
