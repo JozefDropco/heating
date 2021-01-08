@@ -8,6 +8,7 @@ import com.querydsl.core.types.TemplateFactory;
 import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.core.types.dsl.DateTemplate;
 import com.querydsl.core.types.dsl.Expressions;
+import com.querydsl.sql.MySQLTemplates;
 import com.querydsl.sql.SQLTemplates;
 import com.querydsl.sql.dml.SQLDeleteClause;
 import com.querydsl.sql.dml.SQLUpdateClause;
@@ -29,6 +30,7 @@ import static org.dropco.smarthome.database.querydsl.TemperatureMeasurePlace.TEM
 
 public class SolarSystemDao {
     protected static final String SOLAR_PANEL_DELAY = "SOLAR_PANEL_DELAY";
+    protected static final SQLTemplates DEFAULT = new MySQLTemplates();
     private SettingsDao settingsDao;
     private static final Template toDate = TemplateFactory.DEFAULT.create("STR_TO_DATE(CONCAT({0},'-',{1},'-',{2},' ',{3},':',{4},':',{5}), '%Y-%c-%e %k:%i:%s')");
 
@@ -57,7 +59,7 @@ public class SolarSystemDao {
     }
 
     public void updateLastKnownPosition(SolarPanelPosition currentPosition) {
-        new SQLUpdateClause(getConnection(), SQLTemplates.DEFAULT, SOLAR_POSITION)
+        new SQLUpdateClause(getConnection(), DEFAULT, SOLAR_POSITION)
                 .set(SOLAR_POSITION.verticalPosition, currentPosition.getVerticalPositionInSeconds())
                 .set(SOLAR_POSITION.horizontalPosition, currentPosition.getHorizontalPositionInSeconds())
                 .where(SOLAR_POSITION.id.eq(settingsDao.getLong(SolarSystemRefCode.LAST_KNOWN_POSITION_REF_CD)))
@@ -125,11 +127,11 @@ public class SolarSystemDao {
     }
 
     public void updateForMonth(SolarWebService.SolarDTO dto, int month) {
-        new SQLUpdateClause(getConnection(), SQLTemplates.DEFAULT, SOLAR_SCHEDULE)
+        new SQLUpdateClause(getConnection(), DEFAULT, SOLAR_SCHEDULE)
                 .set(SOLAR_SCHEDULE.ignoreDayLight, dto.getIgnore())
                 .where(SOLAR_SCHEDULE.month.eq(month).and(SOLAR_SCHEDULE.hour.eq(dto.getHour())).and(SOLAR_SCHEDULE.minute.eq(dto.getMinute())))
                 .execute();
-        new SQLUpdateClause(getConnection(), SQLTemplates.DEFAULT, SOLAR_POSITION)
+        new SQLUpdateClause(getConnection(), DEFAULT, SOLAR_POSITION)
                 .set(SOLAR_POSITION.horizontalPosition, dto.getHor())
                 .set(SOLAR_POSITION.verticalPosition, dto.getVert())
                 .where(SOLAR_POSITION.id.in(new MySQLQuery<>(getConnection()).select(SOLAR_SCHEDULE.position).from(SOLAR_SCHEDULE)
@@ -138,11 +140,11 @@ public class SolarSystemDao {
     }
 
     public void updateForDate(SolarWebService.SolarDTO dto, Calendar cal) {
-        new SQLUpdateClause(getConnection(), SQLTemplates.DEFAULT, SOLAR_SCHEDULE)
+        new SQLUpdateClause(getConnection(), DEFAULT, SOLAR_SCHEDULE)
                 .set(SOLAR_SCHEDULE.ignoreDayLight, dto.getIgnore())
                 .where(SOLAR_SCHEDULE.month.eq(cal.get(Calendar.MONTH)+1).and(SOLAR_SCHEDULE.day.eq(cal.get(Calendar.DAY_OF_MONTH))).and(SOLAR_SCHEDULE.hour.eq(dto.getHour())).and(SOLAR_SCHEDULE.minute.eq(dto.getMinute())))
                 .execute();
-        new SQLUpdateClause(getConnection(), SQLTemplates.DEFAULT, SOLAR_POSITION)
+        new SQLUpdateClause(getConnection(), DEFAULT, SOLAR_POSITION)
                 .set(SOLAR_POSITION.horizontalPosition, dto.getHor())
                 .set(SOLAR_POSITION.verticalPosition, dto.getVert())
                 .where(SOLAR_POSITION.id.in(new MySQLQuery<>(getConnection()).select(SOLAR_SCHEDULE.position).from(SOLAR_SCHEDULE)
@@ -151,21 +153,21 @@ public class SolarSystemDao {
     }
 
     public void deleteForDate(SolarWebService.SolarDTO dto, Calendar cal) {
-        new SQLDeleteClause(getConnection(), SQLTemplates.DEFAULT, SOLAR_POSITION)
+        new SQLDeleteClause(getConnection(), DEFAULT, SOLAR_POSITION)
                 .where(SOLAR_POSITION.id.in(new MySQLQuery<>(getConnection()).select(SOLAR_SCHEDULE.position).from(SOLAR_SCHEDULE)
                         .where(SOLAR_SCHEDULE.month.eq(cal.get(Calendar.MONTH)+1).and(SOLAR_SCHEDULE.day.eq(cal.get(Calendar.DAY_OF_MONTH))).and(SOLAR_SCHEDULE.hour.eq(dto.getHour())).and(SOLAR_SCHEDULE.minute.eq(dto.getMinute())))))
                 .execute();
-        new SQLDeleteClause(getConnection(), SQLTemplates.DEFAULT, SOLAR_SCHEDULE)
+        new SQLDeleteClause(getConnection(), DEFAULT, SOLAR_SCHEDULE)
                 .where(SOLAR_SCHEDULE.month.eq(cal.get(Calendar.MONTH)+1).and(SOLAR_SCHEDULE.day.eq(cal.get(Calendar.DAY_OF_MONTH))).and(SOLAR_SCHEDULE.hour.eq(dto.getHour())).and(SOLAR_SCHEDULE.minute.eq(dto.getMinute())))
                 .execute();
     }
 
     public void deleteForMonth(SolarWebService.SolarDTO dto, int month) {
-        new SQLDeleteClause(getConnection(), SQLTemplates.DEFAULT, SOLAR_POSITION)
+        new SQLDeleteClause(getConnection(), DEFAULT, SOLAR_POSITION)
                 .where(SOLAR_POSITION.id.in(new MySQLQuery<>(getConnection()).select(SOLAR_SCHEDULE.position).from(SOLAR_SCHEDULE)
                         .where(SOLAR_SCHEDULE.month.eq(month).and(SOLAR_SCHEDULE.hour.eq(dto.getHour())).and(SOLAR_SCHEDULE.minute.eq(dto.getMinute())))))
                 .execute();
-        new SQLDeleteClause(getConnection(), SQLTemplates.DEFAULT, SOLAR_SCHEDULE)
+        new SQLDeleteClause(getConnection(), DEFAULT, SOLAR_SCHEDULE)
                 .where(SOLAR_SCHEDULE.month.eq(month).and(SOLAR_SCHEDULE.hour.eq(dto.getHour())).and(SOLAR_SCHEDULE.minute.eq(dto.getMinute())))
                 .execute();
     }
