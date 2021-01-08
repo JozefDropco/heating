@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class TempService implements Runnable {
     private HeatingDao heatingDao = new HeatingDao();
@@ -29,20 +31,24 @@ public class TempService implements Runnable {
     @Override
     public void run() {
         GpioFactory.getExecutorServiceFactory().getScheduledExecutorService().scheduleAtFixedRate(() -> {
-            W1Master master = new W1Master();
-            if (!ServiceMode.isServiceMode()) {
-                List<TemperatureSensor> sensors = master.getDevices(TemperatureSensor.class);
-                for (TemperatureSensor sensor : sensors) {
-                    W1Device device = (W1Device) sensor;
-                    double temperature = sensor.getTemperature(TemperatureScale.CELSIUS);
-                    String deviceId = device.getId().trim();
-                    AtomicDouble value = recentTemperatures.computeIfAbsent(deviceId, key -> new AtomicDouble(-999));
-                    double oldValue = value.getAndSet(temperature);
-                    if (Double.compare(oldValue,temperature)!=0) {
-                        logDao.logTemperature(deviceId, heatingDao.getPlaceRefCd(deviceId), new Date(), temperature);
-                        subscribers.computeIfAbsent(deviceId, key -> Lists.newArrayList()).forEach(subscriber -> subscriber.accept(temperature));
+            try {
+                W1Master master = new W1Master();
+                if (!ServiceMode.isServiceMode()) {
+                    List<TemperatureSensor> sensors = master.getDevices(TemperatureSensor.class);
+                    for (TemperatureSensor sensor : sensors) {
+                        W1Device device = (W1Device) sensor;
+                        double temperature = sensor.getTemperature(TemperatureScale.CELSIUS);
+                        String deviceId = device.getId().trim();
+                        AtomicDouble value = recentTemperatures.computeIfAbsent(deviceId, key -> new AtomicDouble(-999));
+                        double oldValue = value.getAndSet(temperature);
+                        if (Double.compare(oldValue, temperature) != 0) {
+                            logDao.logTemperature(deviceId, heatingDao.getPlaceRefCd(deviceId), new Date(), temperature);
+                            subscribers.computeIfAbsent(deviceId, key -> Lists.newArrayList()).forEach(subscriber -> subscriber.accept(temperature));
+                        }
                     }
                 }
+            } catch (RuntimeException e){
+                Logger.getLogger(TempService.class.getName()).log(Level.FINE,"Temp service not working",e);
             }
         }, 0, 1, TimeUnit.MINUTES);
     }

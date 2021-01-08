@@ -1,11 +1,12 @@
 package org.dropco.smarthome.solar;
 
-import com.pi4j.io.gpio.*;
+import com.pi4j.io.gpio.GpioController;
+import com.pi4j.io.gpio.GpioFactory;
+import com.pi4j.io.gpio.GpioPinDigitalOutput;
 import org.dropco.smarthome.Main;
 import org.dropco.smarthome.ServiceMode;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.dto.NamedPort;
-import org.dropco.smarthome.gpioextension.DelayedGpioPinListener;
 import org.dropco.smarthome.gpioextension.ExtendedGpioProvider;
 import org.dropco.smarthome.gpioextension.ExtendedPin;
 import org.dropco.smarthome.solar.move.SafetySolarPanel;
@@ -32,10 +33,10 @@ public class SolarMain {
         ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.WEST_PIN_REF_CD, "Kolektory - Západ"), key -> Main.getOutput(getExtendedProvider(), ExtendedPin.class, key));
         ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.NORTH_PIN_REF_CD, "Kolektory - Sever"), key -> Main.getOutput(getExtendedProvider(), ExtendedPin.class, key));
         ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.SOUTH_PIN_REF_CD, "Kolektory - Juh"), key -> Main.getOutput(getExtendedProvider(), ExtendedPin.class, key));
-        ServiceMode.addInput(new NamedPort(STRONG_WIND_PIN_REF_CD, "Silný vietor"), ()->Main.getInput(STRONG_WIND_PIN_REF_CD).isHigh());
-        ServiceMode.addInput(new NamedPort("STRONG_WIND_LIMIT", "Silný vietor - limit splnený"), ()->StrongWind.isWindy());
-        ServiceMode.addInput(new NamedPort(DAY_LIGHT_PIN_REF_CD, "Jas"), ()->Main.getInput(DAY_LIGHT_PIN_REF_CD).isHigh());
-        ServiceMode.addInput(new NamedPort("DAY_LIGHT_LIMIT", "Jas - limit splnený"), ()->DayLight.enoughLight());
+        ServiceMode.addInput(new NamedPort(STRONG_WIND_PIN_REF_CD, "Silný vietor"), () -> Main.getInput(STRONG_WIND_PIN_REF_CD).isHigh());
+        ServiceMode.addInput(new NamedPort("STRONG_WIND_LIMIT", "Silný vietor - limit splnený"), () -> StrongWind.isWindy());
+        ServiceMode.addInput(new NamedPort(DAY_LIGHT_PIN_REF_CD, "Jas"), () -> Main.getInput(DAY_LIGHT_PIN_REF_CD).isHigh());
+        ServiceMode.addInput(new NamedPort("DAY_LIGHT_LIMIT", "Jas - limit splnený"), () -> DayLight.inst().enoughLight());
         ServiceMode.getExclusions().put(SolarSystemRefCode.EAST_PIN_REF_CD, SolarSystemRefCode.WEST_PIN_REF_CD);
         ServiceMode.getExclusions().put(SolarSystemRefCode.WEST_PIN_REF_CD, SolarSystemRefCode.EAST_PIN_REF_CD);
         ServiceMode.getExclusions().put(SolarSystemRefCode.NORTH_PIN_REF_CD, SolarSystemRefCode.SOUTH_PIN_REF_CD);
@@ -43,7 +44,8 @@ public class SolarMain {
         ServiceMode.addSubsriber(state -> {
             if (state) SolarPanelThreadManager.stop();
         });
-        DayLight.connect(Main.getInput(DAY_LIGHT_PIN_REF_CD),()-> (int)settingsDao.getLong(LIGHT_THRESHOLD));
+        DayLight.setInstance(Main.getInput(DAY_LIGHT_PIN_REF_CD), () -> (int) settingsDao.getLong(LIGHT_THRESHOLD));
+        DayLight.inst().connect();
         SolarSystemDao solarSystemDao = new SolarSystemDao(settingsDao);
         SolarPanelThreadManager.delaySupplier = (solarSystemDao::getDelay);
         SolarPanelMover.setCommandExecutor((key, value) -> Main.getOutput(getExtendedProvider(), ExtendedPin.class, key).setState(value));
@@ -52,11 +54,13 @@ public class SolarMain {
         AtomicBoolean solarOverHeated = new AtomicBoolean(false);
         SafetySolarPanel safetySolarPanel = new SafetySolarPanel(solarOverHeated, () -> solarSystemDao.getOverheatedPosition(), () -> solarSystemDao.getStrongWindPosition());
         overHeatedHandler(solarOverHeated, safetySolarPanel);
-        StrongWind.connect(Main.getInput(STRONG_WIND_PIN_REF_CD),safetySolarPanel);
+        StrongWind.connect(Main.getInput(STRONG_WIND_PIN_REF_CD), safetySolarPanel);
         SolarSystemScheduler solarSystemScheduler = new SolarSystemScheduler(solarSystemDao);
         solarSystemScheduler.moveToLastPosition(safetySolarPanel);
         solarSystemScheduler.schedule(safetySolarPanel);
-
+        DayLight.inst().subscribe(enoughLight -> {
+            if (enoughLight) safetySolarPanel.backToNormal();
+        });
     }
 
 

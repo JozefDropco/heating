@@ -33,7 +33,7 @@ public class SafetySolarPanel {
             return;
         }
         if (!overHeated.get() && !StrongWind.isWindy()) {
-            if (ignoreDaylight || DayLight.enoughLight())
+            if (ignoreDaylight || DayLight.inst().enoughLight())
                 SolarPanelThreadManager.move(horizontal, vertical);
             else
                 logger.log(Level.INFO, "Nová pozícia uložená, ale posun zastavený kvôli nedostatku jasu.");

@@ -41,7 +41,7 @@ public class SolarWebService {
     @Path("/daylight")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getDayLight()  {
-        return Response.ok(new Gson().toJson(DayLight.enoughLight())).build();
+        return Response.ok(new Gson().toJson(DayLight.inst().enoughLight())).build();
     }
 
     @GET

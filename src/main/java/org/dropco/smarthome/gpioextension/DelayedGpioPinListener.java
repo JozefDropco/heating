@@ -38,7 +38,7 @@ public abstract class DelayedGpioPinListener implements GpioPinListenerDigital {
         }
     }
 
-    protected void delayedCheck() {
+    public void delayedCheck() {
         inWaitMode.set(GpioFactory.getExecutorServiceFactory().getScheduledExecutorService().schedule(() -> {
             inWaitMode.set(null);
             if (sourcePin.getState() == triggerState) {
