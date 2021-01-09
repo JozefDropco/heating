@@ -43,7 +43,6 @@ public class TempWebService {
             Series currSeries = seriesMap.computeIfAbsent(tuple.get(LogDao._log.placeRefCd), key -> {
                 Series series = new Series();
                 series.placeRefCd = key;
-                series.deviceId = tuple.get(LogDao._log.devideId);
                 series.name = new HeatingDao().getMeasurePlaceByRefCd(key).get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.name);
                 return series;
             });
@@ -83,7 +82,6 @@ public class TempWebService {
             Series currSeries = seriesMap.computeIfAbsent(tuple.get(LogDao._log.placeRefCd), key -> {
                 Series series = new Series();
                 series.placeRefCd = key;
-                series.deviceId = tuple.get(LogDao._log.devideId);
                 series.name = new HeatingDao().getMeasurePlaceByRefCd(key).get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.name);
                 return series;
             });
@@ -184,7 +182,6 @@ public class TempWebService {
     private static class Series{
         String name;
         String placeRefCd;
-        String deviceId;
         List<Data> data= Lists.newArrayList();
     }
 
