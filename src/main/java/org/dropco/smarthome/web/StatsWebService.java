@@ -40,9 +40,9 @@ public class StatsWebService {
         for (LogDao.AggregateTemp temp : temperatures) {
             temp.measurePlace = new HeatingDao().getMeasurePlaceByRefCd(temp.measurePlace).get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.name);
         }
-        List<StatsDao.AggregatedStats> aggregatedStats = new StatsDao().listAggregatedStats(from, to);
+       // List<StatsDao.AggregatedStats> aggregatedStats = new StatsDao().listAggregatedStats(from, to);
         FullStats fullStats = new FullStats();
-        fullStats.ports = aggregatedStats;
+        //fullStats.ports = aggregatedStats;
         fullStats.temps = temperatures;
         return Response.ok(new GsonBuilder().setDateFormat("MM-dd-yyyy HH:mm:ss z").create().toJson(temperatures)).build();
     }
