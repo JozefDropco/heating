@@ -44,7 +44,7 @@ public class StatsWebService {
         FullStats fullStats = new FullStats();
         fullStats.ports = aggregatedStats;
         fullStats.temps = temperatures;
-        return Response.ok(new GsonBuilder().setDateFormat("MM-dd-yyyy HH:mm:ss z").create().toJson(fullStats)).build();
+        return Response.ok(new GsonBuilder().setDateFormat("MM-dd-yyyy HH:mm:ss z").create().toJson(temperatures)).build();
     }
 
     private class FullStats {
