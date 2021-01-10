@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.pi4j.io.gpio.GpioPinDigitalInput;
 import com.pi4j.io.gpio.PinState;
 import com.pi4j.io.gpio.event.GpioPinListenerDigital;
+import org.dropco.smarthome.stats.StatsCollector;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -18,6 +19,7 @@ public class RainSensor {
     private static final List<Consumer<Boolean>> subscribers = Lists.newArrayList();
 
     public static void start(GpioPinDigitalInput input) {
+        StatsCollector.getInstance().collect("Dážď",input);
         raining.set(input.getState() == RAIN_STATE);
         input.setDebounce(1000);
         input.addListener((GpioPinListenerDigital) event -> {

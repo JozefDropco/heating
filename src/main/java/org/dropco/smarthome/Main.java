@@ -8,15 +8,14 @@ import org.dropco.smarthome.heating.HeatingWorker;
 import org.dropco.smarthome.microservice.RainSensor;
 import org.dropco.smarthome.microservice.WaterPumpFeedback;
 import org.dropco.smarthome.solar.SolarMain;
+import org.dropco.smarthome.stats.StatsCollector;
 import org.dropco.smarthome.temp.TempService;
 import org.dropco.smarthome.watering.WateringMain;
 import org.dropco.smarthome.web.WebServer;
 
 import java.lang.reflect.InvocationTargetException;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.sql.SQLOutput;
+import java.util.*;
 
 
 public class Main {
@@ -33,6 +32,7 @@ public class Main {
         new Thread(new TempService()).start();
         WebServer webServer = new WebServer();
         webServer.start();
+        StatsCollector.getInstance().start();
         Set<String> inputs = Sets.newHashSet(args);
         if (!inputs.contains("--noWatering")) {
             ServiceMode.addInput(new NamedPort(WaterPumpFeedback.getMicroServicePinKey(), "Stav čerpadla"), ()->Main.getInput(WaterPumpFeedback.getMicroServicePinKey()).isHigh());
@@ -49,6 +49,9 @@ public class Main {
         if (inputs.contains("--solar")) {
             SolarMain.main(settingsDao);
         }
+        ServiceMode.getOutputs().forEach(namedPort -> {
+            StatsCollector.getInstance().collect(namedPort.getName(),ServiceMode.getPort(namedPort.getRefCd()));
+        });
         webServer.join();
     }
 

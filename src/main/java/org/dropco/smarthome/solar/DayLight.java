@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.pi4j.io.gpio.GpioPinDigitalInput;
 import com.pi4j.io.gpio.PinState;
 import org.dropco.smarthome.gpioextension.DelayedGpioPinListener;
+import org.dropco.smarthome.stats.StatsCollector;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -40,6 +41,7 @@ public class DayLight {
     }
 
     public void connect() {
+        StatsCollector.getInstance().collect("Jas",input);
         pinListener = new DelayedGpioPinListener(PinState.HIGH, lightThreshold.get(), input) {
 
 
