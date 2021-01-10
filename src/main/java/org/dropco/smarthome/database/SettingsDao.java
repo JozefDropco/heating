@@ -1,6 +1,7 @@
 package org.dropco.smarthome.database;
 
 import com.querydsl.core.Tuple;
+import com.querydsl.sql.MySQLTemplates;
 import com.querydsl.sql.SQLTemplates;
 import com.querydsl.sql.dml.SQLUpdateClause;
 import com.querydsl.sql.mysql.MySQLQuery;
@@ -17,6 +18,7 @@ import static org.dropco.smarthome.database.querydsl.LongSetting.LONG;
 import static org.dropco.smarthome.database.querydsl.StringSetting.STRING;
 
 public class SettingsDao {
+    protected static final SQLTemplates SQL_TEMPLATES = new MySQLTemplates();
     private Map<String, String> stringCacheMap = new HashMap<>();
     private Map<String, Long> longCacheMap = new HashMap<>();
     private Map<String, Double> doubleCacheMap = new HashMap<>();
@@ -73,7 +75,7 @@ public class SettingsDao {
     }
 
     public void setLong(String key, long value) {
-        long execute = new SQLUpdateClause(getConnection(), SQLTemplates.DEFAULT, LONG)
+        long execute = new SQLUpdateClause(getConnection(), SQL_TEMPLATES, LONG)
                 .set(LONG.modifiedTs, new Date())
                 .set(LONG.value, value)
                 .where(LONG.refCd.eq(key))
@@ -83,7 +85,7 @@ public class SettingsDao {
     }
 
     public void setDouble(String key, double value) {
-        long execute = new SQLUpdateClause(getConnection(), SQLTemplates.DEFAULT, DOUBLE)
+        long execute = new SQLUpdateClause(getConnection(), SQL_TEMPLATES, DOUBLE)
                 .set(DOUBLE.modifiedTs, new Date())
                 .set(DOUBLE.value, value)
                 .where(DOUBLE.refCd.eq(key))
@@ -92,7 +94,7 @@ public class SettingsDao {
     }
 
     public void setString(String key, String value) {
-        long execute = new SQLUpdateClause(getConnection(), SQLTemplates.DEFAULT, STRING)
+        long execute = new SQLUpdateClause(getConnection(), SQL_TEMPLATES, STRING)
                 .set(STRING.modifiedTs, new Date())
                 .set(STRING.value, value)
                 .where(STRING.refCd.eq(key))

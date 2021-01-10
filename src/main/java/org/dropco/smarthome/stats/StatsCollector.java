@@ -20,7 +20,7 @@ public class StatsCollector {
 
     private StatsDao statsDao = new StatsDao();
     private SettingsDao settingsDao = new SettingsDao();
-    private Map<GpioPinListenerDigital, Long> lastIdMap = Collections.synchronizedMap(new HashMap <>());
+    private Map<String, Long> lastIdMap = Collections.synchronizedMap(new HashMap <>());
     private SimpleDateFormat format = new SimpleDateFormat("dd. MM. yyyy HH:mm:ss z");
 
     public  void start() throws ParseException {
@@ -35,24 +35,25 @@ public class StatsCollector {
     }
 
     public void collect(String name, GpioPinDigital port){
+        Logger.getLogger(StatsCollector.class.getName()).log(Level.INFO,name+" zbieram statistiky.");
         GpioPinListenerDigital listener = new GpioPinListenerDigital() {
             @Override
             public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent gpioPinDigitalStateChangeEvent) {
                 PinState state = gpioPinDigitalStateChangeEvent.getState();
-                handle(state,name, this);
+                handle(state,name);
             }
         };
-        if (port.isHigh()) handle(port.getState(),name,listener);
+        if (port.isHigh()) handle(port.getState(),name);
         port.addListener(listener);
     }
 
 
-    private void handle(PinState state, String name, GpioPinListenerDigital src) {
+    private void handle(PinState state, String name) {
         if (state.isHigh()){
             long id =statsDao.addEntry(name, new Date());
-            lastIdMap.put(src,id);
+            lastIdMap.put(name,id);
         } else {
-            Long previousId = lastIdMap.remove(src);
+            Long previousId = lastIdMap.remove(name);
             if (previousId!=null){
                 statsDao.finishEntry(previousId,new Date());
             }
