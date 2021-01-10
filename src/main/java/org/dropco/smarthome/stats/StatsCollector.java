@@ -52,7 +52,7 @@ public class StatsCollector {
             long id =statsDao.addEntry(name, new Date());
             lastIdMap.put(src,id);
         } else {
-            Long previousId = lastIdMap.remove(this);
+            Long previousId = lastIdMap.remove(src);
             if (previousId!=null){
                 statsDao.finishEntry(previousId,new Date());
             }
