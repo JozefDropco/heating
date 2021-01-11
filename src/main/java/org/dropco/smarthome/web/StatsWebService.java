@@ -35,6 +35,10 @@ public class StatsWebService {
         instance.add(Calendar.DAY_OF_YEAR, 1);
         instance.add(Calendar.SECOND, -1);
         to = instance.getTime();
+        Date date = new Date();
+        if (date.before(to)){
+            to=date;
+        }
         List<LogDao.AggregateTemp> temperatures = new LogDao().retrieveAggregatedTemperatures(from, to);
         for (LogDao.AggregateTemp temp : temperatures) {
             temp.measurePlace = new HeatingDao().getMeasurePlaceByRefCd(temp.measurePlace).get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.name);

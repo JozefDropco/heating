@@ -25,7 +25,7 @@ import static org.dropco.smarthome.database.DBConnection.getConnection;
 public class StatsDao {
     public static Stats _s = new Stats("s");
 
-    private static final Template secondsDiff = TemplateFactory.DEFAULT.create("TIMESTAMPDIFF(SECOND,IFNULL({0},NOW()),{1})");
+    private static final Template secondsDiff = TemplateFactory.DEFAULT.create("TIMESTAMPDIFF(SECOND,{0},IF({1}<{2},{1},{2}))");
 
     public void markAllFinished(Date date) {
         new SQLUpdateClause(getConnection(), SQLTemplates.DEFAULT, _s)
@@ -49,13 +49,13 @@ public class StatsDao {
     }
 
     public List<AggregatedStats> listAggregatedStats(Date from, Date to){
-        NumberTemplate<Long> diff = Expressions.numberTemplate(Long.class, secondsDiff, _s.toDate, _s.fromDate);
+        NumberTemplate<Long> diff = Expressions.numberTemplate(Long.class, secondsDiff, _s.fromDate,_s.toDate,to);
         NumberExpression<Long> cnt = _s.count().as("cnt");
         NumberExpression<Long> sum = diff.sum().as("sum");
         List<Tuple> result = new MySQLQuery<StringSetting>(getConnection()).select(_s.name,
                 cnt,
                 sum
-        ).from(_s).where(_s.fromDate.goe(from).and(_s.toDate.loe(to)))
+        ).from(_s).where(_s.fromDate.goe(from).and(_s.fromDate.loe(to)))
                 .groupBy(_s.name)
                 .orderBy(_s.name.asc()).fetch();
         return Lists.transform(result,tmp->{

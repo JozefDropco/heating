@@ -60,7 +60,10 @@ public class StatsCollector {
                 name=name.substring(0,99);
             }
             long id = statsDao.addEntry(name, new Date());
-            lastIdMap.put(name, id);
+            Long prevId = lastIdMap.put(name, id);
+            if (prevId!=null){
+                statsDao.finishEntry(prevId, new Date());
+            }
         } else {
             Long previousId = lastIdMap.remove(name);
             if (previousId != null) {
