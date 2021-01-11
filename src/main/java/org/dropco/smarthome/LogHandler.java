@@ -2,9 +2,7 @@ package org.dropco.smarthome;
 
 import org.dropco.smarthome.database.LogDao;
 
-import java.io.*;
 import java.util.Date;
-import java.util.logging.ErrorManager;
 import java.util.logging.Formatter;
 import java.util.logging.Handler;
 import java.util.logging.LogRecord;
