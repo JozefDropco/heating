@@ -26,8 +26,8 @@ public class Stats extends com.querydsl.sql.RelationalPathBase<Stats> {
     public final StringPath name = createString("name");
 
 
-    public final DateTimePath<Date> fromDate = createDateTime("toDate", Date.class);
-    public final DateTimePath<Date> toDate = createDateTime("fromDate", Date.class);
+    public final DateTimePath<Date> fromDate = createDateTime("fromDate", Date.class);
+    public final DateTimePath<Date> toDate = createDateTime("toDate", Date.class);
 
 
     public final com.querydsl.sql.PrimaryKey<Stats> pk = createPrimaryKey(id);
