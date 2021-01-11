@@ -1,18 +1,13 @@
 package org.dropco.smarthome.web;
 
-import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.pi4j.io.gpio.GpioPinDigitalOutput;
 import com.querydsl.core.Tuple;
-import org.dropco.smarthome.ServiceMode;
 import org.dropco.smarthome.database.LogDao;
 import org.dropco.smarthome.database.querydsl.TemperatureMeasurePlace;
-import org.dropco.smarthome.dto.NamedPort;
 import org.dropco.smarthome.heating.db.HeatingDao;
-import org.dropco.smarthome.web.dto.Port;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -22,7 +17,6 @@ import java.math.RoundingMode;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Path("/ws/temp")
@@ -40,18 +34,18 @@ public class TempWebService {
         Map<String , Series> seriesMap = Maps.newHashMap();
         Date dataLastDate = new Date(from.getTime());
         for (Tuple tuple: temperatures){
-            Series currSeries = seriesMap.computeIfAbsent(tuple.get(LogDao._log.placeRefCd), key -> {
+            Series currSeries = seriesMap.computeIfAbsent(tuple.get(LogDao._tlog.placeRefCd), key -> {
                 Series series = new Series();
                 series.placeRefCd = key;
                 series.name = new HeatingDao().getMeasurePlaceByRefCd(key).get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.name);
                 return series;
             });
             Data data = new Data();
-            data.x=tuple.get(LogDao._log.timestamp);
+            data.x=tuple.get(LogDao._tlog.timestamp);
             if (dataLastDate.before(data.x)){
                 dataLastDate=data.x;
             }
-            data.y=new BigDecimal(tuple.get(LogDao._log.value).toString()).setScale(1, RoundingMode .HALF_UP).doubleValue();
+            data.y=new BigDecimal(tuple.get(LogDao._tlog.value).toString()).setScale(1, RoundingMode .HALF_UP).doubleValue();
             currSeries.data.add(data);
         }
 
@@ -79,18 +73,18 @@ public class TempWebService {
         Map<String , Series> seriesMap = Maps.newHashMap();
         Date dataLastDate = new Date(last.getTime());
         for (Tuple tuple: temperatures){
-            Series currSeries = seriesMap.computeIfAbsent(tuple.get(LogDao._log.placeRefCd), key -> {
+            Series currSeries = seriesMap.computeIfAbsent(tuple.get(LogDao._tlog.placeRefCd), key -> {
                 Series series = new Series();
                 series.placeRefCd = key;
                 series.name = new HeatingDao().getMeasurePlaceByRefCd(key).get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.name);
                 return series;
             });
             Data data = new Data();
-            data.x=tuple.get(LogDao._log.timestamp);
+            data.x=tuple.get(LogDao._tlog.timestamp);
             if (dataLastDate.before(data.x)){
                 dataLastDate=data.x;
             }
-            data.y=new BigDecimal(tuple.get(LogDao._log.value).toString()).setScale(1, RoundingMode .HALF_UP).doubleValue();
+            data.y=new BigDecimal(tuple.get(LogDao._tlog.value).toString()).setScale(1, RoundingMode .HALF_UP).doubleValue();
             currSeries.data.add(data);
         }
         TempResult tempResult = new TempResult();

@@ -5,16 +5,31 @@ package org.dropco.smarthome.web.dto;
  */
 public class Port {
     private String refcd;
+    private String url;
     private String name;
     private String value;
 
     public Port() {
     }
 
-    public Port(String key,String name, String value) {
+    public Port(String key, String url, String name, String value) {
         this.refcd = key;
+        this.url = url;
         this.name = name;
         this.value = value;
+    }
+
+    /***
+     * Gets the url
+     * @return
+     */
+    public String getUrl() {
+        return url;
+    }
+
+    public Port setUrl(String url) {
+        this.url = url;
+        return this;
     }
 
     public String getName() {

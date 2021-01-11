@@ -1,9 +1,6 @@
 package org.dropco.smarthome.gpioextension;
 
-import com.pi4j.io.gpio.GpioFactory;
-import com.pi4j.io.gpio.GpioPinDigitalInput;
-import com.pi4j.io.gpio.GpioPinDigitalOutput;
-import com.pi4j.io.gpio.PinState;
+import com.pi4j.io.gpio.*;
 import com.pi4j.io.gpio.event.GpioPinDigitalStateChangeEvent;
 import com.pi4j.io.gpio.event.GpioPinListenerDigital;
 
@@ -15,9 +12,9 @@ public abstract class DelayedGpioPinListener implements GpioPinListenerDigital {
     private PinState triggerState;
     private long waitTimeInMillis;
     private AtomicReference<ScheduledFuture> inWaitMode = new AtomicReference<>();
-    private GpioPinDigitalInput sourcePin;
+    private GpioPinDigital sourcePin;
 
-    public DelayedGpioPinListener(PinState triggerState, long waitTimeInMillis, GpioPinDigitalInput sourcePin) {
+    public DelayedGpioPinListener(PinState triggerState, long waitTimeInMillis, GpioPinDigital sourcePin) {
         this.triggerState = triggerState;
         this.waitTimeInMillis = waitTimeInMillis;
         this.sourcePin = sourcePin;

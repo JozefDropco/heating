@@ -21,7 +21,8 @@ public class SolarSystemScheduler {
 
     public void moveToLastPosition(SafetySolarPanel safetySolarPanel){
         SolarPanelStepRecord solarPanelStepRecord = solarSystemDao.getRecentRecord(Calendar.getInstance());
-        logger.log(Level.INFO, "Making sure solar panel is in last position after restart "+solarPanelStepRecord);
+        logger.log(Level.INFO, "Posun na poslednú pozíciu podľa rozvruhu");
+        logger.log(Level.FINE, "Posledná pozícia"+solarPanelStepRecord);
         new Thread(new SolarSystemScheduledWork(safetySolarPanel, solarPanelStepRecord.getIgnoreDaylight(), solarPanelStepRecord.getPanelPosition())).start();
     }
     public void schedule(SafetySolarPanel safetySolarPanel) {

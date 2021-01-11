@@ -24,9 +24,8 @@ public class StatsWebService {
     private static final Logger logger = Logger.getLogger(StatsWebService.class.getName());
 
     @GET
-    @Path("/temp")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response temperaturesPerPlace(@QueryParam("fromDate") String fromString, @QueryParam("toDate") String toString) throws ParseException {
+    public Response stats(@QueryParam("fromDate") String fromString, @QueryParam("toDate") String toString) throws ParseException {
         //2020-12-21
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
         Date from = format.parse(fromString);

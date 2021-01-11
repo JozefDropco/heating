@@ -15,7 +15,7 @@ import java.util.function.BiConsumer;
 public class Boiler implements Runnable {
 
     private static final ScheduledExecutorService EXECUTOR_SERVICE = GpioFactory.getExecutorServiceFactory().getScheduledExecutorService();
-    static final String BOILER_PORT_KEY = "BOILER_PORT_KEY";
+    static final String BOILER_PORT_KEY = "BOILER_PORT";
     static final Semaphore update = new Semaphore(0);
     private BiConsumer<String, Boolean> commandExecutor;
     static AtomicBoolean state = new AtomicBoolean(false);

@@ -2,6 +2,7 @@ package org.dropco.smarthome.solar;
 
 import com.google.common.collect.Lists;
 import com.pi4j.io.gpio.GpioPinDigitalInput;
+import com.pi4j.io.gpio.PinMode;
 import com.pi4j.io.gpio.PinState;
 import org.dropco.smarthome.gpioextension.DelayedGpioPinListener;
 import org.dropco.smarthome.stats.StatsCollector;

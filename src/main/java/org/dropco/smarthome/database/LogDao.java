@@ -7,10 +7,12 @@ import com.querydsl.core.types.TemplateFactory;
 import com.querydsl.core.types.dsl.DateExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
+import com.querydsl.sql.MySQLTemplates;
 import com.querydsl.sql.SQLTemplates;
 import com.querydsl.sql.dml.SQLInsertClause;
 import com.querydsl.sql.dml.SQLUpdateClause;
 import com.querydsl.sql.mysql.MySQLQuery;
+import org.dropco.smarthome.database.querydsl.AppLog;
 import org.dropco.smarthome.database.querydsl.StringSetting;
 import org.dropco.smarthome.database.querydsl.TemperatureLog;
 
@@ -22,65 +24,100 @@ import static org.dropco.smarthome.database.DBConnection.getConnection;
 public class LogDao {
 
     private static final Template leaveoutminutes = TemplateFactory.DEFAULT.create("STR_TO_DATE(DATE_FORMAT({0},'%Y-%m-%d %H'),'%Y-%m-%d %H')");
-    public static TemperatureLog _log = new TemperatureLog("log");
+    protected static final SQLTemplates SQL_TEMPLATES = new MySQLTemplates();
+    public static TemperatureLog _tlog = new TemperatureLog("log");
+    public static AppLog _alog = new AppLog("alg");
 
     public void logTemperature(String deviceId, String placeRefCd, Date date, double temperature) {
-        new SQLInsertClause(getConnection(), SQLTemplates.DEFAULT, _log)
-                .set(_log.devideId, deviceId)
-                .set(_log.placeRefCd, placeRefCd)
-                .set(_log.timestamp, date)
-                .set(_log.value, temperature)
+        new SQLInsertClause(getConnection(), SQL_TEMPLATES, _tlog)
+                .set(_tlog.devideId, deviceId)
+                .set(_tlog.placeRefCd, placeRefCd)
+                .set(_tlog.timestamp, date)
+                .set(_tlog.value, temperature)
                 .execute();
     }
 
     public List<Tuple> retrieveTemperaturesWithPlaces(Date from, Date to) {
-        DateExpression<Date> removeMinutes = Expressions.dateTemplate(Date.class, leaveoutminutes, _log.timestamp);
-        return new MySQLQuery<StringSetting>(getConnection()).select(_log.placeRefCd,
-                removeMinutes.as(_log.timestamp),
-                _log.value.avg().as(_log.value)).from(_log).
-                where(_log.placeRefCd.isNotNull()
-                        .and(_log.timestamp.goe(from))
-                        .and(_log.timestamp.loe(to))
+        DateExpression<Date> removeMinutes = Expressions.dateTemplate(Date.class, leaveoutminutes, _tlog.timestamp);
+        return new MySQLQuery<StringSetting>(getConnection()).select(_tlog.placeRefCd,
+                removeMinutes.as(_tlog.timestamp),
+                _tlog.value.avg().as(_tlog.value)).from(_tlog).
+                where(_tlog.placeRefCd.isNotNull()
+                        .and(_tlog.timestamp.goe(from))
+                        .and(_tlog.timestamp.loe(to))
                 )
-                .groupBy(_log.placeRefCd, removeMinutes)
-                .orderBy(_log.placeRefCd.asc(), _log.timestamp.asc()).fetch();
+                .groupBy(_tlog.placeRefCd, removeMinutes)
+                .orderBy(_tlog.placeRefCd.asc(), _tlog.timestamp.asc()).fetch();
 
 
     }
 
     public List<String> listUnassignedDeviceIds() {
-        return new MySQLQuery<StringSetting>(getConnection()).select(_log.devideId).from(_log).
-                where(_log.placeRefCd.isNull()).fetch();
+        return new MySQLQuery<StringSetting>(getConnection()).select(_tlog.devideId).from(_tlog).
+                where(_tlog.placeRefCd.isNull()).fetch();
     }
 
     public void updateLogs(String deviceId, String refCd) {
-        new SQLUpdateClause(getConnection(), SQLTemplates.DEFAULT, _log)
-                .set(_log.placeRefCd, refCd)
-                .where(_log.devideId.eq(deviceId))
+        new SQLUpdateClause(getConnection(), SQL_TEMPLATES, _tlog)
+                .set(_tlog.placeRefCd, refCd)
+                .where(_tlog.devideId.eq(deviceId))
                 .execute();
     }
 
     public List<AggregateTemp> retrieveAggregatedTemperatures(Date from, Date to) {
-        NumberExpression<Double> min = _log.value.min().as("min");
-        NumberExpression<Double> max = _log.value.max().as("max");
-        NumberExpression<Double> avg = _log.value.avg().as("avg");
-        List<Tuple> result = new MySQLQuery<StringSetting>(getConnection()).select(_log.placeRefCd,
+        NumberExpression<Double> min = _tlog.value.min().as("min");
+        NumberExpression<Double> max = _tlog.value.max().as("max");
+        NumberExpression<Double> avg = _tlog.value.avg().as("avg");
+        List<Tuple> result = new MySQLQuery<StringSetting>(getConnection()).select(_tlog.placeRefCd,
                 min,
                 max,
                 avg
-        ).from(_log).
-                where(_log.placeRefCd.isNotNull()
-                        .and(_log.timestamp.goe(from))
-                        .and(_log.timestamp.loe(to))
+        ).from(_tlog).
+                where(_tlog.placeRefCd.isNotNull()
+                        .and(_tlog.timestamp.goe(from))
+                        .and(_tlog.timestamp.loe(to))
                 )
-                .groupBy(_log.placeRefCd)
-                .orderBy(_log.placeRefCd.asc()).fetch();
+                .groupBy(_tlog.placeRefCd)
+                .orderBy(_tlog.placeRefCd.asc()).fetch();
         return Lists.transform(result, tuple -> {
             AggregateTemp temp = new AggregateTemp();
-            temp.measurePlace = tuple.get(_log.placeRefCd);
+            temp.measurePlace = tuple.get(_tlog.placeRefCd);
             temp.min = tuple.get(min);
             temp.max = tuple.get(max);
             temp.avg = tuple.get(avg);
+            return temp;
+        });
+
+    }
+
+    public void addLogMessage(long seqId,Date date, String logLevel, String message) {
+        new SQLInsertClause(getConnection(), SQL_TEMPLATES, _alog)
+                .set(_alog.date, date)
+                .set(_alog.seqId, seqId)
+                .set(_alog.logLevel, logLevel)
+                .set(_alog.message, message)
+                .execute();
+    }
+
+    public List<AppMsg> getLogs(Date from, Date to, int maxCount, List<String> levels) {
+        NumberExpression<Integer> hour = _alog.date.hour().as("hour");
+        NumberExpression<Integer> min = _alog.date.minute().as("min");
+        List<Tuple> result = new MySQLQuery<StringSetting>(getConnection()).select(hour,
+                min,
+                _alog.message,
+                _alog.id
+        ).from(_alog).
+                where(_alog.logLevel.in(levels)
+                        .and(_alog.date.goe(from))
+                        .and(_alog.date.loe(to))
+                )
+                .orderBy(_alog.date.desc()).limit(maxCount).fetch();
+        return Lists.transform(result, tuple -> {
+            AppMsg temp = new AppMsg();
+            temp.id = tuple.get(_alog.id);
+            temp.hour = String.format("%02d", tuple.get(hour));
+            temp.minute = String.format("%02d", tuple.get(min));
+            temp.message = tuple.get(_alog.message);
             return temp;
         });
 
@@ -91,6 +128,13 @@ public class LogDao {
         public double min;
         public double max;
         public double avg;
+
+    }
+    public static class AppMsg {
+        public long id;
+        public String hour;
+        public String minute;
+        public String message;
 
     }
 }
