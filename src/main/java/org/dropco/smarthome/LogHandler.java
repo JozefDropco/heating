@@ -20,7 +20,7 @@ public class LogHandler extends Handler {
         Formatter formatter = getFormatter();
         String message = (formatter!=null)? formatter.formatMessage(record): record.getMessage();
             synchronized (writeLock) {
-                logDao.addLogMessage(record.getSequenceNumber(),new Date(record.getMillis()),record.getLevel().getName(),message);
+                logDao.addLogMessage(record.getSequenceNumber(),new Date(record.getMillis()),record.getLevel().getName(),message.substring(0,255));
             }
     }
 
