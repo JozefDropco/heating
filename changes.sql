@@ -4,7 +4,7 @@ create table `APP_LOG`
     SEQ_ID integer not null,
     LOG_LEVEL varchar(10) not null,
     MSG_DATE timestamp not null,
-    MESSAGE varchar(256) null CHARACTER SET utf8,
+    MESSAGE varchar(256) null,
     constraint APP_LOG_PK
         primary key (ID)
 );
