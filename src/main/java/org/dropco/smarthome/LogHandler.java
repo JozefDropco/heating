@@ -16,10 +16,13 @@ public class LogHandler extends Handler {
     public void publish(LogRecord record) {
         if (!isLoggable(record)) return;
         Formatter formatter = getFormatter();
-        String message = (formatter!=null)? formatter.formatMessage(record): record.getMessage();
-            synchronized (writeLock) {
-                logDao.addLogMessage(record.getSequenceNumber(),new Date(record.getMillis()),record.getLevel().getName(),message.substring(0,255));
-            }
+        String message = (formatter != null) ? formatter.formatMessage(record) : record.getMessage();
+        if (message.length() > 256) {
+            message = message.substring(0, 255);
+        }
+        synchronized (writeLock) {
+            logDao.addLogMessage(record.getSequenceNumber(), new Date(record.getMillis()), record.getLevel().getName(), message);
+        }
     }
 
     @Override

@@ -33,7 +33,7 @@ public class Main {
         new Thread(new TempService()).start();
         WebServer webServer = new WebServer();
         webServer.start();
-        Logger.getLogger("org.dropco.smarthome").addHandler(new LogHandler());
+        Logger.getLogger("").addHandler(new LogHandler());
         StatsCollector.getInstance().start();
         Set<String> inputs = Sets.newHashSet(args);
         if (!inputs.contains("--noWatering")) {

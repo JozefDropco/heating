@@ -56,7 +56,10 @@ public class StatsCollector {
 
     private void handle(PinState state, String name) {
         if (state.isHigh()) {
-            long id = statsDao.addEntry(name.substring(0,99), new Date());
+            if (name.length()>100){
+                name=name.substring(0,99);
+            }
+            long id = statsDao.addEntry(name, new Date());
             lastIdMap.put(name, id);
         } else {
             Long previousId = lastIdMap.remove(name);
