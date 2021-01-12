@@ -23,7 +23,7 @@ public class CircularPumpTest {
         CircularPump pump= spy(new CircularPump(COMMAND_EXECUTOR));
         doAnswer(mock -> 10.0d).when(pump).getStartThreshold();
         doAnswer(mock -> 5.0d).when(pump).getStopThreshold();
-        doAnswer(mock -> "Ke").when(pump).getCircularPumpPort();
+        doAnswer(mock -> "Ke").when(pump);
         doAnswer(mock -> (mock.getArgument(0).equals(CircularPump.T1_TEMP_KEY)) ? "D1" : "D2").when(pump).getDeviceId(any());
 
         TempService.setTemperature("D1",10.0);
@@ -42,7 +42,7 @@ public class CircularPumpTest {
         CircularPump pump= spy(new CircularPump(COMMAND_EXECUTOR));
         doAnswer(mock -> 10.0d).when(pump).getStartThreshold();
         doAnswer(mock -> 5.0d).when(pump).getStopThreshold();
-        doAnswer(mock -> "Ke").when(pump).getCircularPumpPort();
+        doAnswer(mock -> "Ke").when(pump);
         doAnswer(mock -> (mock.getArgument(0).equals(CircularPump.T1_TEMP_KEY)) ? "D1" : "D2").when(pump).getDeviceId(any());
 
         TempService.setTemperature("D1",70.0);
@@ -62,7 +62,7 @@ public class CircularPumpTest {
         CircularPump pump= spy(new CircularPump(COMMAND_EXECUTOR));
         doAnswer(mock -> 10.0d).when(pump).getStartThreshold();
         doAnswer(mock -> 5.0d).when(pump).getStopThreshold();
-        doAnswer(mock -> "Ke").when(pump).getCircularPumpPort();
+        doAnswer(mock -> "Ke").when(pump);
         doAnswer(mock -> (mock.getArgument(0).equals(CircularPump.T1_TEMP_KEY)) ? "D1" : "D2").when(pump).getDeviceId(any());
 
         TempService.setTemperature("D1",77.0);
@@ -81,7 +81,7 @@ public class CircularPumpTest {
         CircularPump pump= spy(new CircularPump(COMMAND_EXECUTOR));
         doAnswer(mock -> 10.0d).when(pump).getStartThreshold();
         doAnswer(mock -> 5.0d).when(pump).getStopThreshold();
-        doAnswer(mock -> "Ke").when(pump).getCircularPumpPort();
+        doAnswer(mock -> "Ke").when(pump);
         doAnswer(mock -> (mock.getArgument(0).equals(CircularPump.T1_TEMP_KEY)) ? "D1" : "D2").when(pump).getDeviceId(any());
 
         TempService.setTemperature("D1",77.0);

@@ -32,7 +32,7 @@ public class CircularPump implements Runnable {
         this.commandExecutor = commandExecutor;
         ServiceMode.addSubsriber(mode -> {
             if (state.get() && mode) {
-                commandExecutor.accept(getCircularPumpPort(), false);
+                commandExecutor.accept(CIRCULAR_PUMP_PORT, false);
             }
         });
     }
@@ -65,7 +65,7 @@ public class CircularPump implements Runnable {
     }
 
     void raiseChange(boolean b) {
-        commandExecutor.accept(getCircularPumpPort(), b);
+        commandExecutor.accept(CIRCULAR_PUMP_PORT, b);
         subscribers.forEach(consumer -> consumer.accept(b));
     }
 
@@ -80,10 +80,6 @@ public class CircularPump implements Runnable {
 
     double getStopThreshold() {
         return new SettingsDao().getDouble(CIRCULAR_PUMP_DIFF_STOP_TEMP);
-    }
-
-    String getCircularPumpPort() {
-        return new SettingsDao().getString(CIRCULAR_PUMP_PORT);
     }
 
     double getStartThreshold() {

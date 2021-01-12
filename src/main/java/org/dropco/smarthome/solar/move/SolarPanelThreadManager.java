@@ -13,9 +13,9 @@ public class SolarPanelThreadManager {
     public static void move(Integer horizontal, Integer vertical) {
         Thread thread = new Thread(new SolarPanelMover(horizontal, vertical));
         stop(thread);
-        LOGGER.log(Level.INFO, thread.getId() + " Natáčanie kolektorov na hor=" + horizontal + ", vert=" + vertical);
+        LOGGER.log(Level.INFO, "Natáčanie kolektorov na hor=" + horizontal + ", vert=" + vertical);
         Long delay = delaySupplier.get();
-        LOGGER.log(Level.INFO, thread.getId() + "Pauza na zastavenie motora " + delay + " sek.");
+        LOGGER.log(Level.INFO, "Pauza na zastavenie motora " + delay + " sek.");
         try {
             Thread.sleep(delay * 1000);
             thread.start();

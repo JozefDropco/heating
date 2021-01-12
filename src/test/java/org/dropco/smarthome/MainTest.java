@@ -244,6 +244,6 @@ public class MainTest {
 
     @Test
     public void run() throws Exception {
-        Main.main(new String[]{"--solar"});
+        Main.main(new String[]{"--solar","--heating"});
     }
 }

@@ -2,7 +2,6 @@ package org.dropco.smarthome.heating;
 
 import com.pi4j.io.gpio.GpioFactory;
 import org.dropco.smarthome.ServiceMode;
-import org.dropco.smarthome.database.SettingsDao;
 
 import java.util.Calendar;
 import java.util.Date;
@@ -41,21 +40,21 @@ public class Boiler implements Runnable {
                 if (isWeekend(day)) {
                     if (time.after(morning) && time.before(nightWeekend)) {
                         if (CircularPump.getState() && ThreeWayValve.getState() && state.compareAndSet(false, true)) {
-                            commandExecutor.accept(getDeviceId(), true);
+                            commandExecutor.accept(BOILER_PORT_KEY, true);
                         } else {
                             if (state.compareAndSet(true, false)) {
-                                commandExecutor.accept(getDeviceId(), false);
+                                commandExecutor.accept(BOILER_PORT_KEY, false);
                             }
                         }
                     } else if (state.compareAndSet(false, true)) {
-                        commandExecutor.accept(getDeviceId(), true);
+                        commandExecutor.accept(BOILER_PORT_KEY, true);
                     }
                 } else {
                     if (time.after(unblockTime) && time.before(night) && state.compareAndSet(true, false)) {
-                        commandExecutor.accept(getDeviceId(), false);
+                        commandExecutor.accept(BOILER_PORT_KEY, false);
                     } else {
                         if (state.compareAndSet(false, true)) {
-                            commandExecutor.accept(getDeviceId(), true);
+                            commandExecutor.accept(BOILER_PORT_KEY, true);
                         }
                     }
                 }
@@ -63,10 +62,6 @@ public class Boiler implements Runnable {
             EXECUTOR_SERVICE.schedule(() -> update.release(), millisRemaining(getNextTime()), TimeUnit.MILLISECONDS);
             update.acquireUninterruptibly();
         }
-    }
-
-    String getDeviceId() {
-        return new SettingsDao().getString(BOILER_PORT_KEY);
     }
 
     Date getTime(int hour, int minute) {

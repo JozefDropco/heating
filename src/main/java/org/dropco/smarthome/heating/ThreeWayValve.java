@@ -32,7 +32,7 @@ public class ThreeWayValve implements Runnable {
         this.commandExecutor = commandExecutor;
         ServiceMode.addSubsriber(mode -> {
             if (state.get() && mode) {
-                commandExecutor.accept(get3WayPort(), false);
+                commandExecutor.accept(THREE_WAY_PORT, false);
             }
         });
     }
@@ -67,7 +67,7 @@ public class ThreeWayValve implements Runnable {
     }
 
     void raiseChange(boolean state) {
-        commandExecutor.accept(get3WayPort(), state);
+        commandExecutor.accept(THREE_WAY_PORT, state);
         subscribers.forEach(consumer -> consumer.accept(state));
     }
 
@@ -77,10 +77,6 @@ public class ThreeWayValve implements Runnable {
 
     String getDeviceId(String t2TempKey) {
         return new HeatingDao().getDeviceId(t2TempKey);
-    }
-
-    String get3WayPort() {
-        return new SettingsDao().getString(THREE_WAY_PORT);
     }
 
     double getStartThreshold() {

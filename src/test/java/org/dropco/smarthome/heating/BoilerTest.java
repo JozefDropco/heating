@@ -15,7 +15,7 @@ public class BoilerTest {
         new CircularPump(COMMAND_EXECUTOR).setState(true);
         new ThreeWayValve(COMMAND_EXECUTOR).setState(true);
         Boiler boiler = spy(new Boiler(COMMAND_EXECUTOR));
-        when(boiler.getDeviceId()).thenReturn("D1");
+        when(Boiler.BOILER_PORT_KEY).thenReturn("D1");
         when(boiler.getCurrentDate()).thenAnswer(mock -> {
             Calendar calendar = Calendar.getInstance();
             calendar.set(Calendar.HOUR_OF_DAY, 8);
@@ -50,7 +50,7 @@ public class BoilerTest {
         new CircularPump(COMMAND_EXECUTOR).raiseChange(false);
         new ThreeWayValve(COMMAND_EXECUTOR).setState(true);
         Boiler boiler = spy(new Boiler(COMMAND_EXECUTOR));
-        when(boiler.getDeviceId()).thenReturn("D1");
+        when(Boiler.BOILER_PORT_KEY).thenReturn("D1");
         when(boiler.getCurrentDate()).thenAnswer(mock -> {
             Calendar calendar = Calendar.getInstance();
             calendar.set(Calendar.HOUR_OF_DAY, 16);
@@ -84,7 +84,7 @@ public class BoilerTest {
         new CircularPump(COMMAND_EXECUTOR).setState(true);
         new ThreeWayValve(COMMAND_EXECUTOR).setState(true);
         Boiler boiler = spy(new Boiler(COMMAND_EXECUTOR));
-        when(boiler.getDeviceId()).thenReturn("D1");
+        when(Boiler.BOILER_PORT_KEY).thenReturn("D1");
         when(boiler.getCurrentDate()).thenAnswer(mock -> {
             Calendar calendar = Calendar.getInstance();
             calendar.set(Calendar.HOUR_OF_DAY, 23);
@@ -117,7 +117,7 @@ public class BoilerTest {
         new CircularPump(COMMAND_EXECUTOR).setState(true);
         new ThreeWayValve(COMMAND_EXECUTOR).setState(true);
         Boiler boiler = spy(new Boiler(COMMAND_EXECUTOR));
-        when(boiler.getDeviceId()).thenReturn("D1");
+        when(Boiler.BOILER_PORT_KEY).thenReturn("D1");
         when(boiler.getCurrentDate()).thenAnswer(mock -> {
             Calendar calendar = Calendar.getInstance();
             calendar.set(Calendar.HOUR_OF_DAY, 23);
@@ -150,7 +150,7 @@ public class BoilerTest {
         new CircularPump(COMMAND_EXECUTOR).setState(true);
         new ThreeWayValve(COMMAND_EXECUTOR).setState(true);
         Boiler boiler = spy(new Boiler(COMMAND_EXECUTOR));
-        when(boiler.getDeviceId()).thenReturn("D1");
+        when(Boiler.BOILER_PORT_KEY).thenReturn("D1");
         when(boiler.getCurrentDate()).thenAnswer(mock -> {
             Calendar calendar = Calendar.getInstance();
             calendar.set(Calendar.HOUR_OF_DAY, 10);
@@ -183,7 +183,7 @@ public class BoilerTest {
         new ThreeWayValve(COMMAND_EXECUTOR).setState(true);
         Boiler boiler = spy(new Boiler(COMMAND_EXECUTOR));
         Boiler.state.set(true);
-        when(boiler.getDeviceId()).thenReturn("D1");
+        when(Boiler.BOILER_PORT_KEY).thenReturn("D1");
         when(boiler.getCurrentDate()).thenAnswer(mock -> {
             Calendar calendar = Calendar.getInstance();
             calendar.set(Calendar.HOUR_OF_DAY, 10);
