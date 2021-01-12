@@ -1,5 +1,7 @@
 package org.dropco.smarthome.database;
 
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.querydsl.core.Tuple;
 import com.querydsl.sql.MySQLTemplates;
 import com.querydsl.sql.SQLTemplates;
@@ -101,5 +103,59 @@ public class SettingsDao {
                 .execute();
         if (execute == 1) stringCacheMap.put(key, value);
 
+    }
+
+    public AllSetting readAll() {
+        updateIfNeeded();
+        AllSetting s  =new AllSetting();
+        s.doubleConsts = Lists.newArrayList(Iterables.transform(doubleCacheMap.entrySet(), e-> new DoubleConstant(e.getKey(),e.getValue())));
+        s.longConsts = Lists.newArrayList(Iterables.transform(longCacheMap.entrySet(), e-> new LongConstant(e.getKey(),e.getValue())));
+        s.stringConsts = Lists.newArrayList(Iterables.transform(stringCacheMap.entrySet(), e-> new StringConstant(e.getKey(),e.getValue())));
+        return s;
+    }
+
+    public static class AllSetting{
+        private List<LongConstant> longConsts;
+        private List<DoubleConstant> doubleConsts;
+        private List<StringConstant> stringConsts;
+    }
+
+    public static class LongConstant {
+        public String refCd;
+        public Long value;
+
+        public LongConstant(String refCd, Long value) {
+            this.refCd = refCd;
+            this.value = value;
+        }
+
+        public LongConstant() {
+        }
+    }
+
+    public static class DoubleConstant {
+        public String refCd;
+        public Double value;
+
+        public DoubleConstant(String refCd, Double value) {
+
+            this.refCd = refCd;
+            this.value = value;
+        }
+
+        public DoubleConstant() {
+        }
+    }
+
+    public static class StringConstant {
+        public String refCd,value;
+
+        public StringConstant(String refCd, String value) {
+            this.refCd = refCd;
+            this.value = value;
+        }
+
+        public StringConstant() {
+        }
     }
 }
