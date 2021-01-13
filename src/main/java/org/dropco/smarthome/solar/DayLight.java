@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.pi4j.io.gpio.GpioPinDigitalInput;
 import com.pi4j.io.gpio.PinMode;
 import com.pi4j.io.gpio.PinState;
+import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.gpioextension.DelayedGpioPinListener;
 import org.dropco.smarthome.stats.StatsCollector;
 
@@ -41,7 +42,8 @@ public class DayLight {
         return instance;
     }
 
-    public void connect() {
+    public void connect(boolean initialValue) {
+        enoughLight.set(initialValue);
         StatsCollector.getInstance().collect("Jas",input);
         pinListener = new DelayedGpioPinListener(PinState.HIGH, lightThreshold.get(), input) {
 
@@ -50,6 +52,7 @@ public class DayLight {
             public void handleStateChange(boolean state) {
                 boolean success = enoughLight.compareAndSet(false, state);
                 if (success) {
+                    new SettingsDao().setLong(SolarSystemRefCode.DAYLIGHT,1);
                     subscribers.forEach(booleanConsumer -> booleanConsumer.accept(true));
                 }
             }
@@ -68,6 +71,7 @@ public class DayLight {
 
     public void clear() {
         enoughLight.set(false);
+        new SettingsDao().setLong(SolarSystemRefCode.DAYLIGHT,0);
         if (input.isHigh()){
             pinListener.delayedCheck();
         }

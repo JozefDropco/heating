@@ -114,6 +114,10 @@ public class SettingsDao {
         return s;
     }
 
+    public boolean isLongModifiedAfter(String refCd, Date date) {
+        return new MySQLQuery<StringSetting>(getConnection()).select(LONG.refCd).from(LONG).where(LONG.refCd.eq(refCd).and(LONG.modifiedTs.goe(date))).fetchCount()>0;
+    }
+
     public static class AllSetting{
         private List<LongConstant> longConsts;
         private List<DoubleConstant> doubleConsts;

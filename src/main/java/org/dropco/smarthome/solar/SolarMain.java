@@ -14,6 +14,8 @@ import org.dropco.smarthome.solar.move.SafetySolarPanel;
 import org.dropco.smarthome.solar.move.SolarPanelMover;
 import org.dropco.smarthome.solar.move.SolarPanelThreadManager;
 
+import java.util.Calendar;
+
 public class SolarMain {
 
     private static final GpioController gpio = GpioFactory.getInstance();
@@ -45,7 +47,7 @@ public class SolarMain {
             if (state) SolarPanelThreadManager.stop();
         });
         DayLight.setInstance(Main.getInput(DAY_LIGHT_PIN_REF_CD), () -> (int) settingsDao.getLong(LIGHT_THRESHOLD));
-        DayLight.inst().connect();
+        connectDayLight(settingsDao);
         SolarSystemDao solarSystemDao = new SolarSystemDao(settingsDao);
         SolarPanelThreadManager.delaySupplier = (solarSystemDao::getDelay);
         SolarPanelMover.setCommandExecutor((key, value) -> Main.getOutput(getExtendedProvider(), ExtendedPin.class, key).setState(value));
@@ -61,6 +63,18 @@ public class SolarMain {
         DayLight.inst().subscribe(enoughLight -> {
             if (enoughLight) safetySolarPanel.backToNormal();
         });
+    }
+
+    private static void connectDayLight(SettingsDao settingsDao) {
+        boolean dayLight = settingsDao.getLong(SolarSystemRefCode.DAYLIGHT) == 1;
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        boolean modifiedAfter = settingsDao.isLongModifiedAfter(SolarSystemRefCode.DAYLIGHT, calendar.getTime());
+        if (!modifiedAfter) dayLight = false;
+        DayLight.inst().connect(dayLight);
     }
 
 
