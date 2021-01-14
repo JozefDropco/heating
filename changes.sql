@@ -1,31 +1,3 @@
-alter table `LONG_SETTING`
-    add `GROUP` VARCHAR(60) null;
-
-alter table `LONG_SETTING`
-    add DESCRIPTION VARCHAR(255) null;
-
-alter table `LONG_SETTING`
-    add VALUE_TYPE VARCHAR(10) null;
-
-alter table `DOUBLE_SETTING`
-    add `GROUP` VARCHAR(60) null;
-
-alter table `DOUBLE_SETTING`
-    add DESCRIPTION VARCHAR(255) null;
-
-alter table `DOUBLE_SETTING`
-    add VALUE_TYPE VARCHAR(10) null;
-
-
-alter table `STRING_SETTING`
-    add `GROUP` VARCHAR(60) null;
-
-alter table `STRING_SETTING`
-    add DESCRIPTION VARCHAR(255) null;
-
-alter table `STRING_SETTING`
-    add VALUE_TYPE VARCHAR(10) null;
-
 DELETE
 FROM `LONG_SETTING`
 WHERE REF_CD LIKE 'WATERING_PUMP_STOP_DELAY' ESCAPE '#';
