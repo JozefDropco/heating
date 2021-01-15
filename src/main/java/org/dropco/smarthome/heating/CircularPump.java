@@ -18,8 +18,8 @@ public class CircularPump implements Runnable {
     protected static final String CIRCULAR_PUMP_DIFF_STOP_TEMP = "CIRCULAR_PUMP_DIFF_STOP_TEMP";
     protected static final String CIRCULAR_PUMP_PORT = "CIRCULAR_PUMP_PORT";
 
-    static final String T1_TEMP_KEY = "T1_TEMP_KEY";
-    static final String T2_TEMP_KEY = "T2_TEMP_KEY";
+    static final String T1_TEMP_KEY = "SOLAR";
+    static final String T2_TEMP_KEY = "TA3";
 
     static AtomicBoolean state = new AtomicBoolean(false);
     AtomicDouble tempT1 = new AtomicDouble(0);

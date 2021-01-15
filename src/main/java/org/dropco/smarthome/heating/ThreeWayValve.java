@@ -19,8 +19,8 @@ public class ThreeWayValve implements Runnable {
     protected static final String THREE_WAY_VALVE_DIFF_STOP_TEMP = "THREE_WAY_VALVE_DIFF_STOP_TEMP";
     protected static final String WEEKEND_THREE_WAY_VALVE_DIFF_STOP_TEMP = "WEEKEND_THREE_WAY_VALVE_DIFF_STOP_TEMP";
     protected static final String THREE_WAY_PORT = "THREE_WAY_PORT";
-    static final String T31_TEMP_KEY = "T31_TEMP_KEY";
-    static final String T2_TEMP_KEY = "T2_TEMP_KEY";
+    static final String T31_TEMP_KEY = "PRED_TA3";
+    static final String T2_TEMP_KEY = "TA3";
     static AtomicBoolean state = new AtomicBoolean(false);
     AtomicDouble tempT31 = new AtomicDouble(0);
     AtomicDouble tempT2 = new AtomicDouble(0);
