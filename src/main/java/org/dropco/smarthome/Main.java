@@ -51,9 +51,7 @@ public class Main {
         if (inputs.contains("--solar")) {
             SolarMain.main(settingsDao);
         }
-        ServiceMode.getOutputs().forEach(namedPort -> {
-            StatsCollector.getInstance().collect(namedPort.getName(),ServiceMode.getPort(namedPort.getRefCd()));
-        });
+
         webServer.join();
     }
 

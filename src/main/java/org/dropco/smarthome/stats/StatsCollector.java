@@ -4,6 +4,7 @@ import com.pi4j.io.gpio.GpioFactory;
 import com.pi4j.io.gpio.GpioPinDigital;
 import com.pi4j.io.gpio.PinState;
 import com.pi4j.io.gpio.event.GpioPinListenerDigital;
+import org.dropco.smarthome.ServiceMode;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.gpioextension.DelayedGpioPinListener;
 import org.dropco.smarthome.temp.TempService;
@@ -15,6 +16,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -38,30 +40,48 @@ public class StatsCollector {
     }
 
     public void collect(String name, GpioPinDigital port) {
-        Logger.getLogger(StatsCollector.class.getName()).log(Level.INFO, "Zbieram štatistiky pre "+name );
-        GpioPinListenerDigital listener = new DelayedGpioPinListener(PinState.HIGH, 1000, port) {
+        collect(name, port, PinState.HIGH);
+    }
+
+    public void collect(String name, GpioPinDigital port, PinState trigger) {
+        collect(name, port, trigger, (t) -> true);
+    }
+
+    public void collect(String name, GpioPinDigital port, PinState trigger, Predicate<Boolean>... preconditions) {
+        Logger.getLogger(StatsCollector.class.getName()).log(Level.INFO, "Zbieram štatistiky pre " + name);
+        GpioPinListenerDigital listener = new DelayedGpioPinListener(trigger, 1000, port) {
 
             @Override
             public void handleStateChange(boolean state) {
-                if (state)
-                    handle(PinState.HIGH, name);
-                else
-                    handle(PinState.LOW, name);
+                if (!ServiceMode.isServiceMode()) {
+                    boolean shouldContinue = resolvePreconditions(preconditions, state);
+                    if (!shouldContinue) return;
+                    if (state)
+                        handle(state, name);
+                    else
+                        handle(state, name);
+                }
+            }
+
+            private boolean resolvePreconditions(Predicate<Boolean>[] preconditions, boolean state) {
+                for (Predicate<Boolean> predicate : preconditions)
+                    if (!predicate.test(state)) return false;
+                return true;
             }
         };
-        if (port.isHigh()) handle(port.getState(), name);
+        handle(port.getState() == trigger, name);
         port.addListener(listener);
     }
 
 
-    private void handle(PinState state, String name) {
-        if (state.isHigh()) {
-            if (name.length()>100){
-                name=name.substring(0,99);
+    private void handle(boolean state, String name) {
+        if (state) {
+            if (name.length() > 100) {
+                name = name.substring(0, 99);
             }
             long id = statsDao.addEntry(name, new Date());
             Long prevId = lastIdMap.put(name, id);
-            if (prevId!=null){
+            if (prevId != null) {
                 statsDao.finishEntry(prevId, new Date());
             }
         } else {

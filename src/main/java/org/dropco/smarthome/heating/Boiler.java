@@ -94,4 +94,12 @@ public class Boiler implements Runnable {
         Date currentDate = Calendar.getInstance().getTime();
         return future.getTime() - currentDate.getTime();
     }
+
+    /***
+     * Gets the state
+     * @return
+     */
+    public static boolean getState() {
+        return state.get();
+    }
 }

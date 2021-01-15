@@ -53,6 +53,7 @@ public class SolarPanelMover implements Runnable {
             sleepTime = max(absHorizontal, absVertical);
         }
         if (sleepTime > 0) {
+            LOGGER.log(Level.INFO, "Natáčanie kolektorov na hor=" + horizontal + ", vert=" + vertical);
             boolean interrupted = false;
             while (sleepTime > 0) {
                 int secondsSlept = sleepTime;
@@ -119,9 +120,9 @@ public class SolarPanelMover implements Runnable {
     void setState(String pinRefCd, boolean state, String direction, boolean changeState) {
         if (changeState) {
             if (state)
-                LOGGER.log(Level.INFO, "Natáčam na " + direction + ".");
+                LOGGER.log(Level.FINE, "Natáčam na " + direction + ".");
             else
-                LOGGER.log(Level.INFO, "Zastavujem otáčanie na " + direction + ".");
+                LOGGER.log(Level.FINE, "Zastavujem otáčanie na " + direction + ".");
         }
         commandExecutor.accept(pinRefCd, state);
     }
