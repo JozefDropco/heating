@@ -25,7 +25,7 @@ import static org.dropco.smarthome.database.DBConnection.getConnection;
 public class StatsDao {
     public static Stats _s = new Stats("s");
 
-    private static final Template secondsDiff = TemplateFactory.DEFAULT.create("TIMESTAMPDIFF(SECOND,IF({1}<{2},{1},{2}),{0})");
+    private static final Template secondsDiff = TemplateFactory.DEFAULT.create("TIMESTAMPDIFF(SECOND,{0},IF({1}<{2},{1},{2}))");
 
     public void markAllFinished(Date date) {
         new SQLUpdateClause(getConnection(), SQLTemplates.DEFAULT, _s)

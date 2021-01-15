@@ -53,27 +53,32 @@ public class StatsCollector {
 
             @Override
             public void handleStateChange(boolean state) {
-                if (!ServiceMode.isServiceMode()) {
-                    boolean shouldContinue = resolvePreconditions(preconditions, state);
-                    if (!shouldContinue) return;
-                    if (state)
-                        handle(state, name);
-                    else
-                        handle(state, name);
-                }
+                collect(state,name,preconditions);
             }
 
-            private boolean resolvePreconditions(Predicate<Boolean>[] preconditions, boolean state) {
-                for (Predicate<Boolean> predicate : preconditions)
-                    if (!predicate.test(state)) return false;
-                return true;
-            }
+
+
         };
-        handle(port.getState() == trigger, name);
+        collect(port.getState() == trigger, name,preconditions);
         port.addListener(listener);
     }
 
+    protected void collect(boolean state, String name, Predicate<Boolean>[] preconditions) {
+        if (!ServiceMode.isServiceMode()) {
+            boolean shouldContinue = resolvePreconditions(preconditions, state);
+            if (!shouldContinue) return;
+            if (state)
+                handle(state, name);
+            else
+                handle(state, name);
+        }
+    }
 
+    private boolean resolvePreconditions(Predicate<Boolean>[] preconditions, boolean state) {
+        for (Predicate<Boolean> predicate : preconditions)
+            if (!predicate.test(state)) return false;
+        return true;
+    }
     private void handle(boolean state, String name) {
         if (state) {
             if (name.length() > 100) {
