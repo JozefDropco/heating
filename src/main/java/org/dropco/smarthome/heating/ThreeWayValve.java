@@ -29,6 +29,7 @@ public class ThreeWayValve implements Runnable {
     private static List<Consumer<Boolean>> subscribers = Lists.newArrayList();
     private SettingsDao settingsDao;
     public ThreeWayValve(SettingsDao settingsDao, BiConsumer<String, Boolean> commandExecutor) {
+        this.settingsDao =settingsDao;
         this.commandExecutor = commandExecutor;
         ServiceMode.addSubsriber(mode -> {
             if (state.get() && mode) {

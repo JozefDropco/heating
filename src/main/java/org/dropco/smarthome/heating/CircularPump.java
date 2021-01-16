@@ -32,6 +32,7 @@ public class CircularPump implements Runnable {
     private SettingsDao settingsDao;
 
     public CircularPump(SettingsDao settingsDao, BiConsumer<String, Boolean> commandExecutor) {
+        this.settingsDao=settingsDao;
         this.commandExecutor = commandExecutor;
         ServiceMode.addSubsriber(mode -> {
             if (state.get() && mode) {
