@@ -24,11 +24,10 @@ public class StatsCollector {
     private static final StatsCollector instance = new StatsCollector();
 
     private StatsDao statsDao = new StatsDao();
-    private SettingsDao settingsDao = new SettingsDao();
     private Map<String, Long> lastIdMap = Collections.synchronizedMap(new HashMap<>());
     private SimpleDateFormat format = new SimpleDateFormat("dd. MM. yyyy HH:mm:ss z");
 
-    public void start() throws ParseException {
+    public void start(SettingsDao settingsDao) throws ParseException {
         statsDao.markAllFinished(format.parse(settingsDao.getString(StatsRefCode.LAST_HEARTBEAT)));
         GpioFactory.getExecutorServiceFactory().getScheduledExecutorService().scheduleAtFixedRate(() -> {
             try {

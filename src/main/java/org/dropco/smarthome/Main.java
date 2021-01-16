@@ -11,10 +11,12 @@ import org.dropco.smarthome.solar.SolarMain;
 import org.dropco.smarthome.stats.StatsCollector;
 import org.dropco.smarthome.temp.TempService;
 import org.dropco.smarthome.watering.WateringMain;
+import org.dropco.smarthome.web.ConstWebService;
+import org.dropco.smarthome.web.PortWebService;
+import org.dropco.smarthome.web.SolarWebService;
 import org.dropco.smarthome.web.WebServer;
 
 import java.lang.reflect.InvocationTargetException;
-import java.sql.SQLOutput;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -30,21 +32,24 @@ public class Main {
 
     public static void main(String[] args) throws Exception {
         // Create JAX-RS application.
+        ConstWebService.SETTINGS_DAO=settingsDao;
+        PortWebService.SETTINGS_DAO=settingsDao;
+        SolarWebService.SETTINGS_DAO=settingsDao;
         new Thread(new TempService()).start();
         WebServer webServer = new WebServer();
         webServer.start();
         Logger.getLogger("").addHandler(new LogHandler());
-        StatsCollector.getInstance().start();
+        StatsCollector.getInstance().start(settingsDao);
         Set<String> inputs = Sets.newHashSet(args);
         if (!inputs.contains("--noWatering")) {
             ServiceMode.addInput(new NamedPort(WaterPumpFeedback.getMicroServicePinKey(), "Stav čerpadla"), ()->Main.getInput(WaterPumpFeedback.getMicroServicePinKey()).isHigh());
             WaterPumpFeedback.start(getInput(WaterPumpFeedback.getMicroServicePinKey()));
             ServiceMode.addInput(new NamedPort(RainSensor.getMicroServicePinKey(), "Dažďový senzor"), ()->Main.getInput(RainSensor.getMicroServicePinKey()).isHigh());
             RainSensor.start(getInput(RainSensor.getMicroServicePinKey()));
-            WateringMain.main();
+            WateringMain.main(settingsDao);
         }
         if (inputs.contains("--heating")) {
-            HeatingWorker.start((key, value) -> {
+            HeatingWorker.start(settingsDao,(key, value) -> {
                 Main.getOutput(key).setState(value);
             });
         }

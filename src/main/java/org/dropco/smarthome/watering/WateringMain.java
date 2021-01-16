@@ -14,8 +14,8 @@ import java.util.function.Supplier;
 
 public class WateringMain {
 
-    public static void main() {
-        WateringThreadManager.thresholdTempValue = new SettingsDao().getDouble("TEMP_THRESHOLD");
+    public static void main(SettingsDao settingsDao) {
+        WateringThreadManager.thresholdTempValue = settingsDao.getDouble("TEMP_THRESHOLD");
         WateringJob.setCommandExecutor((key, value) -> {
             Main.getOutput(key).setState(value);
         });

@@ -4,8 +4,6 @@ import com.google.common.collect.FluentIterable;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.pi4j.io.gpio.GpioPinDigitalOutput;
-import com.pi4j.io.gpio.WiringPiGpioProviderBase;
-import com.pi4j.wiringpi.GpioUtil;
 import org.dropco.smarthome.ServiceMode;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.dto.NamedPort;
@@ -23,7 +21,7 @@ import java.util.logging.Logger;
 
 @Path("/ws/port")
 public class PortWebService {
-    SettingsDao dao = new SettingsDao();
+    public static SettingsDao SETTINGS_DAO;
     private static final Map<String,String> urlMap = ImmutableMap.<String,String>builder()
             .put("GPIO 0","https://pinout.xyz/pinout/pin11_gpio17")
             .put("GPIO 1","https://pinout.xyz/pinout/pin12_gpio18")
@@ -63,7 +61,7 @@ public class PortWebService {
         Set<NamedPort> inputs = ServiceMode.getInputs();
         return Response.ok(new Gson().toJson(FluentIterable.from(inputs).transform(port -> {
             boolean isHigh = ServiceMode.getInputState(port.getRefCd());
-           String url = Optional.ofNullable(dao.getString(port.getRefCd())).map(urlMap::get).orElse("#");
+           String url = Optional.ofNullable(SETTINGS_DAO.getString(port.getRefCd())).map(urlMap::get).orElse("#");
             return new Port(port.getRefCd(), url, port.getName(), Boolean.toString(isHigh));
         }).toList())).build();
     }
@@ -75,7 +73,7 @@ public class PortWebService {
         Set<NamedPort> outputs = ServiceMode.getOutputs();
         return Response.ok(new Gson().toJson(FluentIterable.from(outputs).transform(port -> {
             boolean isHigh = ServiceMode.getPort(port.getRefCd()).getState().isHigh();
-            String url = Optional.ofNullable(dao.getString(port.getRefCd())).map(urlMap::get).orElse("#");
+            String url = Optional.ofNullable(SETTINGS_DAO.getString(port.getRefCd())).map(urlMap::get).orElse("#");
             return new Port(port.getRefCd(), url, port.getName(), Boolean.toString(isHigh));
         }).toList())).build();
     }

@@ -1,5 +1,6 @@
 package org.dropco.smarthome.heating;
 
+import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.temp.TempService;
 import org.junit.Before;
 import org.junit.Test;
@@ -20,7 +21,7 @@ public class CircularPumpTest {
     @Test
     public void test() throws InterruptedException {
         BiConsumer COMMAND_EXECUTOR = mock(BiConsumer.class);
-        CircularPump pump= spy(new CircularPump(COMMAND_EXECUTOR));
+        CircularPump pump= spy(new CircularPump(new SettingsDao(),COMMAND_EXECUTOR));
         doAnswer(mock -> 10.0d).when(pump).getStartThreshold();
         doAnswer(mock -> 5.0d).when(pump).getStopThreshold();
         doAnswer(mock -> "Ke").when(pump);
@@ -39,7 +40,7 @@ public class CircularPumpTest {
     @Test
     public void test2() throws InterruptedException {
         BiConsumer COMMAND_EXECUTOR = mock(BiConsumer.class);
-        CircularPump pump= spy(new CircularPump(COMMAND_EXECUTOR));
+        CircularPump pump= spy(new CircularPump(new SettingsDao(),COMMAND_EXECUTOR));
         doAnswer(mock -> 10.0d).when(pump).getStartThreshold();
         doAnswer(mock -> 5.0d).when(pump).getStopThreshold();
         doAnswer(mock -> "Ke").when(pump);
@@ -59,7 +60,7 @@ public class CircularPumpTest {
     @Test
     public void test3() throws InterruptedException {
         BiConsumer COMMAND_EXECUTOR = mock(BiConsumer.class);
-        CircularPump pump= spy(new CircularPump(COMMAND_EXECUTOR));
+        CircularPump pump= spy(new CircularPump(new SettingsDao(),COMMAND_EXECUTOR));
         doAnswer(mock -> 10.0d).when(pump).getStartThreshold();
         doAnswer(mock -> 5.0d).when(pump).getStopThreshold();
         doAnswer(mock -> "Ke").when(pump);
@@ -78,7 +79,7 @@ public class CircularPumpTest {
     @Test
     public void test4() throws InterruptedException {
         BiConsumer COMMAND_EXECUTOR = mock(BiConsumer.class);
-        CircularPump pump= spy(new CircularPump(COMMAND_EXECUTOR));
+        CircularPump pump= spy(new CircularPump(new SettingsDao(),COMMAND_EXECUTOR));
         doAnswer(mock -> 10.0d).when(pump).getStartThreshold();
         doAnswer(mock -> 5.0d).when(pump).getStopThreshold();
         doAnswer(mock -> "Ke").when(pump);

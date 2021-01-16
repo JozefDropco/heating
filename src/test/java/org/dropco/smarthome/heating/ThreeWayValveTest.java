@@ -1,5 +1,6 @@
 package org.dropco.smarthome.heating;
 
+import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.temp.TempService;
 import org.junit.Before;
 import org.junit.Test;
@@ -22,7 +23,7 @@ public class ThreeWayValveTest {
     @Test
     public void test() throws InterruptedException {
         BiConsumer COMMAND_EXECUTOR = mock(BiConsumer.class);
-        ThreeWayValve valve= spy(new ThreeWayValve(COMMAND_EXECUTOR));
+        ThreeWayValve valve= spy(new ThreeWayValve(new SettingsDao(),COMMAND_EXECUTOR));
         doAnswer(mock -> 10.0d).when(valve).getStartThreshold();
         doAnswer(mock -> 5.0d).when(valve).getStopThreshold();
         doAnswer(mock -> "Ke").when(valve);
@@ -42,7 +43,7 @@ public class ThreeWayValveTest {
     @Test
     public void test2() throws InterruptedException {
         BiConsumer COMMAND_EXECUTOR = mock(BiConsumer.class);
-        ThreeWayValve valve= spy(new ThreeWayValve(COMMAND_EXECUTOR));
+        ThreeWayValve valve= spy(new ThreeWayValve(new SettingsDao(),COMMAND_EXECUTOR));
         doAnswer(mock -> 10.0d).when(valve).getStartThreshold();
         doAnswer(mock -> 5.0d).when(valve).getStopThreshold();
         doAnswer(mock -> "Ke").when(valve);
@@ -62,7 +63,7 @@ public class ThreeWayValveTest {
     @Test
     public void test3() throws InterruptedException {
         BiConsumer COMMAND_EXECUTOR = mock(BiConsumer.class);
-        ThreeWayValve valve= spy(new ThreeWayValve(COMMAND_EXECUTOR));
+        ThreeWayValve valve= spy(new ThreeWayValve(new SettingsDao(),COMMAND_EXECUTOR));
         doAnswer(mock -> 10.0d).when(valve).getStartThreshold();
         doAnswer(mock -> 5.0d).when(valve).getStopThreshold();
         doAnswer(mock -> "Ke").when(valve);
@@ -81,7 +82,7 @@ public class ThreeWayValveTest {
     @Test
     public void test4() throws InterruptedException {
         BiConsumer COMMAND_EXECUTOR = mock(BiConsumer.class);
-        ThreeWayValve valve= spy(new ThreeWayValve(COMMAND_EXECUTOR));
+        ThreeWayValve valve= spy(new ThreeWayValve(new SettingsDao(),COMMAND_EXECUTOR));
         doAnswer(mock -> 10.0d).when(valve).getStartThreshold();
         doAnswer(mock -> 5.0d).when(valve).getStopThreshold();
         doAnswer(mock -> "Ke").when(valve);

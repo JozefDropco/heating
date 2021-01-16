@@ -15,12 +15,12 @@ import java.util.logging.Logger;
 @Path("/ws/const")
 public class ConstWebService {
     private static final Logger logger = Logger.getLogger(ConstWebService.class.getName());
+    public static SettingsDao SETTINGS_DAO;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response get() throws ParseException {
-        SettingsDao dao = new SettingsDao();
-        return Response.ok(new Gson().toJson(dao.readAll())).build();
+        return Response.ok(new Gson().toJson(SETTINGS_DAO.readAll())).build();
     }
 
 
@@ -28,19 +28,18 @@ public class ConstWebService {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response update(@QueryParam("type") String type, String payload) {
-        SettingsDao dao = new SettingsDao();
         switch (type) {
             case "long":
                 LongConstant longConstant = new Gson().fromJson(payload, LongConstant.class);
-                dao.updateLongConstant(longConstant);
+                SETTINGS_DAO.updateLongConstant(longConstant);
                 break;
             case "double":
                 DoubleConstant doubleConst = new Gson().fromJson(payload, DoubleConstant.class);
-                dao.updateDoubleConstant(doubleConst);
+                SETTINGS_DAO.updateDoubleConstant(doubleConst);
                 break;
             case "string":
                 StringConstant stringConstant = new Gson().fromJson(payload, StringConstant.class);
-                dao.updateStringConstant(stringConstant);
+                SETTINGS_DAO.updateStringConstant(stringConstant);
                 break;
         }
          return Response.ok().build();

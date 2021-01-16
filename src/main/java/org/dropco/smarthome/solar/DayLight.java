@@ -2,7 +2,6 @@ package org.dropco.smarthome.solar;
 
 import com.google.common.collect.Lists;
 import com.pi4j.io.gpio.GpioPinDigitalInput;
-import com.pi4j.io.gpio.PinMode;
 import com.pi4j.io.gpio.PinState;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.gpioextension.DelayedGpioPinListener;
@@ -20,8 +19,9 @@ public class DayLight {
     private final GpioPinDigitalInput input;
     private final Supplier<Integer> lightThreshold;
     private DelayedGpioPinListener pinListener;
+    private SettingsDao settingsDao;
 
-    private DayLight(GpioPinDigitalInput input, Supplier<Integer> lightThreshold) {
+    private DayLight(SettingsDao settingsDao, GpioPinDigitalInput input, Supplier<Integer> lightThreshold) {
         this.input = input;
         this.lightThreshold = lightThreshold;
     }
@@ -30,8 +30,8 @@ public class DayLight {
      * Gets the instance
      * @return
      */
-    public static void setInstance(GpioPinDigitalInput input, Supplier<Integer> lightThreshold) {
-        instance = new DayLight(input, lightThreshold);
+    public static void setInstance(SettingsDao settingsDao, GpioPinDigitalInput input, Supplier<Integer> lightThreshold) {
+        instance = new DayLight(settingsDao, input, lightThreshold);
     }
 
     /***
@@ -44,7 +44,7 @@ public class DayLight {
 
     public void connect(boolean initialValue) {
         enoughLight.set(initialValue);
-        StatsCollector.getInstance().collect("Jas",input);
+        StatsCollector.getInstance().collect("Jas", input);
         pinListener = new DelayedGpioPinListener(PinState.HIGH, lightThreshold.get(), input) {
 
 
@@ -52,7 +52,7 @@ public class DayLight {
             public void handleStateChange(boolean state) {
                 boolean success = enoughLight.compareAndSet(false, state);
                 if (success) {
-                    new SettingsDao().setLong(SolarSystemRefCode.DAYLIGHT,1);
+                    settingsDao.setLong(SolarSystemRefCode.DAYLIGHT, 1);
                     subscribers.forEach(booleanConsumer -> booleanConsumer.accept(true));
                 }
             }
@@ -65,14 +65,14 @@ public class DayLight {
      * Gets the maxContinuousLight
      * @return
      */
-    public  boolean enoughLight() {
+    public boolean enoughLight() {
         return enoughLight.get();
     }
 
     public void clear() {
         enoughLight.set(false);
-        new SettingsDao().setLong(SolarSystemRefCode.DAYLIGHT,0);
-        if (input.isHigh()){
+        settingsDao.setLong(SolarSystemRefCode.DAYLIGHT, 0);
+        if (input.isHigh()) {
             pinListener.delayedCheck();
         }
     }

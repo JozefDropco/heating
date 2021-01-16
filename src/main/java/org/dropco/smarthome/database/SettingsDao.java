@@ -15,6 +15,7 @@ import org.dropco.smarthome.dto.StringConstant;
 
 import java.sql.Connection;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.dropco.smarthome.database.querydsl.DoubleSetting.DOUBLE;
 import static org.dropco.smarthome.database.querydsl.LongSetting.LONG;
@@ -22,10 +23,11 @@ import static org.dropco.smarthome.database.querydsl.StringSetting.STRING;
 
 public class SettingsDao {
     protected static final SQLTemplates SQL_TEMPLATES = new MySQLTemplates();
-    private Map<String, StringConstant> stringCacheMap = new HashMap<>();
-    private Map<String, LongConstant> longCacheMap = new HashMap<>();
-    private Map<String, DoubleConstant> doubleCacheMap = new HashMap<>();
-    private boolean loaded;
+    private final Map<String, StringConstant> stringCacheMap = Collections.synchronizedMap(new HashMap<>());
+    private final Map<String, LongConstant> longCacheMap =  Collections.synchronizedMap(new HashMap<>());
+    private final Map<String, DoubleConstant> doubleCacheMap =  Collections.synchronizedMap(new HashMap<>());
+    private AtomicBoolean loaded =new AtomicBoolean();
+
 
     public String getString(String key) {
         updateIfNeeded();
@@ -44,11 +46,14 @@ public class SettingsDao {
     }
 
     private void updateIfNeeded() {
-        if (!loaded) {
-            loaded = true;
-            loadStringCache();
-            loadLongCache();
-            loadDoubleCache();
+        if (!loaded.get()) {
+            synchronized (SettingsDao.class) {
+                boolean success = loaded.compareAndSet(false, true);
+                if (!success) return;
+                loadStringCache();
+                loadLongCache();
+                loadDoubleCache();
+            }
         }
     }
 

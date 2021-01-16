@@ -27,8 +27,8 @@ public class CircularPump implements Runnable {
     private static final Semaphore update = new Semaphore(0);
     private BiConsumer<String, Boolean> commandExecutor;
     private static List<Consumer<Boolean>> subscribers = Lists.newArrayList();
-
-    public CircularPump(BiConsumer<String, Boolean> commandExecutor) {
+    private SettingsDao settingsDao;
+    public CircularPump(SettingsDao settingsDao,BiConsumer<String, Boolean> commandExecutor) {
         this.commandExecutor = commandExecutor;
         ServiceMode.addSubsriber(mode -> {
             if (state.get() && mode) {
@@ -79,11 +79,11 @@ public class CircularPump implements Runnable {
     }
 
     double getStopThreshold() {
-        return new SettingsDao().getDouble(CIRCULAR_PUMP_DIFF_STOP_TEMP);
+        return settingsDao.getDouble(CIRCULAR_PUMP_DIFF_STOP_TEMP);
     }
 
     double getStartThreshold() {
-        return new SettingsDao().getDouble(CIRCULAR_PUMP_DIFF_START_TEMP);
+        return settingsDao.getDouble(CIRCULAR_PUMP_DIFF_START_TEMP);
     }
 
     public static void addSubscriber(Consumer<Boolean> subscriber){

@@ -23,6 +23,7 @@ import java.util.logging.Logger;
 @Path("/ws/solar")
 public class SolarWebService {
     private static final Logger logger = Logger.getLogger(SolarWebService.class.getName());
+    public static SettingsDao SETTINGS_DAO;
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
@@ -33,9 +34,9 @@ public class SolarWebService {
             Date datum = format.parse(date);
             Calendar cal = Calendar.getInstance();
             cal.setTime(datum);
-            records = new SolarSystemDao(new SettingsDao()).getTodayRecords(cal);
+            records = new SolarSystemDao(SETTINGS_DAO).getTodayRecords(cal);
         } else {
-            records = new SolarSystemDao(new SettingsDao()).getMonthRecords(Integer.parseInt(month));
+            records = new SolarSystemDao(SETTINGS_DAO).getMonthRecords(Integer.parseInt(month));
         }
 
         return Response.ok(new Gson().toJson(Lists.transform(records, this::toSolarDTO))).build();
@@ -47,7 +48,7 @@ public class SolarWebService {
     @Path("/currentState")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getCurrentPosition() throws ParseException {
-        SolarPanelPosition lastKnownPosition = new SolarSystemDao(new SettingsDao()).getLastKnownPosition();
+        SolarPanelPosition lastKnownPosition = new SolarSystemDao(SETTINGS_DAO).getLastKnownPosition();
         Position pos = new Position();
         pos.x=lastKnownPosition.getHorizontalPositionInSeconds();
         pos.y=lastKnownPosition.getVerticalPositionInSeconds();
@@ -56,7 +57,7 @@ public class SolarWebService {
         src.dayLight=DayLight.inst().enoughLight();
         src.windy=StrongWind.isWindy();
         src.overHeated  = SolarTemperatureWatch.isOverHeated();
-        List<SolarPanelStepRecord> todayRecords = new SolarSystemDao(new SettingsDao()).getTodayRecords(Calendar.getInstance());
+        List<SolarPanelStepRecord> todayRecords = new SolarSystemDao(SETTINGS_DAO).getTodayRecords(Calendar.getInstance());
 
         src.remainingPositions = Lists.transform(todayRecords,this::toSolarDTO);
         if (ServiceMode.getPort(SolarSystemRefCode.NORTH_PIN_REF_CD).isHigh()){
@@ -85,9 +86,9 @@ public class SolarWebService {
             Date datum = format.parse(date);
             Calendar cal = Calendar.getInstance();
             cal.setTime(datum);
-            new SolarSystemDao(new SettingsDao()).updateForDate(dto,cal);
+            new SolarSystemDao(SETTINGS_DAO).updateForDate(dto,cal);
         } else {
-            new SolarSystemDao(new SettingsDao()).updateForMonth(dto,Integer.parseInt(month));
+            new SolarSystemDao(SETTINGS_DAO).updateForMonth(dto,Integer.parseInt(month));
         }
         return Response.ok().build();
     }
@@ -103,9 +104,9 @@ public class SolarWebService {
             Date datum = format.parse(date);
             Calendar cal = Calendar.getInstance();
             cal.setTime(datum);
-            new SolarSystemDao(new SettingsDao()).deleteForDate(dto,cal);
+            new SolarSystemDao(SETTINGS_DAO).deleteForDate(dto,cal);
         } else {
-            new SolarSystemDao(new SettingsDao()).deleteForMonth(dto,Integer.parseInt(month));
+            new SolarSystemDao(SETTINGS_DAO).deleteForMonth(dto,Integer.parseInt(month));
         }
         return Response.ok().build();
     }

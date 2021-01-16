@@ -36,7 +36,7 @@ public class SolarMain {
         ServiceMode.addSubsriber(state -> {
             if (state) SolarPanelThreadManager.stop();
         });
-        DayLight.setInstance(Main.getInput(DAY_LIGHT_PIN_REF_CD), () -> (int) settingsDao.getLong(LIGHT_THRESHOLD));
+        DayLight.setInstance(settingsDao,Main.getInput(DAY_LIGHT_PIN_REF_CD), () -> (int) settingsDao.getLong(LIGHT_THRESHOLD));
         connectDayLight(settingsDao);
         SolarSystemDao solarSystemDao = new SolarSystemDao(settingsDao);
         SolarPanelThreadManager.delaySupplier = (solarSystemDao::getDelay);

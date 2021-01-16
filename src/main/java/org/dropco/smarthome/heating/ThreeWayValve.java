@@ -27,8 +27,8 @@ public class ThreeWayValve implements Runnable {
     private static final Semaphore update = new Semaphore(0);
     private BiConsumer<String, Boolean> commandExecutor;
     private static List<Consumer<Boolean>> subscribers = Lists.newArrayList();
-
-    public ThreeWayValve(BiConsumer<String, Boolean> commandExecutor) {
+    private SettingsDao settingsDao;
+    public ThreeWayValve(SettingsDao settingsDao, BiConsumer<String, Boolean> commandExecutor) {
         this.commandExecutor = commandExecutor;
         ServiceMode.addSubsriber(mode -> {
             if (state.get() && mode) {
@@ -80,7 +80,7 @@ public class ThreeWayValve implements Runnable {
     }
 
     double getStartThreshold() {
-        return new SettingsDao().getDouble(THREE_WAY_VALVE_DIFF_START_TEMP);
+        return settingsDao.getDouble(THREE_WAY_VALVE_DIFF_START_TEMP);
     }
 
     double getStopThreshold() {
@@ -97,11 +97,11 @@ public class ThreeWayValve implements Runnable {
     }
 
     double getStopTemperatureStop() {
-        return new SettingsDao().getDouble(THREE_WAY_VALVE_DIFF_STOP_TEMP);
+        return settingsDao.getDouble(THREE_WAY_VALVE_DIFF_STOP_TEMP);
     }
 
     double getStopWeekendTemperatureStop() {
-        return new SettingsDao().getDouble(WEEKEND_THREE_WAY_VALVE_DIFF_STOP_TEMP);
+        return settingsDao.getDouble(WEEKEND_THREE_WAY_VALVE_DIFF_STOP_TEMP);
     }
 
 

@@ -3,6 +3,7 @@ package org.dropco.smarthome.heating;
 import com.pi4j.io.gpio.PinState;
 import org.dropco.smarthome.Main;
 import org.dropco.smarthome.ServiceMode;
+import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.dto.NamedPort;
 import org.dropco.smarthome.gpioextension.ExtendedPin;
 import org.dropco.smarthome.solar.SolarSystemRefCode;
@@ -17,9 +18,9 @@ import static org.dropco.smarthome.heating.ThreeWayValve.THREE_WAY_PORT;
 
 public class HeatingWorker  {
 
-    public static void start(BiConsumer<String, Boolean> commandExecutor) {
-        new Thread(new CircularPump(commandExecutor)).start();
-        new Thread(new ThreeWayValve(commandExecutor)).start();
+    public static void start(SettingsDao settingsDao,BiConsumer<String, Boolean> commandExecutor) {
+        new Thread(new CircularPump(settingsDao,commandExecutor)).start();
+        new Thread(new ThreeWayValve(settingsDao,commandExecutor)).start();
         new Thread(new Boiler(commandExecutor)).start();
         configureServiceMode();
         addToStats();
