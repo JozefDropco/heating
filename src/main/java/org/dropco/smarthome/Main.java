@@ -18,6 +18,7 @@ import org.dropco.smarthome.web.WebServer;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
@@ -38,7 +39,11 @@ public class Main {
         new Thread(new TempService()).start();
         WebServer webServer = new WebServer();
         webServer.start();
-        Logger.getLogger("").addHandler(new LogHandler());
+        Logger logger = Logger.getLogger("");
+        logger.setLevel(Level.ALL);
+        LogHandler handler = new LogHandler();
+        logger.addHandler(handler);
+        handler.setLevel(Level.ALL);
         StatsCollector.getInstance().start(settingsDao);
         Set<String> inputs = Sets.newHashSet(args);
         if (!inputs.contains("--noWatering")) {

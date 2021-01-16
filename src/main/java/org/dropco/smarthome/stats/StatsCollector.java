@@ -16,7 +16,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Predicate;
+import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -39,33 +39,27 @@ public class StatsCollector {
     }
 
     public void collect(String name, GpioPinDigital port) {
-        collect(name, port, PinState.HIGH);
-    }
-
-    public void collect(String name, GpioPinDigital port, PinState trigger) {
-        collect(name, port, trigger, (t) -> true);
-    }
-
-    public void collect(String name, GpioPinDigital port, PinState trigger, Predicate<Boolean>... preconditions) {
         Logger.getLogger(StatsCollector.class.getName()).log(Level.INFO, "Zbieram štatistiky pre " + name);
-        GpioPinListenerDigital listener = new DelayedGpioPinListener(trigger, 1000, port) {
-
+        GpioPinListenerDigital listener = new DelayedGpioPinListener(PinState.HIGH, 1000, port) {
             @Override
             public void handleStateChange(boolean state) {
-                collect(state,name,preconditions);
+                collect(state, name);
             }
-
-
-
         };
-        collect(port.getState() == trigger, name,preconditions);
+        collect(port.isHigh(), name);
         port.addListener(listener);
     }
 
-    protected void collect(boolean state, String name, Predicate<Boolean>[] preconditions) {
+    public void collect(String name, boolean startNow, Consumer<Consumer<Boolean>> subscriber) {
+        Logger.getLogger(StatsCollector.class.getName()).log(Level.INFO, "Zbieram štatistiky pre " + name);
+        subscriber.accept(state -> {
+            collect(state, name);
+        });
+        collect(startNow, name);
+    }
+
+    protected void collect(boolean state, String name) {
         if (!ServiceMode.isServiceMode()) {
-            boolean shouldContinue = resolvePreconditions(preconditions, state);
-            if (!shouldContinue) return;
             if (state)
                 handle(state, name);
             else
@@ -73,11 +67,7 @@ public class StatsCollector {
         }
     }
 
-    private boolean resolvePreconditions(Predicate<Boolean>[] preconditions, boolean state) {
-        for (Predicate<Boolean> predicate : preconditions)
-            if (!predicate.test(state)) return false;
-        return true;
-    }
+
     private void handle(boolean state, String name) {
         if (state) {
             if (name.length() > 100) {

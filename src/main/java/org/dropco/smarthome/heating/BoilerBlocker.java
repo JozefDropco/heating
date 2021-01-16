@@ -12,16 +12,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.logging.Logger;
 
-public class Boiler implements Runnable {
+public class BoilerBlocker implements Runnable {
 
     private static final ScheduledExecutorService EXECUTOR_SERVICE = GpioFactory.getExecutorServiceFactory().getScheduledExecutorService();
     static final String BOILER_PORT_KEY = "BOILER_PORT";
     static final Semaphore update = new Semaphore(0);
     private BiConsumer<String, Boolean> commandExecutor;
     static AtomicBoolean state = new AtomicBoolean(false);
-    public static final Logger LOGGER = Logger.getLogger(Boiler.class.getName());
+    public static final Logger LOGGER = Logger.getLogger(BoilerBlocker.class.getName());
 
-    public Boiler(BiConsumer<String, Boolean> commandExecutor) {
+    public BoilerBlocker(BiConsumer<String, Boolean> commandExecutor) {
         this.commandExecutor = commandExecutor;
         CircularPump.addSubscriber((state) -> update.release());
         ThreeWayValve.addSubscriber((state) -> update.release());

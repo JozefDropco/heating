@@ -15,8 +15,8 @@ public class BoilerTest {
         BiConsumer COMMAND_EXECUTOR = mock(BiConsumer.class);
         new CircularPump(new SettingsDao(),COMMAND_EXECUTOR).setState(true);
         new ThreeWayValve(new SettingsDao(),COMMAND_EXECUTOR).setState(true);
-        Boiler boiler = spy(new Boiler(COMMAND_EXECUTOR));
-        when(Boiler.BOILER_PORT_KEY).thenReturn("D1");
+        BoilerBlocker boiler = spy(new BoilerBlocker(COMMAND_EXECUTOR));
+        when(BoilerBlocker.BOILER_PORT_KEY).thenReturn("D1");
         when(boiler.getCurrentDate()).thenAnswer(mock -> {
             Calendar calendar = Calendar.getInstance();
             calendar.set(Calendar.HOUR_OF_DAY, 8);
@@ -50,8 +50,8 @@ public class BoilerTest {
         BiConsumer COMMAND_EXECUTOR = mock(BiConsumer.class);
         new CircularPump(new SettingsDao(),COMMAND_EXECUTOR).raiseChange(false);
         new ThreeWayValve(new SettingsDao(),COMMAND_EXECUTOR).setState(true);
-        Boiler boiler = spy(new Boiler(COMMAND_EXECUTOR));
-        when(Boiler.BOILER_PORT_KEY).thenReturn("D1");
+        BoilerBlocker boiler = spy(new BoilerBlocker(COMMAND_EXECUTOR));
+        when(BoilerBlocker.BOILER_PORT_KEY).thenReturn("D1");
         when(boiler.getCurrentDate()).thenAnswer(mock -> {
             Calendar calendar = Calendar.getInstance();
             calendar.set(Calendar.HOUR_OF_DAY, 16);
@@ -84,8 +84,8 @@ public class BoilerTest {
         BiConsumer COMMAND_EXECUTOR = mock(BiConsumer.class);
         new CircularPump(new SettingsDao(),COMMAND_EXECUTOR).setState(true);
         new ThreeWayValve(new SettingsDao(),COMMAND_EXECUTOR).setState(true);
-        Boiler boiler = spy(new Boiler(COMMAND_EXECUTOR));
-        when(Boiler.BOILER_PORT_KEY).thenReturn("D1");
+        BoilerBlocker boiler = spy(new BoilerBlocker(COMMAND_EXECUTOR));
+        when(BoilerBlocker.BOILER_PORT_KEY).thenReturn("D1");
         when(boiler.getCurrentDate()).thenAnswer(mock -> {
             Calendar calendar = Calendar.getInstance();
             calendar.set(Calendar.HOUR_OF_DAY, 23);
@@ -117,8 +117,8 @@ public class BoilerTest {
         BiConsumer COMMAND_EXECUTOR = mock(BiConsumer.class);
         new CircularPump(new SettingsDao(),COMMAND_EXECUTOR).setState(true);
         new ThreeWayValve(new SettingsDao(),COMMAND_EXECUTOR).setState(true);
-        Boiler boiler = spy(new Boiler(COMMAND_EXECUTOR));
-        when(Boiler.BOILER_PORT_KEY).thenReturn("D1");
+        BoilerBlocker boiler = spy(new BoilerBlocker(COMMAND_EXECUTOR));
+        when(BoilerBlocker.BOILER_PORT_KEY).thenReturn("D1");
         when(boiler.getCurrentDate()).thenAnswer(mock -> {
             Calendar calendar = Calendar.getInstance();
             calendar.set(Calendar.HOUR_OF_DAY, 23);
@@ -150,8 +150,8 @@ public class BoilerTest {
         BiConsumer COMMAND_EXECUTOR = mock(BiConsumer.class);
         new CircularPump(new SettingsDao(),COMMAND_EXECUTOR).setState(true);
         new ThreeWayValve(new SettingsDao(),COMMAND_EXECUTOR).setState(true);
-        Boiler boiler = spy(new Boiler(COMMAND_EXECUTOR));
-        when(Boiler.BOILER_PORT_KEY).thenReturn("D1");
+        BoilerBlocker boiler = spy(new BoilerBlocker(COMMAND_EXECUTOR));
+        when(BoilerBlocker.BOILER_PORT_KEY).thenReturn("D1");
         when(boiler.getCurrentDate()).thenAnswer(mock -> {
             Calendar calendar = Calendar.getInstance();
             calendar.set(Calendar.HOUR_OF_DAY, 10);
@@ -182,9 +182,9 @@ public class BoilerTest {
         BiConsumer COMMAND_EXECUTOR = mock(BiConsumer.class);
         new CircularPump(new SettingsDao(),COMMAND_EXECUTOR).setState(false);
         new ThreeWayValve(new SettingsDao(),COMMAND_EXECUTOR).setState(true);
-        Boiler boiler = spy(new Boiler(COMMAND_EXECUTOR));
-        Boiler.state.set(true);
-        when(Boiler.BOILER_PORT_KEY).thenReturn("D1");
+        BoilerBlocker boiler = spy(new BoilerBlocker(COMMAND_EXECUTOR));
+        BoilerBlocker.state.set(true);
+        when(BoilerBlocker.BOILER_PORT_KEY).thenReturn("D1");
         when(boiler.getCurrentDate()).thenAnswer(mock -> {
             Calendar calendar = Calendar.getInstance();
             calendar.set(Calendar.HOUR_OF_DAY, 10);

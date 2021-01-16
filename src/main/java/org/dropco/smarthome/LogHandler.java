@@ -14,7 +14,6 @@ public class LogHandler extends Handler {
 
     @Override
     public void publish(LogRecord record) {
-        if (!isLoggable(record)) return;
         Formatter formatter = getFormatter();
         String message = (formatter != null) ? formatter.formatMessage(record) : record.getMessage();
         if (message.length() > 256) {
