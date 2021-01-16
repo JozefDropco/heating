@@ -71,6 +71,6 @@ public class HeatingWorker  {
 
             }
         });
-        StatsCollector.getInstance().collect("Ohrev TA3", Main.getOutput(BOILER_PORT_KEY));
+        StatsCollector.getInstance().collect("Blokovanie ohrevu TA3", Main.getOutput(BOILER_PORT_KEY));
     }
 }
