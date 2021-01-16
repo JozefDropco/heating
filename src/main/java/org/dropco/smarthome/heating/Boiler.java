@@ -10,6 +10,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
+import java.util.logging.Logger;
 
 public class Boiler implements Runnable {
 
@@ -18,6 +19,7 @@ public class Boiler implements Runnable {
     static final Semaphore update = new Semaphore(0);
     private BiConsumer<String, Boolean> commandExecutor;
     static AtomicBoolean state = new AtomicBoolean(false);
+    public static final Logger LOGGER = Logger.getLogger(Boiler.class.getName());
 
     public Boiler(BiConsumer<String, Boolean> commandExecutor) {
         this.commandExecutor = commandExecutor;

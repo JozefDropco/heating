@@ -22,6 +22,7 @@ public class DayLight {
     private SettingsDao settingsDao;
 
     private DayLight(SettingsDao settingsDao, GpioPinDigitalInput input, Supplier<Integer> lightThreshold) {
+        this.settingsDao = settingsDao;
         this.input = input;
         this.lightThreshold = lightThreshold;
     }
