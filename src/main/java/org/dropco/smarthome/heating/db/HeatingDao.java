@@ -1,5 +1,6 @@
 package org.dropco.smarthome.heating.db;
 
+import com.google.common.collect.Lists;
 import com.querydsl.core.Tuple;
 import com.querydsl.sql.SQLTemplates;
 import com.querydsl.sql.dml.SQLDeleteClause;
@@ -7,18 +8,15 @@ import com.querydsl.sql.dml.SQLInsertClause;
 import com.querydsl.sql.dml.SQLUpdateClause;
 import com.querydsl.sql.mysql.MySQLQuery;
 import org.dropco.smarthome.database.DBConnection;
-import org.dropco.smarthome.database.querydsl.SolarHeating;
 import org.dropco.smarthome.database.querydsl.StringSetting;
 import org.dropco.smarthome.heating.dto.SolarHeatingSchedule;
 
 import java.sql.Connection;
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 
-import static org.dropco.smarthome.database.querydsl.SolarHeating.*;
+import static org.dropco.smarthome.database.querydsl.SolarHeating.SOLAR_HEATING;
 import static org.dropco.smarthome.database.querydsl.TemperatureMeasurePlace.TEMP_MEASURE_PLACE;
 
 public class HeatingDao {
@@ -33,7 +31,7 @@ public class HeatingDao {
                 .from(TEMP_MEASURE_PLACE).where(TEMP_MEASURE_PLACE.devideId.eq(deviceId)).fetchFirst();
     }
 
-    public SolarHeatingSchedule getCurrentRecord(){
+    public SolarHeatingSchedule getCurrentRecord() {
         Tuple tuple = new MySQLQuery<StringSetting>(getConnection()).select(SOLAR_HEATING.all())
                 .from(SOLAR_HEATING).where(SOLAR_HEATING.day.eq(LocalDate.now().getDayOfWeek().getValue())
                         .and(SOLAR_HEATING.fromTime.loe(LocalTime.now()).and(SOLAR_HEATING.toTime.gt(LocalTime.now())))).fetchFirst();
@@ -56,7 +54,7 @@ public class HeatingDao {
                 .from(TEMP_MEASURE_PLACE).fetch();
     }
 
-    public void saveMeasurePlace(String name,String refCd, String deviceId) {
+    public void saveMeasurePlace(String name, String refCd, String deviceId) {
         new SQLInsertClause(getConnection(), SQLTemplates.DEFAULT, TEMP_MEASURE_PLACE)
                 .set(TEMP_MEASURE_PLACE.devideId, deviceId)
                 .set(TEMP_MEASURE_PLACE.name, name)
@@ -86,5 +84,11 @@ public class HeatingDao {
                 .setThreeWayValveStopDiff(tuple.get(SOLAR_HEATING.threeWayValveStopDiff))
                 .setThreeWayValveStartDiff(tuple.get(SOLAR_HEATING.threeWayValveStartDiff))
                 .setBoilerBlock(tuple.get(SOLAR_HEATING.boilerBlocked));
+    }
+
+    public List<SolarHeatingSchedule> getScheduleForDay(int day) {
+        List<Tuple> tuple = new MySQLQuery<StringSetting>(getConnection()).select(SOLAR_HEATING.all())
+                .from(SOLAR_HEATING).where(SOLAR_HEATING.day.eq(day)).orderBy(SOLAR_HEATING.fromTime.asc()).fetch();
+        return Lists.transform(tuple, this::toSolarHeating);
     }
 }
