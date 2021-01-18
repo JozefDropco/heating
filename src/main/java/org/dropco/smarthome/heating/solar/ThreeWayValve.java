@@ -1,4 +1,4 @@
-package org.dropco.smarthome.heating;
+package org.dropco.smarthome.heating.solar;
 
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AtomicDouble;
@@ -7,20 +7,17 @@ import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.heating.db.HeatingDao;
 import org.dropco.smarthome.temp.TempService;
 
-import java.util.Calendar;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.logging.Logger;
 
 public class ThreeWayValve implements Runnable {
-    protected static final String THREE_WAY_VALVE_DIFF_START_TEMP = "THREE_WAY_VALVE_DIFF_START_TEMP";
-    protected static final String THREE_WAY_VALVE_DIFF_STOP_TEMP = "THREE_WAY_VALVE_DIFF_STOP_TEMP";
-    protected static final String WEEKEND_THREE_WAY_VALVE_DIFF_STOP_TEMP = "WEEKEND_THREE_WAY_VALVE_DIFF_STOP_TEMP";
     protected static final String THREE_WAY_PORT = "THREE_WAY_PORT";
-    static final String T31_TEMP_KEY = "PRED_TA3";
-    static final String T2_TEMP_KEY = "TA3";
+    static String THREE_WAY_VALVE_T31_MEASURE_PLACE;
+    static String THREE_WAY_VALVE_T2_MEASURE_PLACE;
     static AtomicBoolean state = new AtomicBoolean(false);
     AtomicDouble tempT31 = new AtomicDouble(0);
     AtomicDouble tempT2 = new AtomicDouble(0);
@@ -28,8 +25,12 @@ public class ThreeWayValve implements Runnable {
     private BiConsumer<String, Boolean> commandExecutor;
     private static List<Consumer<Boolean>> subscribers = Lists.newArrayList();
     private SettingsDao settingsDao;
+    public static final Logger LOGGER = Logger.getLogger(ThreeWayValve.class.getName());
+
     public ThreeWayValve(SettingsDao settingsDao, BiConsumer<String, Boolean> commandExecutor) {
         this.settingsDao =settingsDao;
+        THREE_WAY_VALVE_T31_MEASURE_PLACE =settingsDao.getString("THREE_WAY_VALVE_T31_MEASURE_PLACE");
+        THREE_WAY_VALVE_T2_MEASURE_PLACE =settingsDao.getString("THREE_WAY_VALVE_T2_MEASURE_PLACE");
         this.commandExecutor = commandExecutor;
         ServiceMode.addSubsriber(mode -> {
             if (state.get() && mode) {
@@ -41,25 +42,27 @@ public class ThreeWayValve implements Runnable {
 
     @Override
     public void run() {
-        TempService.subscribe(getDeviceId(T31_TEMP_KEY), value1 -> {
-            tempT31.set(value1);
+        TempService.subscribe(getDeviceId(THREE_WAY_VALVE_T31_MEASURE_PLACE), value -> {
+            tempT31.set(value);
+            LOGGER.fine(THREE_WAY_VALVE_T31_MEASURE_PLACE + " teplota je " + value);
             update.release();
         });
-        TempService.subscribe(getDeviceId(T2_TEMP_KEY), value -> {
+        TempService.subscribe(getDeviceId(THREE_WAY_VALVE_T2_MEASURE_PLACE), value -> {
             tempT2.set(value);
+            LOGGER.fine(THREE_WAY_VALVE_T2_MEASURE_PLACE + " teplota je " + value);
             update.release();
         });
-        tempT31.set(TempService.getTemperature(getDeviceId(T31_TEMP_KEY)));
-        tempT2.set(TempService.getTemperature(getDeviceId(T2_TEMP_KEY)));
+        tempT31.set(TempService.getTemperature(getDeviceId(THREE_WAY_VALVE_T31_MEASURE_PLACE)));
+        tempT2.set(TempService.getTemperature(getDeviceId(THREE_WAY_VALVE_T2_MEASURE_PLACE)));
 
         while (true) {
             if (!ServiceMode.isServiceMode()) {
                 double difference = tempT31.get() - tempT2.get();
-                if (difference >= getStartThreshold() && state.compareAndSet(false, true)) {
+                LOGGER.fine("Rozdiel teplôt pre 3-cestný ventil je " + difference);
+                if (difference >= SolarHeatingCurrentSetup.get().getThreeWayValveStartDiff() && state.compareAndSet(false, true)) {
                     raiseChange(true);
                 }
-                double stopThreshold = getStopThreshold();
-                if (difference <= stopThreshold && state.compareAndSet(true, false)) {
+                if (difference <= SolarHeatingCurrentSetup.get().getThreeWayValveStopDiff() && state.compareAndSet(true, false)) {
                     raiseChange(false);
                 }
             }
@@ -68,6 +71,7 @@ public class ThreeWayValve implements Runnable {
     }
 
     void raiseChange(boolean state) {
+        LOGGER.info("3-cestný ventil sa prepne na " + (state ? "ohrev vody" : "bypass"));
         commandExecutor.accept(THREE_WAY_PORT, state);
         subscribers.forEach(consumer -> consumer.accept(state));
     }
@@ -78,31 +82,6 @@ public class ThreeWayValve implements Runnable {
 
     String getDeviceId(String t2TempKey) {
         return new HeatingDao().getDeviceId(t2TempKey);
-    }
-
-    double getStartThreshold() {
-        return settingsDao.getDouble(THREE_WAY_VALVE_DIFF_START_TEMP);
-    }
-
-    double getStopThreshold() {
-        double value = getStopTemperatureStop();
-        int day = Calendar.getInstance().get(Calendar.DAY_OF_WEEK);
-        if (isWeekend(day)) {
-            getStopWeekendTemperatureStop();
-        }
-        return value;
-    }
-
-    boolean isWeekend(int day) {
-        return day == Calendar.SATURDAY || day == Calendar.SUNDAY;
-    }
-
-    double getStopTemperatureStop() {
-        return settingsDao.getDouble(THREE_WAY_VALVE_DIFF_STOP_TEMP);
-    }
-
-    double getStopWeekendTemperatureStop() {
-        return settingsDao.getDouble(WEEKEND_THREE_WAY_VALVE_DIFF_STOP_TEMP);
     }
 
 

@@ -5,6 +5,7 @@ import org.dropco.smarthome.database.LogDao;
 import java.util.Date;
 import java.util.logging.Formatter;
 import java.util.logging.Handler;
+import java.util.logging.Level;
 import java.util.logging.LogRecord;
 
 public class LogHandler extends Handler {
@@ -14,6 +15,7 @@ public class LogHandler extends Handler {
 
     @Override
     public void publish(LogRecord record) {
+        if (!isLoggable(record)) return;
         Formatter formatter = getFormatter();
         String message = (formatter != null) ? formatter.formatMessage(record) : record.getMessage();
         if (message.length() > 256) {
@@ -22,6 +24,11 @@ public class LogHandler extends Handler {
         synchronized (writeLock) {
             logDao.addLogMessage(record.getSequenceNumber(), new Date(record.getMillis()), record.getLevel().getName(), message);
         }
+    }
+
+    @Override
+    public boolean isLoggable(LogRecord record) {
+        return record.getLoggerName().startsWith("org.dropco.smarthome") || record.getLevel().intValue() >= Level.INFO.intValue();
     }
 
     @Override

@@ -4,7 +4,7 @@ import com.google.common.collect.Sets;
 import com.pi4j.io.gpio.*;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.dto.NamedPort;
-import org.dropco.smarthome.heating.HeatingWorker;
+import org.dropco.smarthome.heating.solar.SolarHeatingMain;
 import org.dropco.smarthome.microservice.RainSensor;
 import org.dropco.smarthome.microservice.WaterPumpFeedback;
 import org.dropco.smarthome.solar.SolarMain;
@@ -54,7 +54,7 @@ public class Main {
             WateringMain.main(settingsDao);
         }
         if (inputs.contains("--heating")) {
-            HeatingWorker.start(settingsDao,(key, value) -> {
+            SolarHeatingMain.start(settingsDao,(key, value) -> {
                 Main.getOutput(key).setState(value);
             });
         }

@@ -1,6 +1,7 @@
-package org.dropco.smarthome.heating;
+package org.dropco.smarthome.heating.solar;
 
 import org.dropco.smarthome.database.SettingsDao;
+import org.dropco.smarthome.heating.solar.SolarCircularPump;
 import org.dropco.smarthome.temp.TempService;
 import org.junit.Before;
 import org.junit.Test;
@@ -21,11 +22,11 @@ public class CircularPumpTest {
     @Test
     public void test() throws InterruptedException {
         BiConsumer COMMAND_EXECUTOR = mock(BiConsumer.class);
-        CircularPump pump= spy(new CircularPump(new SettingsDao(),COMMAND_EXECUTOR));
+        SolarCircularPump pump= spy(new SolarCircularPump(new SettingsDao(),COMMAND_EXECUTOR));
         doAnswer(mock -> 10.0d).when(pump).getStartThreshold();
         doAnswer(mock -> 5.0d).when(pump).getStopThreshold();
         doAnswer(mock -> "Ke").when(pump);
-        doAnswer(mock -> (mock.getArgument(0).equals(CircularPump.T1_TEMP_KEY)) ? "D1" : "D2").when(pump).getDeviceId(any());
+        doAnswer(mock -> (mock.getArgument(0).equals(SolarCircularPump.T1_MEASURE_PLACE)) ? "D1" : "D2").when(pump).getDeviceId(any());
 
         TempService.setTemperature("D1",10.0);
         TempService.setTemperature("D2",10.0);
@@ -40,11 +41,11 @@ public class CircularPumpTest {
     @Test
     public void test2() throws InterruptedException {
         BiConsumer COMMAND_EXECUTOR = mock(BiConsumer.class);
-        CircularPump pump= spy(new CircularPump(new SettingsDao(),COMMAND_EXECUTOR));
+        SolarCircularPump pump= spy(new SolarCircularPump(new SettingsDao(),COMMAND_EXECUTOR));
         doAnswer(mock -> 10.0d).when(pump).getStartThreshold();
         doAnswer(mock -> 5.0d).when(pump).getStopThreshold();
         doAnswer(mock -> "Ke").when(pump);
-        doAnswer(mock -> (mock.getArgument(0).equals(CircularPump.T1_TEMP_KEY)) ? "D1" : "D2").when(pump).getDeviceId(any());
+        doAnswer(mock -> (mock.getArgument(0).equals(SolarCircularPump.T1_MEASURE_PLACE)) ? "D1" : "D2").when(pump).getDeviceId(any());
 
         TempService.setTemperature("D1",70.0);
         TempService.setTemperature("D2",65.0);
@@ -60,11 +61,11 @@ public class CircularPumpTest {
     @Test
     public void test3() throws InterruptedException {
         BiConsumer COMMAND_EXECUTOR = mock(BiConsumer.class);
-        CircularPump pump= spy(new CircularPump(new SettingsDao(),COMMAND_EXECUTOR));
+        SolarCircularPump pump= spy(new SolarCircularPump(new SettingsDao(),COMMAND_EXECUTOR));
         doAnswer(mock -> 10.0d).when(pump).getStartThreshold();
         doAnswer(mock -> 5.0d).when(pump).getStopThreshold();
         doAnswer(mock -> "Ke").when(pump);
-        doAnswer(mock -> (mock.getArgument(0).equals(CircularPump.T1_TEMP_KEY)) ? "D1" : "D2").when(pump).getDeviceId(any());
+        doAnswer(mock -> (mock.getArgument(0).equals(SolarCircularPump.T1_MEASURE_PLACE)) ? "D1" : "D2").when(pump).getDeviceId(any());
 
         TempService.setTemperature("D1",77.0);
         TempService.setTemperature("D2",65.0);
@@ -79,11 +80,11 @@ public class CircularPumpTest {
     @Test
     public void test4() throws InterruptedException {
         BiConsumer COMMAND_EXECUTOR = mock(BiConsumer.class);
-        CircularPump pump= spy(new CircularPump(new SettingsDao(),COMMAND_EXECUTOR));
+        SolarCircularPump pump= spy(new SolarCircularPump(new SettingsDao(),COMMAND_EXECUTOR));
         doAnswer(mock -> 10.0d).when(pump).getStartThreshold();
         doAnswer(mock -> 5.0d).when(pump).getStopThreshold();
         doAnswer(mock -> "Ke").when(pump);
-        doAnswer(mock -> (mock.getArgument(0).equals(CircularPump.T1_TEMP_KEY)) ? "D1" : "D2").when(pump).getDeviceId(any());
+        doAnswer(mock -> (mock.getArgument(0).equals(SolarCircularPump.T1_MEASURE_PLACE)) ? "D1" : "D2").when(pump).getDeviceId(any());
 
         TempService.setTemperature("D1",77.0);
         TempService.setTemperature("D2",65.0);

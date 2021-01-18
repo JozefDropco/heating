@@ -1,9 +1,9 @@
 package org.dropco.smarthome.web;
 
 import com.google.gson.Gson;
-import org.dropco.smarthome.heating.BoilerBlocker;
-import org.dropco.smarthome.heating.CircularPump;
-import org.dropco.smarthome.heating.ThreeWayValve;
+import org.dropco.smarthome.heating.solar.BoilerBlocker;
+import org.dropco.smarthome.heating.solar.SolarCircularPump;
+import org.dropco.smarthome.heating.solar.ThreeWayValve;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -22,7 +22,7 @@ public class HeatingWebService {
     @Produces(MediaType.APPLICATION_JSON)
     public Response stats(@QueryParam("fromDate") String fromString, @QueryParam("toDate") String toString) throws ParseException {
         FullStats fullStats = new FullStats();
-        fullStats.solarCircularPump = CircularPump.getState();
+        fullStats.solarCircularPump = SolarCircularPump.getState();
         fullStats.heatingBoilerBlock = BoilerBlocker.getState();
         fullStats.threeWayBypass = ThreeWayValve.getState()==false;
         fullStats.threeWayOpened = ThreeWayValve.getState();

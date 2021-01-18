@@ -25,7 +25,7 @@ public class TemperatureMeasurePlace extends com.querydsl.sql.RelationalPathBase
 
     public final StringPath name = createString("name");
 
-    public final com.querydsl.sql.PrimaryKey<TemperatureMeasurePlace> tV21RefRegionPk = createPrimaryKey(placeRefCd);
+    public final com.querydsl.sql.PrimaryKey<TemperatureMeasurePlace> pk = createPrimaryKey(placeRefCd);
 
     public TemperatureMeasurePlace(String variable) {
         super(TemperatureMeasurePlace.class, forVariable(variable), "HEATING", "TEMP_MEASURE_PLACE");

@@ -1,4 +1,4 @@
-package org.dropco.smarthome.heating;
+package org.dropco.smarthome.heating.solar;
 
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AtomicDouble;
@@ -14,14 +14,14 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
 
-public class CircularPump implements Runnable {
-    protected static final String CIRCULAR_PUMP_DIFF_START_TEMP = "CIRCULAR_PUMP_DIFF_START_TEMP";
-    protected static final String CIRCULAR_PUMP_DIFF_STOP_TEMP = "CIRCULAR_PUMP_DIFF_STOP_TEMP";
-    protected static final String CIRCULAR_PUMP_PORT = "CIRCULAR_PUMP_PORT";
+public class SolarCircularPump implements Runnable {
+    protected static final String CIRCULAR_PUMP_DIFF_START_TEMP = "SOLAR_CIRCULAR_PUMP_DIFF_START_TEMP";
+    protected static final String CIRCULAR_PUMP_DIFF_STOP_TEMP = "SOLAR_CIRCULAR_PUMP_DIFF_STOP_TEMP";
+    protected static final String CIRCULAR_PUMP_PORT = "SOLAR_CIRCULAR_PUMP_PORT";
 
-    static final String T1_TEMP_KEY = "SOLAR";
-    static final String T2_TEMP_KEY = "TA3";
-    public static final Logger LOGGER = Logger.getLogger(CircularPump.class.getName());
+    static String T1_MEASURE_PLACE;
+    static String T2_MEASURE_PLACE;
+    public static final Logger LOGGER = Logger.getLogger(SolarCircularPump.class.getName());
 
     static AtomicBoolean state = new AtomicBoolean(false);
     AtomicDouble tempT1 = new AtomicDouble(0);
@@ -31,8 +31,10 @@ public class CircularPump implements Runnable {
     private static List<Consumer<Boolean>> subscribers = Lists.newArrayList();
     private SettingsDao settingsDao;
 
-    public CircularPump(SettingsDao settingsDao, BiConsumer<String, Boolean> commandExecutor) {
-        this.settingsDao=settingsDao;
+    public SolarCircularPump(SettingsDao settingsDao, BiConsumer<String, Boolean> commandExecutor) {
+        T1_MEASURE_PLACE = settingsDao.getString("SOLAR_CIRCULAR_PUMP_T1_MEASURE_PLACE");
+        T2_MEASURE_PLACE = settingsDao.getString("SOLAR_CIRCULAR_PUMP_T2_MEASURE_PLACE");
+        this.settingsDao = settingsDao;
         this.commandExecutor = commandExecutor;
         ServiceMode.addSubsriber(mode -> {
             if (state.get() && mode) {
@@ -44,24 +46,23 @@ public class CircularPump implements Runnable {
 
     @Override
     public void run() {
-        TempService.subscribe(getDeviceId(T1_TEMP_KEY), value1 -> {
-            tempT1.set(value1);
-            LOGGER.info(T1_TEMP_KEY + " teplata je " + value1);
+        String t1MeasurePlace = getDeviceId(T1_MEASURE_PLACE);
+        TempService.subscribe(t1MeasurePlace, value -> {
+            tempT1.set(value);
+            LOGGER.fine(T1_MEASURE_PLACE + " teplota je " + value);
             update.release();
         });
-        TempService.subscribe(getDeviceId(T2_TEMP_KEY), value -> {
+        TempService.subscribe(getDeviceId(T2_MEASURE_PLACE), value -> {
             tempT2.set(value);
-            LOGGER.info(T2_TEMP_KEY + " teplata je " + value);
+            LOGGER.fine(T2_MEASURE_PLACE + " teplota je " + value);
             update.release();
         });
-        tempT1.set(TempService.getTemperature(getDeviceId(T1_TEMP_KEY)));
-        tempT2.set(TempService.getTemperature(getDeviceId(T2_TEMP_KEY)));
-        LOGGER.info(T1_TEMP_KEY + " teplata je " + tempT1.get());
-        LOGGER.info(T2_TEMP_KEY + " teplata je " + tempT2.get());
+        tempT1.set(TempService.getTemperature(t1MeasurePlace));
+        tempT2.set(TempService.getTemperature(getDeviceId(T2_MEASURE_PLACE)));
         while (true) {
             if (!ServiceMode.isServiceMode()) {
                 double difference = tempT1.get() - tempT2.get();
-                LOGGER.info("Rozdiel teplot pre obehové čerpadlo je" + difference);
+                LOGGER.fine("Rozdiel teplôt pre obehové čerpadlo je " + difference);
                 if (difference >= getStartThreshold() && state.compareAndSet(false, true)) {
                     raiseChange(true);
                 }
@@ -73,10 +74,10 @@ public class CircularPump implements Runnable {
         }
     }
 
-    void raiseChange(boolean b) {
-        LOGGER.info("Čerpadlo sa "+ (b?"zapne":"vypne"));
-        commandExecutor.accept(CIRCULAR_PUMP_PORT, b);
-        subscribers.forEach(consumer -> consumer.accept(b));
+    void raiseChange(boolean state) {
+        LOGGER.info("Obehové čerpadlo kolektorov sa " + (state ? "zapne" : "vypne"));
+        commandExecutor.accept(CIRCULAR_PUMP_PORT, state);
+        subscribers.forEach(consumer -> consumer.accept(state));
     }
 
     void setState(boolean newState) {
