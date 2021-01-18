@@ -27,8 +27,8 @@ public class SolarHeatingCurrentSetup {
         SolarHeatingCurrentSetup.CURRENT_RECORD.set(currentRecord);
         Logger.getLogger(SolarHeatingCurrentSetup.class.getName()).info(currentRecord.toString());
         subscribers.forEach(subs-> subs.accept(currentRecord));
-        LocalTime endTime = SolarHeatingCurrentSetup.CURRENT_RECORD.get().getToTime().plusSeconds(1);
-        long sleepTime = LocalTime.now().until(endTime, ChronoUnit.SECONDS)+1;
+        LocalTime endTime = SolarHeatingCurrentSetup.CURRENT_RECORD.get().getToTime();
+        long sleepTime = LocalTime.now().until(endTime, ChronoUnit.SECONDS)+2;
         EXECUTOR_SERVICE.schedule(() -> start(heatingDao),sleepTime,TimeUnit.SECONDS);
     }
 

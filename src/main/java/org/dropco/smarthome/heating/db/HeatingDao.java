@@ -2,6 +2,7 @@ package org.dropco.smarthome.heating.db;
 
 import com.google.common.collect.Lists;
 import com.querydsl.core.Tuple;
+import com.querydsl.sql.MySQLTemplates;
 import com.querydsl.sql.SQLTemplates;
 import com.querydsl.sql.dml.SQLDeleteClause;
 import com.querydsl.sql.dml.SQLInsertClause;
@@ -21,6 +22,8 @@ import static org.dropco.smarthome.database.querydsl.TemperatureMeasurePlace.TEM
 
 public class HeatingDao {
 
+    public static final MySQLTemplates SQL_TEMPLATES = new MySQLTemplates();
+
     public String getDeviceId(String placeRefCd) {
         return new MySQLQuery<StringSetting>(getConnection()).select(TEMP_MEASURE_PLACE.devideId)
                 .from(TEMP_MEASURE_PLACE).where(TEMP_MEASURE_PLACE.placeRefCd.eq(placeRefCd)).fetchFirst();
@@ -32,7 +35,7 @@ public class HeatingDao {
     }
 
     public SolarHeatingSchedule getCurrentRecord() {
-        Tuple tuple = new MySQLQuery<StringSetting>(getConnection()).select(SOLAR_HEATING.all())
+        Tuple tuple = new MySQLQuery<StringSetting>(getConnection(), SQL_TEMPLATES).select(SOLAR_HEATING.all())
                 .from(SOLAR_HEATING).where(SOLAR_HEATING.day.eq(LocalDate.now().getDayOfWeek().getValue())
                         .and(SOLAR_HEATING.fromTime.loe(LocalTime.now()).and(SOLAR_HEATING.toTime.gt(LocalTime.now())))).fetchFirst();
         return toSolarHeating(tuple);
@@ -90,5 +93,27 @@ public class HeatingDao {
         List<Tuple> tuple = new MySQLQuery<StringSetting>(getConnection()).select(SOLAR_HEATING.all())
                 .from(SOLAR_HEATING).where(SOLAR_HEATING.day.eq(day)).orderBy(SOLAR_HEATING.fromTime.asc()).fetch();
         return Lists.transform(tuple, this::toSolarHeating);
+    }
+
+    public void saveHeatingSchedule(SolarHeatingSchedule solarHeatingSchedule) {
+        new SQLInsertClause(getConnection(), SQL_TEMPLATES, SOLAR_HEATING)
+                .set(SOLAR_HEATING.fromTime, solarHeatingSchedule.getFromTime())
+                .set(SOLAR_HEATING.day,solarHeatingSchedule.getDay())
+                .set(SOLAR_HEATING.toTime, solarHeatingSchedule.getToTime())
+                .set(SOLAR_HEATING.threeWayValveStartDiff, solarHeatingSchedule.getThreeWayValveStartDiff())
+                .set(SOLAR_HEATING.threeWayValveStopDiff, solarHeatingSchedule.getThreeWayValveStopDiff())
+                .set(SOLAR_HEATING.boilerBlocked, solarHeatingSchedule.getBoilerBlock())
+                .execute();
+    }
+    public void updateHeatingSchedule(SolarHeatingSchedule solarHeatingSchedule) {
+        new SQLUpdateClause(getConnection(), SQL_TEMPLATES, SOLAR_HEATING)
+                .set(SOLAR_HEATING.fromTime, solarHeatingSchedule.getFromTime())
+                .set(SOLAR_HEATING.day,solarHeatingSchedule.getDay())
+                .set(SOLAR_HEATING.toTime, solarHeatingSchedule.getToTime())
+                .set(SOLAR_HEATING.threeWayValveStartDiff, solarHeatingSchedule.getThreeWayValveStartDiff())
+                .set(SOLAR_HEATING.threeWayValveStopDiff, solarHeatingSchedule.getThreeWayValveStopDiff())
+                .set(SOLAR_HEATING.boilerBlocked, solarHeatingSchedule.getBoilerBlock())
+                .where(SOLAR_HEATING.id.eq(solarHeatingSchedule.getId()))
+                .execute();
     }
 }
