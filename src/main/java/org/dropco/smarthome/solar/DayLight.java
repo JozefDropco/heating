@@ -2,6 +2,7 @@ package org.dropco.smarthome.solar;
 
 import com.google.common.collect.Lists;
 import com.pi4j.io.gpio.GpioPinDigitalInput;
+import com.pi4j.io.gpio.PinPullResistance;
 import com.pi4j.io.gpio.PinState;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.gpioextension.DelayedGpioPinListener;
@@ -58,6 +59,7 @@ public class DayLight {
                 }
             }
         };
+        input.setPullResistance(PinPullResistance.PULL_UP);
         input.addListener(pinListener);
 
     }
