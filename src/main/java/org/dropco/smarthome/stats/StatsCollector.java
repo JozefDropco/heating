@@ -39,14 +39,17 @@ public class StatsCollector {
     }
 
     public void collect(String name, GpioPinDigital port) {
+        collect(name,port,PinState.HIGH);
+    }
+    public void collect(String name, GpioPinDigital port, PinState pinState) {
         Logger.getLogger(StatsCollector.class.getName()).log(Level.INFO, "Zbieram štatistiky pre " + name);
-        GpioPinListenerDigital listener = new DelayedGpioPinListener(PinState.HIGH, 1000, port) {
+        GpioPinListenerDigital listener = new DelayedGpioPinListener(pinState, 1000, port) {
             @Override
             public void handleStateChange(boolean state) {
                 collect(state, name);
             }
         };
-        collect(port.isHigh(), name);
+        collect(pinState.equals(port.getState()), name);
         port.addListener(listener);
     }
 

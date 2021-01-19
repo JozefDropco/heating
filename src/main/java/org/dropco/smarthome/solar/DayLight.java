@@ -46,8 +46,8 @@ public class DayLight {
 
     public void connect(boolean initialValue) {
         enoughLight.set(initialValue);
-        StatsCollector.getInstance().collect("Jas", input);
-        pinListener = new DelayedGpioPinListener(PinState.HIGH, lightThreshold.get(), input) {
+        StatsCollector.getInstance().collect("Jas", input,PinState.LOW);
+        pinListener = new DelayedGpioPinListener(PinState.LOW, lightThreshold.get(), input) {
 
 
             @Override
