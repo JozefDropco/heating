@@ -75,7 +75,7 @@ public class DayLight {
     public void clear() {
         enoughLight.set(false);
         settingsDao.setLong(SolarSystemRefCode.DAYLIGHT, 0);
-        if (input.isHigh()) {
+        if (input.isLow()) {
             pinListener.delayedCheck();
         }
     }
@@ -86,5 +86,9 @@ public class DayLight {
 
     public void unsubscribe(Consumer<Boolean> subscriber) {
         subscribers.remove(subscriber);
+    }
+
+    public boolean getCurrentState() {
+        return input.isLow();
     }
 }
