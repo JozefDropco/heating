@@ -7,17 +7,19 @@ import org.dropco.smarthome.solar.move.SafetySolarPanel;
 import org.dropco.smarthome.stats.StatsCollector;
 
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Supplier;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class StrongWind {
     private static final AtomicBoolean isWindy = new AtomicBoolean(false);
 
     public static void connect(GpioPinDigitalInput strongWindPin, SafetySolarPanel safetySolarPanel) {
-        StatsCollector.getInstance().collect("Silný vietor",strongWindPin);
+        StatsCollector.getInstance().collect("Silný vietor", strongWindPin);
         strongWindPin.addListener(new DelayedGpioPinListener(PinState.HIGH, 5000, strongWindPin) {
             @Override
             public void handleStateChange(boolean state) {
                 isWindy.set(state);
+                Logger.getLogger(StrongWind.class.getName()).log(Level.FINE, (state ? "Fúka " : "Skončil ") + "silný vietor");
                 if (state) {
                     safetySolarPanel.moveToStrongWindPosition();
                 } else {
@@ -35,7 +37,7 @@ public class StrongWind {
         return isWindy.get();
     }
 
-     static void set(boolean state) {
+    static void set(boolean state) {
         isWindy.set(state);
     }
 }

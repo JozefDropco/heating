@@ -36,16 +36,16 @@ public class SolarTemperatureWatch {
                 @Override
                 public void accept(Double temperature) {
                     if (temperature > threshold.get()) {
-                        solarOverHeated.set(true);
-                        if (true)
-                            moveToOverheatedPosition();
-                        else
-                            safetySolarPanel.backToNormal();
+                        boolean successFullySet = solarOverHeated.compareAndSet(false, true);
+                        if (successFullySet) moveToOverheatedPosition();
+                    } else {
+                        boolean successFullySet = solarOverHeated.compareAndSet(true, false);
+                        if (successFullySet) safetySolarPanel.backToNormal();
                     }
                 }
             });
         else
-            logger.log(Level.SEVERE,"Meracie miesto prehriatia kolektorov nie je nastavené (REF_CD="+MEASURE_PLACE_REF_CD+")");
+            logger.log(Level.SEVERE, "Meracie miesto prehriatia kolektorov nie je nastavené (REF_CD=" + MEASURE_PLACE_REF_CD + ")");
     }
 
     private void moveToOverheatedPosition() {

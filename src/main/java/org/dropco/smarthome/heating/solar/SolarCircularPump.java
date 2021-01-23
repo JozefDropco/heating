@@ -7,6 +7,7 @@ import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.heating.db.HeatingDao;
 import org.dropco.smarthome.temp.TempService;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;

@@ -13,6 +13,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class DayLight {
     private static DayLight instance;
@@ -22,6 +24,7 @@ public class DayLight {
     private final Supplier<Integer> lightThreshold;
     private DelayedGpioPinListener pinListener;
     private SettingsDao settingsDao;
+    private static final Logger LOGGER = Logger.getLogger(DayLight.class.getName());
 
     private DayLight(SettingsDao settingsDao, GpioPinDigitalInput input, Supplier<Integer> lightThreshold) {
         this.settingsDao = settingsDao;
@@ -56,6 +59,7 @@ public class DayLight {
                 boolean success = enoughLight.compareAndSet(false, state);
                 if (success) {
                     settingsDao.setLong(SolarSystemRefCode.DAYLIGHT, 1);
+                    LOGGER.log(Level.INFO,"Denný jas splnený");
                     subscribers.forEach(booleanConsumer -> booleanConsumer.accept(true));
                 }
             }
@@ -75,6 +79,7 @@ public class DayLight {
 
     public void clear() {
         enoughLight.set(false);
+        LOGGER.log(Level.INFO, "Reset denného jasu");
         settingsDao.setLong(SolarSystemRefCode.DAYLIGHT, 0);
         if (input.isLow()) {
             pinListener.delayedCheck();
