@@ -16,7 +16,7 @@ import java.util.logging.Logger;
 
 public class SolarHeatingCurrentSetup {
 
-    private static List<Consumer<SolarHeatingSchedule>> subscribers = Lists.newArrayList();
+    private static List<Consumer<SolarHeatingSchedule>> subscribers = Collections.synchronizedList(Lists.newArrayList());
     static ScheduledExecutorService EXECUTOR_SERVICE = GpioFactory.getExecutorServiceFactory().getScheduledExecutorService();
 
     private static final AtomicReference<SolarHeatingSchedule> CURRENT_RECORD = new AtomicReference<>();

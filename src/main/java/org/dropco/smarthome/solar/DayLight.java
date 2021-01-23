@@ -8,6 +8,7 @@ import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.gpioextension.DelayedGpioPinListener;
 import org.dropco.smarthome.stats.StatsCollector;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -16,7 +17,7 @@ import java.util.function.Supplier;
 public class DayLight {
     private static DayLight instance;
     private final AtomicBoolean enoughLight = new AtomicBoolean(false);
-    private final List<Consumer<Boolean>> subscribers = Lists.newArrayList();
+    private final List<Consumer<Boolean>> subscribers = Collections.synchronizedList(Lists.newArrayList());
     private final GpioPinDigitalInput input;
     private final Supplier<Integer> lightThreshold;
     private DelayedGpioPinListener pinListener;

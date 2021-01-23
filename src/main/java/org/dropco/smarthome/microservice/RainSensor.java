@@ -16,7 +16,7 @@ public class RainSensor {
     private static final AtomicBoolean raining = new AtomicBoolean(false);
     private static final PinState RAIN_STATE = PinState.LOW;
     private static Logger logger = Logger.getLogger(RainSensor.class.getName());
-    private static final List<Consumer<Boolean>> subscribers = Lists.newArrayList();
+    private static final List<Consumer<Boolean>> subscribers = Collections.synchronizedList(Lists.newArrayList());
 
     public static void start(GpioPinDigitalInput input) {
         StatsCollector.getInstance().collect("Dážď",input);

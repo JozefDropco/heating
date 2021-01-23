@@ -15,7 +15,7 @@ import java.util.logging.Logger;
 public class WaterPumpFeedback {
     public static final AtomicBoolean running = new AtomicBoolean(false);
     private static Logger logger = Logger.getLogger(WaterPumpFeedback.class.getName());
-    private static final List<Consumer<Boolean>> subscribers = Lists.newArrayList();
+    private static final List<Consumer<Boolean>> subscribers = Collections.synchronizedList(Lists.newArrayList());
 
     public static void start(GpioPinDigitalInput input) {
         StatsCollector.getInstance().collect("Čerpadlo zavlažovania",input);

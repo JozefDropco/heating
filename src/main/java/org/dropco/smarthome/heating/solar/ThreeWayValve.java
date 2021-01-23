@@ -23,7 +23,7 @@ public class ThreeWayValve implements Runnable {
     AtomicDouble tempT2 = new AtomicDouble(0);
     private static final Semaphore update = new Semaphore(0);
     private BiConsumer<String, Boolean> commandExecutor;
-    private static List<Consumer<Boolean>> subscribers = Lists.newArrayList();
+    private static List<Consumer<Boolean>> subscribers = Collections.synchronizedList(Lists.newArrayList());
     private SettingsDao settingsDao;
     public static final Logger LOGGER = Logger.getLogger(ThreeWayValve.class.getName());
 

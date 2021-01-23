@@ -21,7 +21,7 @@ public class ServiceMode {
     private static final Map<String, Function<String, GpioPinDigitalOutput>> outputGetterMap = new HashMap<>();
     private static final Map<String, Supplier<Boolean>> inputStateGetterMap = new HashMap<>();
     private static final Multimap<String,String> exclusions = Multimaps.newListMultimap(Maps.newHashMap(), ArrayList::new);
-    private static final List<Consumer<Boolean>> subscribers = Lists.newArrayList();
+    private static final List<Consumer<Boolean>> subscribers = Collections.synchronizedList(Lists.newArrayList());
     public static void startServiceMode(){
         serviceMode.set(true);
         subscribers.forEach(subscriber-> subscriber.accept(true));
