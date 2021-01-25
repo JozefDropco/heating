@@ -16,6 +16,9 @@ import org.dropco.smarthome.database.querydsl.AppLog;
 import org.dropco.smarthome.database.querydsl.StringSetting;
 import org.dropco.smarthome.database.querydsl.TemperatureLog;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -46,8 +49,8 @@ public class LogDao {
                         .and(_tlog.timestamp.goe(from))
                         .and(_tlog.timestamp.loe(to))
                 )
-                .groupBy(_tlog.placeRefCd, removeMinutes)
-                .orderBy(_tlog.placeRefCd.asc(), _tlog.timestamp.asc()).fetch();
+                .groupBy(removeMinutes, _tlog.placeRefCd)
+                .orderBy(_tlog.timestamp.asc(), _tlog.placeRefCd.asc()).fetch();
 
 
     }
@@ -84,13 +87,13 @@ public class LogDao {
             temp.measurePlace = tuple.get(_tlog.placeRefCd);
             temp.min = tuple.get(min);
             temp.max = tuple.get(max);
-            temp.avg = tuple.get(avg);
+            temp.avg = new BigDecimal(tuple.get(avg)).setScale(1, RoundingMode.HALF_UP).doubleValue();
             return temp;
         });
 
     }
 
-    public void addLogMessage(long seqId,Date date, String logLevel, String message) {
+    public void addLogMessage(long seqId, Date date, String logLevel, String message) {
         new SQLInsertClause(getConnection(), SQL_TEMPLATES, _alog)
                 .set(_alog.date, date)
                 .set(_alog.seqId, seqId)
@@ -123,6 +126,19 @@ public class LogDao {
 
     }
 
+    public double readPreviousValue(String series, Date date) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(date);
+        calendar.add(Calendar.DAY_OF_YEAR,-1);
+        DateExpression<Date> removeMinutes = Expressions.dateTemplate(Date.class, leaveoutminutes, _tlog.timestamp);
+        return new MySQLQuery<StringSetting>(getConnection()).select(
+                _tlog.value.avg().as(_tlog.value)).from(_tlog).
+                where(_tlog.placeRefCd.eq(series)
+                        .and(_tlog.timestamp.goe(calendar.getTime()))
+                        .and(_tlog.timestamp.loe(date))
+                ).orderBy(removeMinutes.desc()).fetchFirst();
+    }
+
     public static class AggregateTemp {
         public String measurePlace;
         public double min;
@@ -130,6 +146,7 @@ public class LogDao {
         public double avg;
 
     }
+
     public static class AppMsg {
         public long id;
         public String hour;

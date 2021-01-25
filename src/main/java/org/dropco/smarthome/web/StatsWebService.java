@@ -12,6 +12,8 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -42,6 +44,7 @@ public class StatsWebService {
         List<LogDao.AggregateTemp> temperatures = new LogDao().retrieveAggregatedTemperatures(from, to);
         for (LogDao.AggregateTemp temp : temperatures) {
             temp.measurePlace = new HeatingDao().getMeasurePlaceByRefCd(temp.measurePlace).get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.name);
+
         }
         List<StatsDao.AggregatedStats> aggregatedStats = new StatsDao().listAggregatedStats(from, to);
         FullStats fullStats = new FullStats();
