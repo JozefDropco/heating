@@ -26,14 +26,14 @@ public class ExtendedGpioProvider extends GpioProviderBase {
 
     @Override
     public void setState(Pin pin, PinState state) {
+        byte prevValue = value;
         super.setState(pin, state);
         if (state.isHigh()) {
             value |= 1 << (pin.getAddress() - 101);
-            sent();
         } else {
             value &= ~(1 << (pin.getAddress() - 101));
-            sent();
         }
+        if (prevValue != value) sent();
     }
 
     @Override
@@ -73,12 +73,13 @@ public class ExtendedGpioProvider extends GpioProviderBase {
         @Override
         public void sent(ExtendedGpioProvider provider) {
             provider.gatePin.low();
-            logger.log(Level.FINE,"AND nastaveny na 0");
+            logger.log(Level.FINE, "AND nastaveny na 0");
             Shift.shiftOut((byte) provider.dataOutPin.getPin().getAddress(), (byte) provider.clockPin.getPin().getAddress(), (byte) Shift.MSBFIRST, provider.value);
-            logger.log(Level.FINE,"Hodnota "+provider.value+" poslana na posuvny register");
-            if(provider.value!=0) {
-provider.gatePin.high();
-            logger.log(Level.FINE,"AND nastaveny na 1");}
+            logger.log(Level.FINE, "Hodnota " + provider.value + " poslana na posuvny register");
+            if (provider.value != 0) {
+                provider.gatePin.high();
+                logger.log(Level.FINE, "AND nastaveny na 1");
+            }
         }
     }
 
