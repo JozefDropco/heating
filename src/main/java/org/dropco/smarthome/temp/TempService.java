@@ -38,43 +38,44 @@ public class TempService implements Runnable {
                     for (TemperatureSensor sensor : sensors) {
                         W1Device device = (W1Device) sensor;
                         double temperature = sensor.getTemperature(TemperatureScale.CELSIUS);
-                        String deviceId = device.getId().trim();
-                        AtomicDouble value = recentTemperatures.computeIfAbsent(deviceId, key -> new AtomicDouble(-999));
-                        double oldValue = value.getAndSet(temperature);
-                        if (Double.compare(oldValue, temperature) != 0) {
-                            logDao.logTemperature(deviceId, heatingDao.getPlaceRefCd(deviceId), new Date(), temperature);
-                            subscribers.computeIfAbsent(deviceId, key -> Lists.newArrayList()).forEach(subscriber -> subscriber.accept(temperature));
+                        if (Double.compare(temperature, 85.0d) != 0) {
+                            String deviceId = device.getId().trim();
+                            AtomicDouble value = recentTemperatures.computeIfAbsent(deviceId, key -> new AtomicDouble(-999));
+                            double oldValue = value.getAndSet(temperature);
+                            if (Double.compare(oldValue, temperature) != 0) {
+                                logDao.logTemperature(deviceId, heatingDao.getPlaceRefCd(deviceId), new Date(), temperature);
+                                subscribers.computeIfAbsent(deviceId, key -> Lists.newArrayList()).forEach(subscriber -> subscriber.accept(temperature));
+                            }
                         }
                     }
                 }
-            } catch (RuntimeException e){
-                Logger.getLogger(TempService.class.getName()).log(Level.FINE,"Temp service not working",e);
+            } catch (RuntimeException e) {
+                Logger.getLogger(TempService.class.getName()).log(Level.FINE, "Temp service not working", e);
             }
         }, 0, 1, TimeUnit.MINUTES);
     }
 
 
-
     public static void subscribe(String deviceId, Consumer<Double> subscriber) {
-        subscribers.computeIfAbsent(deviceId,key-> Lists.newArrayList()).add(subscriber);
+        subscribers.computeIfAbsent(deviceId, key -> Lists.newArrayList()).add(subscriber);
     }
 
-    public static void unsubscribe(String deviceId,Consumer<Double> subscriber) {
-        subscribers.computeIfAbsent(deviceId,key-> Lists.newArrayList()).remove(subscriber);
+    public static void unsubscribe(String deviceId, Consumer<Double> subscriber) {
+        subscribers.computeIfAbsent(deviceId, key -> Lists.newArrayList()).remove(subscriber);
     }
 
-    public static double getOutsideTemperature(){
+    public static double getOutsideTemperature() {
         return recentTemperatures.getOrDefault(new HeatingDao().getDeviceId(TempRefCode.EXTERNAL_TEMPERATURE_PLACE_REF_CD), new AtomicDouble(-999)).get();
     }
 
-    public static double getTemperature(String deviceId){
+    public static double getTemperature(String deviceId) {
         return recentTemperatures.getOrDefault(deviceId, new AtomicDouble(-999)).get();
     }
 
-    public static void setTemperature(String deviceId, double value){
-        AtomicDouble tempValue = recentTemperatures.computeIfAbsent(deviceId,key-> new AtomicDouble(-999));
+    public static void setTemperature(String deviceId, double value) {
+        AtomicDouble tempValue = recentTemperatures.computeIfAbsent(deviceId, key -> new AtomicDouble(-999));
         double oldValue = tempValue.getAndSet(value);
-        if (Double.compare(oldValue,value)!=0) {
+        if (Double.compare(oldValue, value) != 0) {
             subscribers.computeIfAbsent(deviceId, key -> Lists.newArrayList()).forEach(subscriber -> subscriber.accept(value));
         }
     }
