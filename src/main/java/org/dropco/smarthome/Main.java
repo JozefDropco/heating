@@ -58,7 +58,7 @@ public class Main {
             SolarHeatingMain.start(settingsDao,(key, value) -> {
                 Main.getOutput(key).setState(value);
             });
-            HeatingHeaterMain.start();
+            HeatingHeaterMain.start(settingsDao);
         }
         if (inputs.contains("--solar")) {
             SolarMain.main(settingsDao);
