@@ -56,6 +56,7 @@ public class DayLight {
 
             @Override
             public void handleStateChange(boolean state) {
+if (state) {
                 boolean success = enoughLight.compareAndSet(false, state);
                 if (success) {
                     settingsDao.setLong(SolarSystemRefCode.DAYLIGHT, 1);
@@ -63,6 +64,7 @@ public class DayLight {
                     subscribers.forEach(booleanConsumer -> booleanConsumer.accept(true));
                 }
             }
+}
         };
         input.setPullResistance(PinPullResistance.PULL_UP);
         input.addListener(pinListener);
