@@ -19,9 +19,10 @@ public class CircularPump {
 
     public CircularPump(GpioPinDigitalInput input) {
         this.input = input;
+        state.set(input.getState()==PinState.LOW);
     }
 
-    public static Boolean geState() {
+    public static Boolean getState() {
         return state.get();
     }
 

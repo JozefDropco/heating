@@ -21,7 +21,7 @@ public class Flame {
         this.input = input;
     }
 
-    public static Boolean geState() {
+    public static Boolean getState() {
         return state.get();
     }
 

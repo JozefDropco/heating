@@ -11,27 +11,28 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class PulseInputGpioListener implements GpioPinListenerDigital {
-    private PinState triggerState;
+    private PinState logicalHighState;
     private long delayedShutdown;
     private AtomicReference<ScheduledFuture> inWaitMode = new AtomicReference<>();
     private GpioPinDigital sourcePin;
 
-    public PulseInputGpioListener(PinState triggerState, long delayedShutdown, GpioPinDigital sourcePin) {
-        this.triggerState = triggerState;
+    public PulseInputGpioListener(PinState logicalHighState, long delayedShutdown, GpioPinDigital sourcePin) {
+        this.logicalHighState = logicalHighState;
         this.delayedShutdown = delayedShutdown;
         this.sourcePin = sourcePin;
-        if (sourcePin.getState() == triggerState) {
+        if (sourcePin.getState() == logicalHighState) {
             delayedShutdown();
         }
     }
 
     @Override
     public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent event) {
-        if (event.getState() == triggerState) {
-            handleStateChange(true);
+        if (event.getState() == logicalHighState) {
             ScheduledFuture future = inWaitMode.getAndSet(null);
-            if (future != null && !future.isDone())
+            if (future != null && !future.isDone()) {
                 future.cancel(false);
+            }
+            handleStateChange(true);
             delayedShutdown();
         }
     }
