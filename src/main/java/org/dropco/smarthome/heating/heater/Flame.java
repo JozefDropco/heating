@@ -3,7 +3,7 @@ package org.dropco.smarthome.heating.heater;
 import com.google.common.collect.Lists;
 import com.pi4j.io.gpio.GpioPinDigitalInput;
 import com.pi4j.io.gpio.PinState;
-import org.dropco.smarthome.gpioextension.PulseInputGpioListener;
+import com.pi4j.io.gpio.event.GpioPinListenerDigital;
 
 import java.util.Collections;
 import java.util.List;
@@ -26,13 +26,15 @@ public class Flame {
     }
 
 
-    public void start(long blinkStop) {
-        input.addListener(new PulseInputGpioListener(PinState.HIGH, blinkStop, input) {
-            @Override
-            public void handleStateChange(boolean state) {
-                if (Flame.this.state.compareAndSet(!state, state)) {
-                    subscribers.forEach(sub-> sub.accept(state));
-                }
+    public void start() {
+        input.addListener((GpioPinListenerDigital) event -> {
+            if (event.getState() == PinState.HIGH) {
+                boolean set = Flame.this.state.compareAndSet(true, false);
+                if (set) subscribers.forEach(sub -> sub.accept(Flame.this.state.get()));
+
+            } else {
+                boolean set = Flame.this.state.compareAndSet(false, true);
+                if (set) subscribers.forEach(sub -> sub.accept(Flame.this.state.get()));
             }
         });
     }

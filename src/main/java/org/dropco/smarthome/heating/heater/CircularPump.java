@@ -27,11 +27,17 @@ public class CircularPump {
 
 
     public void start(long blinkStop) {
-        input.addListener(new PulseInputGpioListener(PinState.HIGH, blinkStop, input) {
+        input.addListener(new PulseInputGpioListener(PinState.LOW, blinkStop, input) {
             @Override
             public void handleStateChange(boolean state) {
-                if (CircularPump.this.state.compareAndSet(!state, state)) {
-                    subscribers.forEach(sub-> sub.accept(state));
+                if (state) {
+                    if (CircularPump.this.state.compareAndSet(false, state)) {
+                        subscribers.forEach(sub -> sub.accept(state));
+                    }
+                } else {
+                    if (CircularPump.this.state.compareAndSet(true, state)) {
+                        subscribers.forEach(sub -> sub.accept(state));
+                    }
                 }
             }
         });

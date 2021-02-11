@@ -13,8 +13,8 @@ public class HeatingHeaterMain {
 
 private static final String HEATER_BLINK_STOP = "HEATER_BLINK_STOP";
     public static void start(SettingsDao dao) {
+        new Flame(Main.getInput(Flame.HEATER_FLAME_REF_CD)).start();
         long blinkStop = dao.getLong(HEATER_BLINK_STOP);
-        new Flame(Main.getInput(Flame.HEATER_FLAME_REF_CD)).start(blinkStop);
         new CircularPump(Main.getInput(CircularPump.HEATER_CIRCULAR_REF_CD)).start(blinkStop);
         new Boiler(Main.getInput(Boiler.HEATER_BOILER_FEC_CD)).start(blinkStop);
         configureServiceMode();
