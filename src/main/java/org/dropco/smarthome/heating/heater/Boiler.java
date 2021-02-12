@@ -21,7 +21,6 @@ public class Boiler {
 
     public Boiler(GpioPinDigitalInput input) {
         this.input = input;
-        state.set(input.getState()==PinState.LOW);
     }
 
     public static Boolean getState() {
@@ -31,6 +30,7 @@ public class Boiler {
 
     public void start(long blinkStop) {
         input.setPullResistance(PinPullResistance.PULL_UP);
+        state.set(input.getState()==PinState.LOW);
         input.addListener(new PulseInputGpioListener(PinState.LOW, blinkStop, input) {
             @Override
             public void handleStateChange(boolean state) {
