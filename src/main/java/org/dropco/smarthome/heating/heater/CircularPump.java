@@ -2,6 +2,7 @@ package org.dropco.smarthome.heating.heater;
 
 import com.google.common.collect.Lists;
 import com.pi4j.io.gpio.GpioPinDigitalInput;
+import com.pi4j.io.gpio.PinPullResistance;
 import com.pi4j.io.gpio.PinState;
 import org.dropco.smarthome.gpioextension.PulseInputGpioListener;
 
@@ -28,6 +29,7 @@ public class CircularPump {
 
 
     public void start(long blinkStop) {
+        input.setPullResistance(PinPullResistance.PULL_UP);
         input.addListener(new PulseInputGpioListener(PinState.LOW, blinkStop, input) {
             @Override
             public void handleStateChange(boolean state) {

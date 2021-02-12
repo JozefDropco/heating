@@ -2,6 +2,7 @@ package org.dropco.smarthome.heating.heater;
 
 import com.google.common.collect.Lists;
 import com.pi4j.io.gpio.GpioPinDigitalInput;
+import com.pi4j.io.gpio.PinPullResistance;
 import com.pi4j.io.gpio.PinState;
 import com.pi4j.io.gpio.event.GpioPinListenerDigital;
 
@@ -27,6 +28,7 @@ public class Flame {
 
 
     public void start() {
+        input.setPullResistance(PinPullResistance.PULL_UP);
         state.set(input.getState() == PinState.LOW);
         input.addListener((GpioPinListenerDigital) event -> {
             if (event.getState() == PinState.LOW) {
