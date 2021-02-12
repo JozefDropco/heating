@@ -27,13 +27,13 @@ public class Flame {
 
 
     public void start() {
+        state.set(input.getState() == PinState.LOW);
         input.addListener((GpioPinListenerDigital) event -> {
-            if (event.getState() == PinState.HIGH) {
-                boolean set = Flame.this.state.compareAndSet(true, false);
-                if (set) subscribers.forEach(sub -> sub.accept(Flame.this.state.get()));
-
-            } else {
+            if (event.getState() == PinState.LOW) {
                 boolean set = Flame.this.state.compareAndSet(false, true);
+                if (set) subscribers.forEach(sub -> sub.accept(Flame.this.state.get()));
+            } else {
+                boolean set = Flame.this.state.compareAndSet(true, false);
                 if (set) subscribers.forEach(sub -> sub.accept(Flame.this.state.get()));
             }
         });
