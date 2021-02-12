@@ -27,21 +27,21 @@ public abstract class PulseInputGpioListener implements GpioPinListenerDigital {
 
     @Override
     public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent event) {
-        System.out.println(event.getPin().getName() +" ma stav "+ event.getState());
         if (event.getState() == logicalHighState) {
             ScheduledFuture future = inWaitMode.getAndSet(null);
             if (future != null && !future.isDone()) {
                 future.cancel(false);
             }
             handleStateChange(true);
-            delayedShutdown();
         }
+        delayedShutdown();
     }
 
     public void delayedShutdown() {
         inWaitMode.set(GpioFactory.getExecutorServiceFactory().getScheduledExecutorService().schedule(() -> {
             inWaitMode.set(null);
-            handleStateChange(false);
+            if (sourcePin.getState() != logicalHighState)
+                handleStateChange(false);
         }, delayedShutdown, TimeUnit.MILLISECONDS));
     }
 
