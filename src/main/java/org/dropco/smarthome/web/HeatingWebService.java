@@ -7,6 +7,9 @@ import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import org.dropco.smarthome.heating.db.HeatingDao;
 import org.dropco.smarthome.heating.dto.SolarHeatingSchedule;
+import org.dropco.smarthome.heating.heater.Boiler;
+import org.dropco.smarthome.heating.heater.HeaterCircularPump;
+import org.dropco.smarthome.heating.heater.Flame;
 import org.dropco.smarthome.heating.solar.BoilerBlocker;
 import org.dropco.smarthome.heating.solar.SolarCircularPump;
 import org.dropco.smarthome.heating.solar.ThreeWayValve;
@@ -47,6 +50,9 @@ public class HeatingWebService {
         fullStats.heatingBoilerBlock = BoilerBlocker.getState();
         fullStats.threeWayBypass = ThreeWayValve.getState() == false;
         fullStats.threeWayOpened = ThreeWayValve.getState();
+        fullStats.heaterFlame = Flame.getState();
+        fullStats.heaterBoiler = Boiler.getState();
+        fullStats.heaterCircularPump = HeaterCircularPump.getState();
         return Response.ok(new Gson().toJson(fullStats)).build();
     }
 
@@ -55,6 +61,9 @@ public class HeatingWebService {
         boolean heatingBoilerBlock;
         boolean threeWayBypass;
         boolean threeWayOpened;
+        boolean heaterFlame;
+        boolean heaterBoiler;
+        boolean heaterCircularPump;
     }
 
     @GET

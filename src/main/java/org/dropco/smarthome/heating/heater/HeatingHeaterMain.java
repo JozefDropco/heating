@@ -15,7 +15,7 @@ private static final String HEATER_BLINK_STOP = "HEATER_BLINK_STOP";
     public static void start(SettingsDao dao) {
         new Flame(Main.getInput(Flame.HEATER_FLAME_REF_CD)).start();
         long blinkStop = dao.getLong(HEATER_BLINK_STOP);
-        new CircularPump(Main.getInput(CircularPump.HEATER_CIRCULAR_REF_CD)).start(blinkStop);
+        new HeaterCircularPump(Main.getInput(HeaterCircularPump.HEATER_CIRCULAR_REF_CD)).start(blinkStop);
         new Boiler(Main.getInput(Boiler.HEATER_BOILER_FEC_CD)).start(blinkStop);
         configureServiceMode();
         addToStats();
@@ -28,10 +28,10 @@ private static final String HEATER_BLINK_STOP = "HEATER_BLINK_STOP";
                 Flame.addSubscriber(countStats);
             }
         });
-        StatsCollector.getInstance().collect("Kúrenie chod čerpadla", CircularPump.getState(), new Consumer<Consumer<Boolean>>() {
+        StatsCollector.getInstance().collect("Kúrenie chod čerpadla", HeaterCircularPump.getState(), new Consumer<Consumer<Boolean>>() {
             @Override
             public void accept(Consumer<Boolean> countStats) {
-                CircularPump.addSubscriber(countStats);
+                HeaterCircularPump.addSubscriber(countStats);
             }
         });
         StatsCollector.getInstance().collect("Ohrev TA3 plynovým kotlom", Boiler.getState(), new Consumer<Consumer<Boolean>>() {
@@ -44,7 +44,7 @@ private static final String HEATER_BLINK_STOP = "HEATER_BLINK_STOP";
 
     private static void configureServiceMode() {
         ServiceMode.addInput(new NamedPort(Flame.HEATER_FLAME_REF_CD, "Horák plynového kotla"), () -> Flame.getState());
-        ServiceMode.addInput(new NamedPort(CircularPump.HEATER_CIRCULAR_REF_CD, "Kúrenie chod čerpadla"), () -> CircularPump.getState());
+        ServiceMode.addInput(new NamedPort(HeaterCircularPump.HEATER_CIRCULAR_REF_CD, "Kúrenie chod čerpadla"), () -> HeaterCircularPump.getState());
         ServiceMode.addInput(new NamedPort(Boiler.HEATER_BOILER_FEC_CD, "Ohrev TA3 plynovým kotlom"), () -> Boiler.getState());
     }
 

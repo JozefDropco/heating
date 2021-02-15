@@ -11,14 +11,14 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
-public class CircularPump {
+public class HeaterCircularPump {
     public static final String HEATER_CIRCULAR_REF_CD = "HEATER_CIRCULAR_PUMP_PORT";
 
     private GpioPinDigitalInput input;
     private static final AtomicBoolean state = new AtomicBoolean(false);
     private static List<Consumer<Boolean>> subscribers = Collections.synchronizedList(Lists.newArrayList());
 
-    public CircularPump(GpioPinDigitalInput input) {
+    public HeaterCircularPump(GpioPinDigitalInput input) {
         this.input = input;
     }
 
@@ -34,11 +34,11 @@ public class CircularPump {
             @Override
             public void handleStateChange(boolean state) {
                 if (state) {
-                    if (CircularPump.this.state.compareAndSet(false, state)) {
+                    if (HeaterCircularPump.this.state.compareAndSet(false, state)) {
                         subscribers.forEach(sub -> sub.accept(state));
                     }
                 } else {
-                    if (CircularPump.this.state.compareAndSet(true, state)) {
+                    if (HeaterCircularPump.this.state.compareAndSet(true, state)) {
                         subscribers.forEach(sub -> sub.accept(state));
                     }
                 }
