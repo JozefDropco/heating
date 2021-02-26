@@ -2,11 +2,8 @@ package org.dropco.smarthome.web;
 
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import org.dropco.smarthome.Main;
 import org.dropco.smarthome.ServiceMode;
 import org.dropco.smarthome.database.SettingsDao;
-import org.dropco.smarthome.heating.db.HeatingDao;
 import org.dropco.smarthome.solar.*;
 
 import javax.ws.rs.*;
@@ -43,20 +40,19 @@ public class SolarWebService {
     }
 
 
-
     @GET
     @Path("/currentState")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getCurrentPosition() throws ParseException {
         SolarPanelPosition lastKnownPosition = new SolarSystemDao(SETTINGS_DAO).getLastKnownPosition();
         Position pos = new Position();
-        pos.x=lastKnownPosition.getHorizontalPositionInSeconds();
-        pos.y=lastKnownPosition.getVerticalPositionInSeconds();
+        pos.x = lastKnownPosition.getHorizontalPositionInSeconds();
+        pos.y = lastKnownPosition.getVerticalPositionInSeconds();
         State src = new State();
-        src.pos=pos;
-        src.dayLight=DayLight.inst().enoughLight();
-        src.windy=StrongWind.isWindy();
-        src.overHeated  = SolarTemperatureWatch.isOverHeated();
+        src.pos = pos;
+        src.dayLight = DayLight.inst().enoughLight();
+        src.windy = StrongWind.isWindy();
+        src.overHeated = SolarTemperatureWatch.isOverHeated();
         List<SolarPanelStepRecord> todayRecords = new SolarSystemDao(SETTINGS_DAO).getTodayRecords(Calendar.getInstance());
 
         src.remainingPositions = Lists.transform(todayRecords,this::toSolarDTO);
@@ -69,7 +65,7 @@ public class SolarWebService {
         if (ServiceMode.getPort(SolarSystemRefCode.WEST_PIN_REF_CD).isHigh()){
             src.movement.add("WEST");
         }
-        if (ServiceMode.getPort(SolarSystemRefCode.EAST_PIN_REF_CD).isHigh()){
+        if (ServiceMode.getPort(SolarSystemRefCode.EAST_PIN_REF_CD).isHigh()) {
             src.movement.add("EAST");
         }
         return Response.ok(new Gson().toJson(src)).build();
@@ -81,14 +77,14 @@ public class SolarWebService {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response updateSolarTimeTable(@QueryParam("date") String date, @QueryParam("month") String month, String entry) throws ParseException {
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-        SolarDTO dto = new Gson().fromJson(entry,SolarDTO.class);
+        SolarDTO dto = new Gson().fromJson(entry, SolarDTO.class);
         if (date != null) {
             Date datum = format.parse(date);
             Calendar cal = Calendar.getInstance();
             cal.setTime(datum);
-            new SolarSystemDao(SETTINGS_DAO).updateForDate(dto,cal);
+            new SolarSystemDao(SETTINGS_DAO).updateForDate(dto, cal);
         } else {
-            new SolarSystemDao(SETTINGS_DAO).updateForMonth(dto,Integer.parseInt(month));
+            new SolarSystemDao(SETTINGS_DAO).updateForMonth(dto, Integer.parseInt(month));
         }
         return Response.ok().build();
     }
@@ -99,14 +95,14 @@ public class SolarWebService {
     @Consumes(MediaType.APPLICATION_JSON)
     public Response deleteSolarTimeTable(@QueryParam("date") String date, @QueryParam("month") String month, String entry) throws ParseException {
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-        SolarDTO dto = new Gson().fromJson(entry,SolarDTO.class);
+        SolarDTO dto = new Gson().fromJson(entry, SolarDTO.class);
         if (date != null) {
             Date datum = format.parse(date);
             Calendar cal = Calendar.getInstance();
             cal.setTime(datum);
-            new SolarSystemDao(SETTINGS_DAO).deleteForDate(dto,cal);
+            new SolarSystemDao(SETTINGS_DAO).deleteForDate(dto, cal);
         } else {
-            new SolarSystemDao(SETTINGS_DAO).deleteForMonth(dto,Integer.parseInt(month));
+            new SolarSystemDao(SETTINGS_DAO).deleteForMonth(dto, Integer.parseInt(month));
         }
         return Response.ok().build();
     }
@@ -121,7 +117,7 @@ public class SolarWebService {
         return solarDTO;
     }
 
-    public static class State{
+    public static class State {
         public List<SolarDTO> remainingPositions;
         private boolean windy;
         private boolean dayLight;
@@ -130,9 +126,11 @@ public class SolarWebService {
         private List<String> movement = new ArrayList<>();
 
     }
-    public static class Position{
-        int x,y;
+
+    public static class Position {
+        int x, y;
     }
+
     public static class SolarDTO {
         private int hour, minute;
         private Integer hor, vert;
