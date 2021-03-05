@@ -1,5 +1,6 @@
 package org.dropco.smarthome.heating.solar;
 
+import com.pi4j.io.gpio.PinState;
 import org.dropco.smarthome.Main;
 import org.dropco.smarthome.ServiceMode;
 import org.dropco.smarthome.database.SettingsDao;
@@ -31,6 +32,8 @@ public class SolarHeatingMain {
         ServiceMode.addOutput(new NamedPort(BOILER_BLOCK_PIN, "Blokovanie ohrevu TA3"), key -> Main.getOutput(key));
     }
     private static void addToStats() {
+        StatsCollector.getInstance().collect("S-J indikator", Main.getInput("GPIO 10"),PinState.LOW);
+        StatsCollector.getInstance().collect("V-Z indikator", Main.getInput("GPIO 11"), PinState.LOW);
         StatsCollector.getInstance().collect("Kolektory - obehové čerpadlo",Main.getOutput(CIRCULAR_PUMP_PORT));
         StatsCollector.getInstance().collect("3-cestný ventil - Bypass", !ThreeWayValve.getState() && SolarCircularPump.getState(), new Consumer<Consumer<Boolean>>() {
             @Override
