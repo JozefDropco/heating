@@ -1,4 +1,8 @@
 INSERT INTO `HEATING`.`STRING_SETTING` (REF_CD, VALUE, MODIFIED_TS, `GROUP`, DESCRIPTION, VALUE_TYPE)
-VALUES ('FIREPLACE_CIRCULAR_PUMP_PORT', 'GPIO 24', '2021-02-18 20:22:05', 'Kúrenie',
-        'Vstupný pin pre chod čerpadla krbu', 'pin');
+VALUES ('NORTH_SOUTH_MOVE_INDICATOR', 'GPIO 10', '2021-03-05 12:09:55', 'Kúrenie', 'Vstupný pin pre pohyb motora S-J',
+        'pin');
+
+INSERT INTO `HEATING`.`STRING_SETTING` (REF_CD, VALUE, MODIFIED_TS, `GROUP`, DESCRIPTION, VALUE_TYPE)
+VALUES ('EAST_WEST_MOVE_INDICATOR', 'GPIO 11', '2021-03-05 12:09:55', 'Kúrenie', 'Vstupný pin pre pohyb motora V-Z',
+        'pin');
 
