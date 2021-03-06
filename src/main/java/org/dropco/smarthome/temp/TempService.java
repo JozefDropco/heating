@@ -38,7 +38,7 @@ public class TempService implements Runnable {
                     for (TemperatureSensor sensor : sensors) {
                         W1Device device = (W1Device) sensor;
                         double temperature = sensor.getTemperature(TemperatureScale.CELSIUS);
-                        if (Double.compare(temperature, 85.0d) != 0) {
+                        if (!(Double.compare(temperature, 85.0d) == 0 || temperature<-55.0 || temperature>125.0)) {
                             String deviceId = device.getId().trim();
                             AtomicDouble value = recentTemperatures.computeIfAbsent(deviceId, key -> new AtomicDouble(-999));
                             double oldValue = value.getAndSet(temperature);
