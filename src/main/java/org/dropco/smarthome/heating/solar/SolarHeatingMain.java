@@ -35,8 +35,8 @@ public class SolarHeatingMain {
         ServiceMode.addOutput(new NamedPort(BOILER_BLOCK_PIN, "Blokovanie ohrevu TA3"), key -> Main.getOutput(key));
     }
     private static void addToStats() {
-        StatsCollector.getInstance().collect("S-J indikator", Main.getInput(NORTH_SOUTH_MOVE_INDICATOR),PinState.LOW);
-        StatsCollector.getInstance().collect("V-Z indikator", Main.getInput(EAST_WEST_MOVE_INDICATOR), PinState.LOW);
+        StatsCollector.getInstance().collectRealTime("S-J indikator", Main.getInput(NORTH_SOUTH_MOVE_INDICATOR),PinState.LOW);
+        StatsCollector.getInstance().collectRealTime("V-Z indikator", Main.getInput(EAST_WEST_MOVE_INDICATOR), PinState.LOW);
         StatsCollector.getInstance().collect("Kolektory - obehové čerpadlo",Main.getOutput(CIRCULAR_PUMP_PORT));
         StatsCollector.getInstance().collect("3-cestný ventil - Bypass", !ThreeWayValve.getState() && SolarCircularPump.getState(), new Consumer<Consumer<Boolean>>() {
             @Override

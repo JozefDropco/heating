@@ -3,6 +3,7 @@ package org.dropco.smarthome.stats;
 import com.pi4j.io.gpio.GpioFactory;
 import com.pi4j.io.gpio.GpioPinDigital;
 import com.pi4j.io.gpio.PinState;
+import com.pi4j.io.gpio.event.GpioPinDigitalStateChangeEvent;
 import com.pi4j.io.gpio.event.GpioPinListenerDigital;
 import org.dropco.smarthome.ServiceMode;
 import org.dropco.smarthome.database.SettingsDao;
@@ -39,8 +40,16 @@ public class StatsCollector {
     }
 
     public void collect(String name, GpioPinDigital port) {
-        collect(name,port,PinState.HIGH);
+        collect(name, port, PinState.HIGH);
     }
+
+    public void collectRealTime(String name, GpioPinDigital port, PinState pinState) {
+        Logger.getLogger(StatsCollector.class.getName()).log(Level.INFO, "Zbieram štatistiky pre " + name);
+
+        collect(pinState.equals(port.getState()), name);
+        port.addListener((GpioPinListenerDigital) event -> collect(event.getState() == pinState, name));
+    }
+
     public void collect(String name, GpioPinDigital port, PinState pinState) {
         Logger.getLogger(StatsCollector.class.getName()).log(Level.INFO, "Zbieram štatistiky pre " + name);
         GpioPinListenerDigital listener = new DelayedGpioPinListener(pinState, 1000, port) {
