@@ -1,0 +1,83 @@
+package org.dropco.smarthome.solar.move;
+
+import com.google.common.collect.Lists;
+import com.pi4j.io.gpio.GpioPinDigitalInput;
+import com.pi4j.io.gpio.PinState;
+import com.pi4j.io.gpio.event.GpioPinDigitalStateChangeEvent;
+import org.dropco.smarthome.gpioextension.PulseInputGpioListener;
+import org.dropco.smarthome.gpioextension.RemovableGpioPinListenerDigital;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
+
+public class VerticalMoveFeedback {
+    private static final AtomicBoolean moving = new AtomicBoolean(false);
+    private static final PinState LOGICAL_HIGH_STATE = PinState.LOW;
+    private GpioPinDigitalInput input;
+    private final List<Consumer<Boolean>> movingSubscribers = Collections.synchronizedList(Lists.newArrayList());
+    private static final VerticalMoveFeedback instance = new VerticalMoveFeedback();
+
+    public void start() {
+        input.addListener(new PulseInputGpioListener(LOGICAL_HIGH_STATE, 3000, input) {
+            @Override
+            public void handleStateChange(boolean state) {
+                if (state) {
+                    if (moving.compareAndSet(false, state)) {
+                        movingSubscribers.forEach(sub -> sub.accept(state));
+                    }
+                } else {
+                    if (moving.compareAndSet(true, state)) {
+                        movingSubscribers.forEach(sub -> sub.accept(state));
+                    }
+                }
+            }
+        });
+    }
+
+    /***
+     * Gets the instance
+     * @return
+     */
+    public static VerticalMoveFeedback getInstance() {
+        return instance;
+    }
+
+    public VerticalMoveFeedback setInput(GpioPinDigitalInput input) {
+        this.input = input;
+        return this;
+    }
+
+    /***
+     * Gets the input
+     * @return
+     */
+    public GpioPinDigitalInput getInput() {
+        return input;
+    }
+
+    /***
+     * Gets the moving
+     * @return
+     */
+    public static boolean getMoving() {
+        return moving.get();
+    }
+
+
+    public void addSubscriber(Consumer<Boolean> consumer) {
+        movingSubscribers.add(consumer);
+    }
+
+    public RemovableGpioPinListenerDigital addRealTimeTicker(Consumer<Boolean> consumer) {
+        RemovableGpioPinListenerDigital listener = new RemovableGpioPinListenerDigital(input) {
+            @Override
+            public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent event) {
+                consumer.accept(event.getState() == LOGICAL_HIGH_STATE);
+            }
+        };
+        input.addListener(listener);
+        return listener;
+    }
+}

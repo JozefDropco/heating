@@ -2,8 +2,13 @@ package org.dropco.smarthome.heating.solar;
 
 import com.google.common.collect.Lists;
 import com.pi4j.io.gpio.GpioFactory;
+import com.pi4j.io.gpio.PinState;
+import org.dropco.smarthome.Main;
 import org.dropco.smarthome.heating.db.HeatingDao;
 import org.dropco.smarthome.heating.dto.SolarHeatingSchedule;
+import org.dropco.smarthome.solar.move.HorizontalMoveFeedback;
+import org.dropco.smarthome.solar.move.VerticalMoveFeedback;
+import org.dropco.smarthome.stats.StatsCollector;
 
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
@@ -17,6 +22,9 @@ import java.util.logging.Logger;
 
 public class SolarHeatingCurrentSetup {
 
+    private static final String NORTH_SOUTH_MOVE_INDICATOR = "NORTH_SOUTH_MOVE_INDICATOR";
+    private static final String EAST_WEST_MOVE_INDICATOR = "EAST_WEST_MOVE_INDICATOR";
+
     private static List<Consumer<SolarHeatingSchedule>> subscribers = Collections.synchronizedList(Lists.newArrayList());
     static ScheduledExecutorService EXECUTOR_SERVICE = GpioFactory.getExecutorServiceFactory().getScheduledExecutorService();
 
@@ -24,6 +32,8 @@ public class SolarHeatingCurrentSetup {
 
 
     public static void start(HeatingDao heatingDao) {
+        VerticalMoveFeedback.getInstance().setInput(Main.getInput(NORTH_SOUTH_MOVE_INDICATOR)).start();
+        HorizontalMoveFeedback.getInstance().setInput(Main.getInput(EAST_WEST_MOVE_INDICATOR)).start();
         SolarHeatingSchedule currentRecord = heatingDao.getCurrentRecord();
         SolarHeatingCurrentSetup.CURRENT_RECORD.set(currentRecord);
         Logger.getLogger(SolarHeatingCurrentSetup.class.getName()).info(currentRecord.toString());

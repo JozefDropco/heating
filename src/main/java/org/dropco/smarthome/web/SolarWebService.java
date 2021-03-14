@@ -5,6 +5,8 @@ import com.google.gson.Gson;
 import org.dropco.smarthome.ServiceMode;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.solar.*;
+import org.dropco.smarthome.solar.move.HorizontalMoveFeedback;
+import org.dropco.smarthome.solar.move.VerticalMoveFeedback;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -56,16 +58,16 @@ public class SolarWebService {
         List<SolarPanelStepRecord> todayRecords = new SolarSystemDao(SETTINGS_DAO).getTodayRecords(Calendar.getInstance());
 
         src.remainingPositions = Lists.transform(todayRecords,this::toSolarDTO);
-        if (ServiceMode.getPort(SolarSystemRefCode.NORTH_PIN_REF_CD).isHigh()){
+        if (ServiceMode.getPort(SolarSystemRefCode.NORTH_PIN_REF_CD).isHigh()  && VerticalMoveFeedback.getMoving()){
             src.movement.add("NORTH");
         }
-        if (ServiceMode.getPort(SolarSystemRefCode.SOUTH_PIN_REF_CD).isHigh()){
+        if (ServiceMode.getPort(SolarSystemRefCode.SOUTH_PIN_REF_CD).isHigh() && VerticalMoveFeedback.getMoving()){
             src.movement.add("SOUTH");
         }
-        if (ServiceMode.getPort(SolarSystemRefCode.WEST_PIN_REF_CD).isHigh()){
+        if (ServiceMode.getPort(SolarSystemRefCode.WEST_PIN_REF_CD).isHigh()  && HorizontalMoveFeedback.getMoving()){
             src.movement.add("WEST");
         }
-        if (ServiceMode.getPort(SolarSystemRefCode.EAST_PIN_REF_CD).isHigh()) {
+        if (ServiceMode.getPort(SolarSystemRefCode.EAST_PIN_REF_CD).isHigh()  && HorizontalMoveFeedback.getMoving()) {
             src.movement.add("EAST");
         }
         return Response.ok(new Gson().toJson(src)).build();

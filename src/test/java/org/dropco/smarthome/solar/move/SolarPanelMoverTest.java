@@ -1,6 +1,7 @@
 package org.dropco.smarthome.solar.move;
 
 import com.google.common.collect.Lists;
+import org.dropco.smarthome.gpioextension.RemovableGpioPinListenerDigital;
 import org.dropco.smarthome.solar.SolarPanelPosition;
 import org.dropco.smarthome.solar.SolarSystemRefCode;
 import org.junit.Assert;
@@ -9,6 +10,8 @@ import org.junit.Test;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 public class SolarPanelMoverTest {
 
@@ -20,16 +23,17 @@ public class SolarPanelMoverTest {
             result.add(cmdRefCd + value);
         });
 
-        SolarPanelThreadManager.delaySupplier=()->1l;
+        SolarPanelManager.delaySupplier=()->1l;
         SolarPanelMover.setCurrentPositionSupplier(()->currentPosition);
         List<Integer> sleepTimes = Lists.newArrayList();
         new SolarPanelMover(0, 5){
             @Override
-            void sleep(int sleepTime) throws InterruptedException {
-                sleepTimes.add(sleepTime);
+            void addWatch(int ticks, Consumer<Integer> onceFinished, Function<Consumer<Boolean>, RemovableGpioPinListenerDigital> addRealTimeTicker, Consumer<Consumer<Boolean>> addMoveListener) {
+                sleepTimes.add(ticks);
+                onceFinished.accept(ticks);
             }
         }.run();
-        Assert.assertTrue(sleepTimes.get(0) == 5);
+        Assert.assertTrue(sleepTimes.contains(5));
         Assert.assertTrue(result.remove(SolarSystemRefCode.SOUTH_PIN_REF_CD + false));
         Assert.assertTrue(result.remove(SolarSystemRefCode.NORTH_PIN_REF_CD + false));
         Assert.assertTrue(result.remove(SolarSystemRefCode.WEST_PIN_REF_CD + false));
@@ -50,11 +54,12 @@ public class SolarPanelMoverTest {
         List<Integer> sleepTimes = Lists.newArrayList();
         new SolarPanelMover(0,0){
             @Override
-            void sleep(int sleepTime) throws InterruptedException {
-                sleepTimes.add(sleepTime);
+            void addWatch(int ticks, Consumer<Integer> onceFinished, Function<Consumer<Boolean>, RemovableGpioPinListenerDigital> addRealTimeTicker, Consumer<Consumer<Boolean>> addMoveListener) {
+                sleepTimes.add(ticks);
+                onceFinished.accept(ticks);
             }
         }.run();
-        Assert.assertTrue(sleepTimes.get(0)== 5);
+        Assert.assertTrue(sleepTimes.contains(5));
         Assert.assertTrue(result.remove(SolarSystemRefCode.SOUTH_PIN_REF_CD + false));
         Assert.assertTrue(result.remove(SolarSystemRefCode.NORTH_PIN_REF_CD + false));
         Assert.assertTrue(result.remove(SolarSystemRefCode.WEST_PIN_REF_CD + false));
@@ -70,16 +75,17 @@ public class SolarPanelMoverTest {
             result.add(cmdRefCd + value);
         });
 
-        SolarPanelThreadManager.delaySupplier=()->1l;
+        SolarPanelManager.delaySupplier=()->1l;
         SolarPanelMover.setCurrentPositionSupplier(()->currentPosition);
         List<Integer> sleepTimes = Lists.newArrayList();
         new SolarPanelMover(0, 0){
             @Override
-            void sleep(int sleepTime) throws InterruptedException {
-                sleepTimes.add(sleepTime);
+            void addWatch(int ticks, Consumer<Integer> onceFinished, Function<Consumer<Boolean>, RemovableGpioPinListenerDigital> addRealTimeTicker, Consumer<Consumer<Boolean>> addMoveListener) {
+                sleepTimes.add(ticks);
+                onceFinished.accept(ticks);
             }
         }.run();
-        Assert.assertTrue(sleepTimes.get(0) == 5);
+        Assert.assertTrue(sleepTimes.contains(5));
         Assert.assertTrue(result.remove(SolarSystemRefCode.SOUTH_PIN_REF_CD + false));
         Assert.assertTrue(result.remove(SolarSystemRefCode.NORTH_PIN_REF_CD + false));
         Assert.assertTrue(result.remove(SolarSystemRefCode.WEST_PIN_REF_CD + false));
@@ -100,11 +106,12 @@ public class SolarPanelMoverTest {
         List<Integer> sleepTimes = Lists.newArrayList();
         new SolarPanelMover(5,0){
             @Override
-            void sleep(int sleepTime) throws InterruptedException {
-                sleepTimes.add(sleepTime);
+            void addWatch(int ticks, Consumer<Integer> onceFinished, Function<Consumer<Boolean>, RemovableGpioPinListenerDigital> addRealTimeTicker, Consumer<Consumer<Boolean>> addMoveListener) {
+                sleepTimes.add(ticks);
+                onceFinished.accept(ticks);
             }
         }.run();
-        Assert.assertTrue(sleepTimes.get(0)== 5);
+        Assert.assertTrue(sleepTimes.contains(5));
         Assert.assertTrue(result.remove(SolarSystemRefCode.SOUTH_PIN_REF_CD + false));
         Assert.assertTrue(result.remove(SolarSystemRefCode.NORTH_PIN_REF_CD + false));
         Assert.assertTrue(result.remove(SolarSystemRefCode.WEST_PIN_REF_CD + false));
@@ -124,12 +131,13 @@ public class SolarPanelMoverTest {
         List<Integer> sleepTimes = Lists.newArrayList();
         new SolarPanelMover(280,135){
             @Override
-            void sleep(int sleepTime) throws InterruptedException {
-                sleepTimes.add(sleepTime);
+            void addWatch(int ticks, Consumer<Integer> onceFinished, Function<Consumer<Boolean>, RemovableGpioPinListenerDigital> addRealTimeTicker, Consumer<Consumer<Boolean>> addMoveListener) {
+                sleepTimes.add(ticks);
+                onceFinished.accept(ticks);
             }
         }.run();
-        Assert.assertTrue(sleepTimes.get(0)== 135);
-        Assert.assertTrue(sleepTimes.get(1)== (280-135));
+        Assert.assertTrue(sleepTimes.contains(135));
+        Assert.assertTrue(sleepTimes.contains(280));
         Assert.assertTrue(result.remove(SolarSystemRefCode.SOUTH_PIN_REF_CD + false));
         Assert.assertTrue(result.remove(SolarSystemRefCode.NORTH_PIN_REF_CD + false));
         Assert.assertTrue(result.remove(SolarSystemRefCode.WEST_PIN_REF_CD + false));

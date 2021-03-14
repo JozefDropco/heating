@@ -17,8 +17,6 @@ import static org.dropco.smarthome.heating.solar.ThreeWayValve.THREE_WAY_PORT;
 
 public class SolarHeatingMain {
 
-    private static final String NORTH_SOUTH_MOVE_INDICATOR = "NORTH_SOUTH_MOVE_INDICATOR"; //GPIO 10
-    private static final String EAST_WEST_MOVE_INDICATOR = "EAST_WEST_MOVE_INDICATOR";//"GPIO 11"
 
     public static void start(SettingsDao settingsDao, BiConsumer<String, Boolean> commandExecutor) {
         SolarHeatingCurrentSetup.start(new HeatingDao());
@@ -35,8 +33,6 @@ public class SolarHeatingMain {
         ServiceMode.addOutput(new NamedPort(BOILER_BLOCK_PIN, "Blokovanie ohrevu TA3"), key -> Main.getOutput(key));
     }
     private static void addToStats() {
-        StatsCollector.getInstance().collectRealTime("S-J indikator", Main.getInput(NORTH_SOUTH_MOVE_INDICATOR),PinState.LOW);
-        StatsCollector.getInstance().collectRealTime("V-Z indikator", Main.getInput(EAST_WEST_MOVE_INDICATOR), PinState.LOW);
         StatsCollector.getInstance().collect("Kolektory - obehové čerpadlo",Main.getOutput(CIRCULAR_PUMP_PORT));
         StatsCollector.getInstance().collect("3-cestný ventil - Bypass", !ThreeWayValve.getState() && SolarCircularPump.getState(), new Consumer<Consumer<Boolean>>() {
             @Override

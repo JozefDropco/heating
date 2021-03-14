@@ -6,7 +6,6 @@ import org.dropco.smarthome.solar.SolarPanelPosition;
 import org.dropco.smarthome.solar.SolarTemperatureWatch;
 import org.dropco.smarthome.solar.StrongWind;
 
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -30,7 +29,7 @@ public class SafetySolarPanel {
         }
         if (!SolarTemperatureWatch.isOverHeated() && !StrongWind.isWindy()) {
             if (ignoreDaylight || DayLight.inst().enoughLight())
-                SolarPanelThreadManager.move(horizontal, vertical);
+                SolarPanelManager.move(horizontal, vertical);
             else
                 logger.log(Level.INFO, "Nová pozícia uložená, ale posun zastavený kvôli nedostatku jasu.");
         } else {
@@ -41,7 +40,7 @@ public class SafetySolarPanel {
     public void moveToStrongWindPosition() {
         SolarPanelPosition solarPanelPosition = strongWindProvider.get();
         logger.log(Level.INFO, "Presun na pozíciu pri silnom vetre, hor=" + solarPanelPosition.getHorizontalPositionInSeconds() + ", ver=" + solarPanelPosition.getVerticalPositionInSeconds());
-        SolarPanelThreadManager.move(solarPanelPosition.getHorizontalPositionInSeconds(), solarPanelPosition.getVerticalPositionInSeconds());
+        SolarPanelManager.move(solarPanelPosition.getHorizontalPositionInSeconds(), solarPanelPosition.getVerticalPositionInSeconds());
     }
 
 
@@ -49,7 +48,7 @@ public class SafetySolarPanel {
     public void backToNormal() {
         if (!SolarTemperatureWatch.isOverHeated() && !StrongWind.isWindy()) {
             logger.log(Level.INFO, "Návrat do normálu, hor=" + lastHorizontal + ", ver=" + lastVertical);
-            SolarPanelThreadManager.move(lastHorizontal, lastVertical);
+            SolarPanelManager.move(lastHorizontal, lastVertical);
         }
     }
 

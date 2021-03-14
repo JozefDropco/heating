@@ -4,7 +4,6 @@ import org.dropco.smarthome.Main;
 import org.dropco.smarthome.ServiceMode;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.dto.NamedPort;
-import org.dropco.smarthome.solar.move.SolarPanelThreadManager;
 import org.dropco.smarthome.stats.StatsCollector;
 import org.dropco.smarthome.watering.db.WateringDao;
 

@@ -2,7 +2,7 @@ package org.dropco.smarthome.solar;
 
 import org.dropco.smarthome.heating.db.HeatingDao;
 import org.dropco.smarthome.solar.move.SafetySolarPanel;
-import org.dropco.smarthome.solar.move.SolarPanelThreadManager;
+import org.dropco.smarthome.solar.move.SolarPanelManager;
 import org.dropco.smarthome.temp.TempService;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -51,6 +51,6 @@ public class SolarTemperatureWatch {
     private void moveToOverheatedPosition() {
         SolarPanelPosition solarPanelPosition = overHeatedPositionProvider.get();
         logger.log(Level.INFO, "Presun na pozíciu pri prehriatí, hor=" + solarPanelPosition.getHorizontalPositionInSeconds() + ", ver=" + solarPanelPosition.getVerticalPositionInSeconds());
-        SolarPanelThreadManager.move(solarPanelPosition.getHorizontalPositionInSeconds(), solarPanelPosition.getVerticalPositionInSeconds());
+        SolarPanelManager.move(solarPanelPosition.getHorizontalPositionInSeconds(), solarPanelPosition.getVerticalPositionInSeconds());
     }
 }

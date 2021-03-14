@@ -1,15 +1,19 @@
 package org.dropco.smarthome.solar.move;
 
+import org.dropco.smarthome.gpioextension.RemovableGpioPinListenerDigital;
 import org.dropco.smarthome.solar.SolarPanelPosition;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import static java.lang.Math.*;
+import static java.lang.Math.abs;
 import static org.dropco.smarthome.solar.SolarSystemRefCode.*;
 
 public class SolarPanelMover implements Runnable {
@@ -21,13 +25,16 @@ public class SolarPanelMover implements Runnable {
     protected static final String NORTH = "Sever";
     private static Supplier<SolarPanelPosition> currentPositionSupplier;
     private static BiConsumer<String, Boolean> commandExecutor;
-    private static List<PositionChangeListener> listeners = new ArrayList<>();
+    private static List<PositionChangeListener> listeners = Collections.synchronizedList(new ArrayList<>());
     private Integer horizontal;
     private Integer vertical;
 
     SolarPanelMover(Integer horizontal, Integer vertical) {
         this.horizontal = horizontal;
         this.vertical = vertical;
+    }
+
+    public static void removeStopListener(CountDownWatcher countDownWatcher) {
     }
 
     @Override
@@ -40,90 +47,58 @@ public class SolarPanelMover implements Runnable {
         if (vertical != null)
             diffVertical = vertical - currentPosition.getVerticalPositionInSeconds();
 
-        setState(NORTH_PIN_REF_CD, diffVertical < 0, NORTH, diffVertical < 0);
-        setState(SOUTH_PIN_REF_CD, diffVertical > 0, SOUTH, diffVertical > 0);
-        setState(WEST_PIN_REF_CD, diffHorizontal < 0, WEST, diffHorizontal < 0);
-        setState(EAST_PIN_REF_CD, diffHorizontal > 0, EAST, diffHorizontal > 0);
         int absHorizontal = abs(diffHorizontal);
         int absVertical = abs(diffVertical);
-        //Take minimum of shifts
-        int sleepTime = min(absHorizontal, absVertical);
-        //if we are not moving in 2 axis take the maximum
-        if (sleepTime == 0) {
-            sleepTime = max(absHorizontal, absVertical);
+        boolean movingNorth = diffVertical < 0;
+        setState(NORTH_PIN_REF_CD, movingNorth && diffVertical != 0, NORTH);
+        setState(SOUTH_PIN_REF_CD, !movingNorth && diffVertical != 0, SOUTH);
+        boolean movingWest = diffHorizontal < 0;
+        setState(WEST_PIN_REF_CD, movingWest && diffHorizontal != 0, WEST);
+        setState(EAST_PIN_REF_CD, !movingWest && diffHorizontal != 0, EAST);
+
+        if (absVertical > 0) {
+            addVertical(currentPosition, absVertical, movingNorth);
         }
-        if (sleepTime > 0) {
-            LOGGER.log(Level.INFO, "Natáčanie kolektorov na hor=" + horizontal + ", vert=" + vertical);
-            boolean interrupted = false;
-            while (sleepTime > 0) {
-                int secondsSlept = sleepTime;
-                long milis = System.currentTimeMillis();
-                try {
-                    sleep(sleepTime);
-                } catch (InterruptedException e) {
-                    interrupted = true;
-                    secondsSlept = Math.round((System.currentTimeMillis() - milis) / 1000);
-                } finally {
-                    if (diffHorizontal < 0) {
-                        currentPosition.setHorizontalPositionInSeconds(currentPosition.getHorizontalPositionInSeconds() - secondsSlept);
-                        diffHorizontal += secondsSlept;
-                        if (diffHorizontal >= 0) {
-                            diffHorizontal = 0;
-                            setState(WEST_PIN_REF_CD, false, WEST, true);
-                        }
-                    } else {
-                        if (diffHorizontal > 0) {
-                            currentPosition.setHorizontalPositionInSeconds(currentPosition.getHorizontalPositionInSeconds() + secondsSlept);
-                            diffHorizontal -= secondsSlept;
-                            if (diffHorizontal <= 0) {
-                                diffHorizontal = 0;
-                                setState(EAST_PIN_REF_CD, false, EAST, true);
-                            }
-                        }
-                    }
-                    if (diffVertical > 0) {
-                        currentPosition.setVerticalPositionInSeconds(currentPosition.getVerticalPositionInSeconds() + secondsSlept);
-                        diffVertical -= secondsSlept;
-                        if (diffVertical <= 0) {
-                            diffVertical = 0;
-                            setState(SOUTH_PIN_REF_CD, false, SOUTH, true);
-                        }
-                    } else {
-                        if (diffVertical < 0) {
-                            currentPosition.setVerticalPositionInSeconds(currentPosition.getVerticalPositionInSeconds() - secondsSlept);
-                            diffVertical += secondsSlept;
-                            if (diffVertical >= 0) {
-                                diffVertical = 0;
-                                setState(NORTH_PIN_REF_CD, false, NORTH, true);
-                            }
-                        }
-                    }
-                }
-                if (!Thread.interrupted() && !interrupted) {
-                    sleepTime = Math.max(abs(diffHorizontal), abs(diffVertical));
-                } else {
-                    setState(SOUTH_PIN_REF_CD, false, SOUTH, true);
-                    setState(NORTH_PIN_REF_CD, false, NORTH, true);
-                    setState(WEST_PIN_REF_CD, false, WEST, true);
-                    setState(EAST_PIN_REF_CD, false, EAST, true);
-                    break;
-                }
+        if (absHorizontal > 0) {
+            addHorizontal(currentPosition, absHorizontal, movingWest);
+        }
+    }
+
+    private void addVertical(SolarPanelPosition currentPosition, int absVertical, boolean movingNorth) {
+        addWatch(absVertical, ticks -> {
+            if (movingNorth) {
+                currentPosition.setVerticalPositionInSeconds(currentPosition.getVerticalPositionInSeconds() - ticks);
+                setState(NORTH_PIN_REF_CD, false, NORTH);
+            } else {
+                currentPosition.setVerticalPositionInSeconds(currentPosition.getVerticalPositionInSeconds() + ticks);
+                setState(SOUTH_PIN_REF_CD, false, SOUTH);
             }
             fireUpdate(currentPosition);
-        }
+        }, VerticalMoveFeedback.getInstance()::addRealTimeTicker, VerticalMoveFeedback.getInstance()::addSubscriber);
     }
 
-    void sleep(int sleepTime) throws InterruptedException {
-        Thread.sleep(sleepTime * 1000);
+    private void addHorizontal(SolarPanelPosition currentPosition, int absHorizontal, boolean movingWest) {
+        addWatch(absHorizontal, ticks -> {
+            if (movingWest) {
+                currentPosition.setHorizontalPositionInSeconds(currentPosition.getHorizontalPositionInSeconds() - ticks);
+                setState(WEST_PIN_REF_CD, false, WEST);
+            } else {
+                currentPosition.setHorizontalPositionInSeconds(currentPosition.getHorizontalPositionInSeconds() + ticks);
+                setState(EAST_PIN_REF_CD, false, EAST);
+            }
+            fireUpdate(currentPosition);
+        }, HorizontalMoveFeedback.getInstance()::addRealTimeTicker, HorizontalMoveFeedback.getInstance()::addSubscriber);
     }
 
-    void setState(String pinRefCd, boolean state, String direction, boolean changeState) {
-        if (changeState) {
-            if (state)
-                LOGGER.log(Level.FINE, "Natáčam na " + direction + ".");
-            else
-                LOGGER.log(Level.FINE, "Zastavujem otáčanie na " + direction + ".");
-        }
+    void addWatch(int ticks, Consumer<Integer> onceFinished, Function<Consumer<Boolean>, RemovableGpioPinListenerDigital> addRealTimeTicker, Consumer<Consumer<Boolean>> addMoveListener) {
+        new CountDownWatcher(ticks).start(onceFinished, addRealTimeTicker, addMoveListener);
+    }
+
+    void setState(String pinRefCd, boolean state, String direction) {
+        if (state)
+            LOGGER.log(Level.FINE, "Natáčam na " + direction + ".");
+        else
+            LOGGER.log(Level.FINE, "Zastavujem otáčanie na " + direction + ".");
         commandExecutor.accept(pinRefCd, state);
     }
 

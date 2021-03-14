@@ -12,7 +12,7 @@ import org.dropco.smarthome.gpioextension.ExtendedPin;
 import org.dropco.smarthome.heating.db.HeatingDao;
 import org.dropco.smarthome.solar.move.SafetySolarPanel;
 import org.dropco.smarthome.solar.move.SolarPanelMover;
-import org.dropco.smarthome.solar.move.SolarPanelThreadManager;
+import org.dropco.smarthome.solar.move.SolarPanelManager;
 import org.dropco.smarthome.stats.StatsCollector;
 
 import java.util.Calendar;
@@ -34,12 +34,12 @@ public class SolarMain {
         configureServiceMode();
         addToStats();
         ServiceMode.addSubsriber(state -> {
-            if (state) SolarPanelThreadManager.stop();
+            if (state) SolarPanelManager.stop();
         });
         DayLight.setInstance(settingsDao,Main.getInput(DAY_LIGHT_PIN_REF_CD), () -> (int) settingsDao.getLong(LIGHT_THRESHOLD));
         connectDayLight(settingsDao);
         SolarSystemDao solarSystemDao = new SolarSystemDao(settingsDao);
-        SolarPanelThreadManager.delaySupplier = (solarSystemDao::getDelay);
+        SolarPanelManager.delaySupplier = (solarSystemDao::getDelay);
         SolarPanelMover.setCommandExecutor((key, value) -> Main.getOutput(getExtendedProvider(), ExtendedPin.class, key).setState(value));
         SolarPanelMover.setCurrentPositionSupplier(() -> solarSystemDao.getLastKnownPosition());
         SolarPanelMover.addListener(panel -> solarSystemDao.updateLastKnownPosition(panel));

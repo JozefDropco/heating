@@ -2,11 +2,10 @@ package org.dropco.smarthome.solar;
 
 import org.dropco.smarthome.solar.move.SafetySolarPanel;
 import org.dropco.smarthome.solar.move.SolarPanelMover;
-import org.dropco.smarthome.solar.move.SolarPanelThreadManager;
+import org.dropco.smarthome.solar.move.SolarPanelManager;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 public class SolarSystemScheduledWorkTest {
@@ -16,7 +15,7 @@ public class SolarSystemScheduledWorkTest {
     @Test
     public void run() throws InterruptedException {
 
-        SolarPanelThreadManager.delaySupplier=()->1l;
+        SolarPanelManager.delaySupplier=()->1l;
         SolarPanelMover.setCurrentPositionSupplier(startPos()::getPanelPosition);
         SolarPanelMover.setCommandExecutor((s, aBoolean) -> {});
         SolarPanelMover.addListener(position -> currentPos = position);
@@ -34,7 +33,7 @@ public class SolarSystemScheduledWorkTest {
     @Test
     public void runStrongWind() throws InterruptedException {
 
-        SolarPanelThreadManager.delaySupplier=()->1l;
+        SolarPanelManager.delaySupplier=()->1l;
         final SolarPanelPosition[] currentPos = {new SolarPanelPosition(-30, -15)};
         SolarPanelMover.setCommandExecutor((s, aBoolean) -> {});
         SolarPanelMover.setCurrentPositionSupplier(()-> currentPos[0]);
@@ -61,7 +60,7 @@ public class SolarSystemScheduledWorkTest {
     @Test
     public void runStrongWindBackToNormal() throws InterruptedException {
 
-        SolarPanelThreadManager.delaySupplier=()->1l;
+        SolarPanelManager.delaySupplier=()->1l;
         final SolarPanelPosition[] currentPos = {new SolarPanelPosition(-30, -15)};
         SolarPanelMover.setCommandExecutor((s, aBoolean) -> {});
         SolarPanelMover.setCurrentPositionSupplier(()-> currentPos[0]);
