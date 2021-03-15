@@ -14,16 +14,20 @@ public class StrongWind {
     private static final AtomicBoolean isWindy = new AtomicBoolean(false);
 
     public static void connect(GpioPinDigitalInput strongWindPin, SafetySolarPanel safetySolarPanel) {
-        StatsCollector.getInstance().collect("Silný vietor", strongWindPin,PinState.LOW);
+        StatsCollector.getInstance().collect("Silný vietor", strongWindPin, PinState.LOW);
         strongWindPin.addListener(new DelayedGpioPinListener(PinState.LOW, 5000, strongWindPin) {
             @Override
             public void handleStateChange(boolean state) {
-                isWindy.set(state);
-                Logger.getLogger(StrongWind.class.getName()).log(Level.FINE, (state ? "Fúka " : "Skončil ") + "silný vietor");
                 if (state) {
-                    safetySolarPanel.moveToStrongWindPosition();
+                    if (isWindy.compareAndSet(false, state)) {
+                        Logger.getLogger(StrongWind.class.getName()).log(Level.FINE, "Fúka silný vietor");
+                        safetySolarPanel.moveToStrongWindPosition();
+                    }
                 } else {
-                    safetySolarPanel.backToNormal();
+                    if (isWindy.compareAndSet(true, state)) {
+                        Logger.getLogger(StrongWind.class.getName()).log(Level.FINE, "Skončil silný vietor");
+                        safetySolarPanel.backToNormal();
+                    }
                 }
             }
         });

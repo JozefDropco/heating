@@ -50,21 +50,21 @@ public class DayLight {
 
     public void connect(boolean initialValue) {
         enoughLight.set(initialValue);
-        StatsCollector.getInstance().collect("Jas", input,PinState.LOW);
+        StatsCollector.getInstance().collect("Jas", input, PinState.LOW);
         pinListener = new DelayedGpioPinListener(PinState.LOW, lightThreshold.get(), input) {
 
 
             @Override
             public void handleStateChange(boolean state) {
-if (state) {
-                boolean success = enoughLight.compareAndSet(false, state);
-                if (success) {
-                    settingsDao.setLong(SolarSystemRefCode.DAYLIGHT, 1);
-                    LOGGER.log(Level.INFO,"Denný jas splnený");
-                    subscribers.forEach(booleanConsumer -> booleanConsumer.accept(true));
+                if (state) {
+                    boolean success = enoughLight.compareAndSet(false, state);
+                    if (success) {
+                        settingsDao.setLong(SolarSystemRefCode.DAYLIGHT, 1);
+                        LOGGER.log(Level.INFO, "Denný jas splnený");
+                        subscribers.forEach(booleanConsumer -> booleanConsumer.accept(true));
+                    }
                 }
             }
-}
         };
         input.setPullResistance(PinPullResistance.PULL_UP);
         input.addListener(pinListener);
