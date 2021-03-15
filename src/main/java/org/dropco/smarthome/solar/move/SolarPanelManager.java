@@ -1,5 +1,7 @@
 package org.dropco.smarthome.solar.move;
 
+import com.google.common.collect.Lists;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -42,7 +44,7 @@ public class SolarPanelManager {
             try {
                 LOGGER.log(Level.FINE, "Waiting for current thread - " + oldThread.getId() + " to stop.");
                 oldThread.join();
-                stopListeners.forEach(listener-> listener.accept((avoid)->SolarPanelManager.removeStopListener(listener)));
+                Lists.newArrayList(stopListeners).forEach(listener-> listener.accept((avoid)->SolarPanelManager.removeStopListener(listener)));
             } catch (InterruptedException e) {
                 LOGGER.log(Level.FINE, "Waiting for current " + oldThread.getId() + " was interrupted.");
             }

@@ -90,7 +90,7 @@ public class SolarPanelMover implements Runnable {
         }, HorizontalMoveFeedback.getInstance()::addRealTimeTicker, HorizontalMoveFeedback.getInstance()::addSubscriber);
     }
 
-    void addWatch(int ticks, Consumer<Integer> onceFinished, Function<Consumer<Boolean>, RemovableGpioPinListenerDigital> addRealTimeTicker, Consumer<Consumer<Boolean>> addMoveListener) {
+    void addWatch(int ticks, Consumer<Integer> onceFinished, Function<Consumer<Boolean>, RemovableGpioPinListenerDigital> addRealTimeTicker, Consumer<BiConsumer<Supplier<Boolean>,Boolean>> addMoveListener) {
         new CountDownWatcher(ticks).start(onceFinished, addRealTimeTicker, addMoveListener);
     }
 

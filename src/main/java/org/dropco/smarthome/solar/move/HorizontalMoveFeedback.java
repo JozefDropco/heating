@@ -10,13 +10,15 @@ import org.dropco.smarthome.gpioextension.RemovableGpioPinListenerDigital;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 public class HorizontalMoveFeedback {
     private static final AtomicBoolean moving = new AtomicBoolean(false);
     private static final PinState LOGICAL_HIGH_STATE = PinState.LOW;
     private GpioPinDigitalInput input;
-    private final List<Consumer<Boolean>> movingSubscribers = Collections.synchronizedList(Lists.newArrayList());
+    private final List<BiConsumer<Supplier<Boolean>,Boolean>> movingSubscribers = Collections.synchronizedList(Lists.newArrayList());
     private static final HorizontalMoveFeedback instance = new HorizontalMoveFeedback();
 
     public void start() {
@@ -25,11 +27,11 @@ public class HorizontalMoveFeedback {
             public void handleStateChange(boolean state) {
                 if (state) {
                     if (moving.compareAndSet(false, state)) {
-                        movingSubscribers.forEach(sub -> sub.accept(state));
+                        Lists.newArrayList(movingSubscribers).forEach(sub -> sub.accept(()-> movingSubscribers.remove(sub),state));
                     }
                 } else {
                     if (moving.compareAndSet(true, state)) {
-                        movingSubscribers.forEach(sub -> sub.accept(state));
+                        Lists.newArrayList(movingSubscribers).forEach(sub -> sub.accept(()-> movingSubscribers.remove(sub),state));
                     }
                 }
             }
@@ -66,7 +68,7 @@ public class HorizontalMoveFeedback {
     }
 
 
-    public void addSubscriber(Consumer<Boolean> consumer) {
+    public void addSubscriber(BiConsumer<Supplier<Boolean>,Boolean> consumer) {
         movingSubscribers.add(consumer);
     }
 
