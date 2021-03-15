@@ -10,8 +10,10 @@ import org.junit.Test;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 public class SolarPanelMoverTest {
 
@@ -28,7 +30,7 @@ public class SolarPanelMoverTest {
         List<Integer> sleepTimes = Lists.newArrayList();
         new SolarPanelMover(0, 5){
             @Override
-            void addWatch(int ticks, Consumer<Integer> onceFinished, Function<Consumer<Boolean>, RemovableGpioPinListenerDigital> addRealTimeTicker, Consumer<Consumer<Boolean>> addMoveListener) {
+            void addWatch(int ticks, Consumer<Integer> onceFinished, Function<Consumer<Boolean>, RemovableGpioPinListenerDigital> addRealTimeTicker, Consumer<BiConsumer<Supplier<Boolean>, Boolean>> addMoveListener) {
                 sleepTimes.add(ticks);
                 onceFinished.accept(ticks);
             }
@@ -54,7 +56,7 @@ public class SolarPanelMoverTest {
         List<Integer> sleepTimes = Lists.newArrayList();
         new SolarPanelMover(0,0){
             @Override
-            void addWatch(int ticks, Consumer<Integer> onceFinished, Function<Consumer<Boolean>, RemovableGpioPinListenerDigital> addRealTimeTicker, Consumer<Consumer<Boolean>> addMoveListener) {
+            void addWatch(int ticks, Consumer<Integer> onceFinished, Function<Consumer<Boolean>, RemovableGpioPinListenerDigital> addRealTimeTicker, Consumer<BiConsumer<Supplier<Boolean>, Boolean>> addMoveListener) {
                 sleepTimes.add(ticks);
                 onceFinished.accept(ticks);
             }
@@ -80,7 +82,7 @@ public class SolarPanelMoverTest {
         List<Integer> sleepTimes = Lists.newArrayList();
         new SolarPanelMover(0, 0){
             @Override
-            void addWatch(int ticks, Consumer<Integer> onceFinished, Function<Consumer<Boolean>, RemovableGpioPinListenerDigital> addRealTimeTicker, Consumer<Consumer<Boolean>> addMoveListener) {
+            void addWatch(int ticks, Consumer<Integer> onceFinished, Function<Consumer<Boolean>, RemovableGpioPinListenerDigital> addRealTimeTicker, Consumer<BiConsumer<Supplier<Boolean>, Boolean>> addMoveListener) {
                 sleepTimes.add(ticks);
                 onceFinished.accept(ticks);
             }
@@ -106,7 +108,7 @@ public class SolarPanelMoverTest {
         List<Integer> sleepTimes = Lists.newArrayList();
         new SolarPanelMover(5,0){
             @Override
-            void addWatch(int ticks, Consumer<Integer> onceFinished, Function<Consumer<Boolean>, RemovableGpioPinListenerDigital> addRealTimeTicker, Consumer<Consumer<Boolean>> addMoveListener) {
+            void addWatch(int ticks, Consumer<Integer> onceFinished, Function<Consumer<Boolean>, RemovableGpioPinListenerDigital> addRealTimeTicker, Consumer<BiConsumer<Supplier<Boolean>, Boolean>> addMoveListener) {
                 sleepTimes.add(ticks);
                 onceFinished.accept(ticks);
             }
@@ -131,7 +133,7 @@ public class SolarPanelMoverTest {
         List<Integer> sleepTimes = Lists.newArrayList();
         new SolarPanelMover(280,135){
             @Override
-            void addWatch(int ticks, Consumer<Integer> onceFinished, Function<Consumer<Boolean>, RemovableGpioPinListenerDigital> addRealTimeTicker, Consumer<Consumer<Boolean>> addMoveListener) {
+            void addWatch(int ticks, Consumer<Integer> onceFinished, Function<Consumer<Boolean>, RemovableGpioPinListenerDigital> addRealTimeTicker, Consumer<BiConsumer<Supplier<Boolean>, Boolean>> addMoveListener) {
                 sleepTimes.add(ticks);
                 onceFinished.accept(ticks);
             }
