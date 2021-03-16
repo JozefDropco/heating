@@ -6,6 +6,8 @@ import org.dropco.smarthome.ServiceMode;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.dto.NamedPort;
 import org.dropco.smarthome.heating.db.HeatingDao;
+import org.dropco.smarthome.solar.move.HorizontalMoveFeedback;
+import org.dropco.smarthome.solar.move.VerticalMoveFeedback;
 import org.dropco.smarthome.stats.StatsCollector;
 
 import java.util.function.BiConsumer;
@@ -33,6 +35,9 @@ public class SolarHeatingMain {
         ServiceMode.addOutput(new NamedPort(BOILER_BLOCK_PIN, "Blokovanie ohrevu TA3"), key -> Main.getOutput(key));
     }
     private static void addToStats() {
+        StatsCollector.getInstance().collect("S-J indikator", true,VerticalMoveFeedback.getInstance()::addRealTimeTicker);
+        StatsCollector.getInstance().collect("V-Z indikator", true, HorizontalMoveFeedback.getInstance()::addRealTimeTicker);
+
         StatsCollector.getInstance().collect("Kolektory - obehové čerpadlo",Main.getOutput(CIRCULAR_PUMP_PORT));
         StatsCollector.getInstance().collect("3-cestný ventil - Bypass", !ThreeWayValve.getState() && SolarCircularPump.getState(), new Consumer<Consumer<Boolean>>() {
             @Override

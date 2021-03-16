@@ -34,9 +34,6 @@ public class SolarPanelMover implements Runnable {
         this.vertical = vertical;
     }
 
-    public static void removeStopListener(CountDownWatcher countDownWatcher) {
-    }
-
     @Override
     public void run() {
         SolarPanelPosition currentPosition = currentPositionSupplier.get();
