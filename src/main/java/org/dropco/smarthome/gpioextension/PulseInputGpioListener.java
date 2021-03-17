@@ -8,12 +8,14 @@ import com.pi4j.io.gpio.event.GpioPinListenerDigital;
 
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class PulseInputGpioListener implements GpioPinListenerDigital {
     private PinState logicalHighState;
     private long delayedShutdown;
     private AtomicReference<ScheduledFuture> inWaitMode = new AtomicReference<>();
+    private AtomicLong counter = new AtomicLong();
     private GpioPinDigital sourcePin;
 
     public PulseInputGpioListener(PinState logicalHighState, long delayedShutdown, GpioPinDigital sourcePin) {
@@ -21,7 +23,7 @@ public abstract class PulseInputGpioListener implements GpioPinListenerDigital {
         this.delayedShutdown = delayedShutdown;
         this.sourcePin = sourcePin;
         if (sourcePin.getState() == logicalHighState) {
-            delayedShutdown();
+            delayedShutdown(counter.incrementAndGet());
         }
     }
 
@@ -34,13 +36,13 @@ public abstract class PulseInputGpioListener implements GpioPinListenerDigital {
             }
             handleStateChange(true);
         }
-        delayedShutdown();
+        delayedShutdown(counter.incrementAndGet());
     }
 
-    public void delayedShutdown() {
+    public void delayedShutdown(long currentCounter) {
         inWaitMode.set(GpioFactory.getExecutorServiceFactory().getScheduledExecutorService().schedule(() -> {
             inWaitMode.set(null);
-            if (sourcePin.getState() != logicalHighState)
+            if (counter.get()==currentCounter)
                 handleStateChange(false);
         }, delayedShutdown, TimeUnit.MILLISECONDS));
     }
