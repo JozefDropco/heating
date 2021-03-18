@@ -1,7 +1,9 @@
 package org.dropco.smarthome.solar.move;
 
+import com.pi4j.io.gpio.GpioFactory;
 import org.dropco.smarthome.gpioextension.RemovableGpioPinListenerDigital;
 
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
@@ -19,13 +21,14 @@ public class CountDownWatcher {
         this.tickCount = tickCount;
     }
 
-    public void start(Consumer<Integer> callbackOnceFinished, Function<Consumer<Boolean>, RemovableGpioPinListenerDigital> realTimeTickerGetter, Consumer<BiConsumer<Supplier<Boolean>,Boolean>> movement) {
-        SolarPanelManager.addStopListener(unlinker -> {
+    public void start(Consumer<Integer> callbackOnceFinished, Function<Consumer<Boolean>, RemovableGpioPinListenerDigital> realTimeTickerGetter, Consumer<BiConsumer<Supplier<Boolean>, Boolean>> movement, Supplier<Boolean> isMoving) {
+        Consumer<Consumer<Void>> stopListener = unlinker -> {
             RemovableGpioPinListenerDigital listener = this.listener.get();
-            if (listener!=null) listener.unlink();
+            if (listener != null) listener.unlink();
             callbackOnceFinished.accept(actualTicks.get());
             unlinker.accept(null);
-        });
+        };
+        SolarPanelManager.addStopListener(stopListener);
         listener.set(realTimeTickerGetter.apply(state -> {
             if (state) {
                 int currentTickCount = actualTicks.incrementAndGet();
@@ -42,5 +45,13 @@ public class CountDownWatcher {
                 callbackOnceFinished.accept(actualTicks.get());
             }
         });
+        GpioFactory.getExecutorServiceFactory().getScheduledExecutorService().schedule(() -> {
+            if (!isMoving.get()){
+                RemovableGpioPinListenerDigital listener = this.listener.get();
+                if (listener!=null) listener.unlink();
+                SolarPanelManager.removeStopListener(stopListener);
+                callbackOnceFinished.accept(actualTicks.get());
+            }
+        }, 5000, TimeUnit.MILLISECONDS);
     }
 }

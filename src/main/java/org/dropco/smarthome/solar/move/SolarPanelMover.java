@@ -71,7 +71,7 @@ public class SolarPanelMover implements Runnable {
                 setState(SOUTH_PIN_REF_CD, false, SOUTH);
             }
             fireUpdate(currentPosition);
-        }, VerticalMoveFeedback.getInstance()::addRealTimeTicker, VerticalMoveFeedback.getInstance()::addSubscriber);
+        }, VerticalMoveFeedback.getInstance()::addRealTimeTicker, VerticalMoveFeedback.getInstance()::addSubscriber, VerticalMoveFeedback::getMoving);
     }
 
     private void addHorizontal(SolarPanelPosition currentPosition, int absHorizontal, boolean movingWest) {
@@ -84,11 +84,12 @@ public class SolarPanelMover implements Runnable {
                 setState(EAST_PIN_REF_CD, false, EAST);
             }
             fireUpdate(currentPosition);
-        }, HorizontalMoveFeedback.getInstance()::addRealTimeTicker, HorizontalMoveFeedback.getInstance()::addSubscriber);
+        }, HorizontalMoveFeedback.getInstance()::addRealTimeTicker, HorizontalMoveFeedback.getInstance()::addSubscriber,
+                HorizontalMoveFeedback::getMoving);
     }
 
-    void addWatch(int ticks, Consumer<Integer> onceFinished, Function<Consumer<Boolean>, RemovableGpioPinListenerDigital> addRealTimeTicker, Consumer<BiConsumer<Supplier<Boolean>,Boolean>> addMoveListener) {
-        new CountDownWatcher(ticks).start(onceFinished, addRealTimeTicker, addMoveListener);
+    void addWatch(int ticks, Consumer<Integer> onceFinished, Function<Consumer<Boolean>, RemovableGpioPinListenerDigital> addRealTimeTicker, Consumer<BiConsumer<Supplier<Boolean>,Boolean>> addMoveListener, Supplier<Boolean> isMoving) {
+        new CountDownWatcher(ticks).start(onceFinished, addRealTimeTicker, addMoveListener,isMoving);
     }
 
     void setState(String pinRefCd, boolean state, String direction) {
