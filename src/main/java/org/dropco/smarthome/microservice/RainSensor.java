@@ -4,6 +4,8 @@ import com.google.common.collect.Lists;
 import com.pi4j.io.gpio.GpioPinDigitalInput;
 import com.pi4j.io.gpio.PinState;
 import com.pi4j.io.gpio.event.GpioPinListenerDigital;
+import org.dropco.smarthome.gpioextension.DelayedGpioPinListener;
+import org.dropco.smarthome.solar.StrongWind;
 import org.dropco.smarthome.stats.StatsCollector;
 
 import java.util.Collections;
@@ -22,31 +24,39 @@ public class RainSensor {
     public static void start(GpioPinDigitalInput input) {
         StatsCollector.getInstance().collect("Dážď",input);
         raining.set(input.getState() == RAIN_STATE);
-        input.setDebounce(1000);
-        input.addListener((GpioPinListenerDigital) event -> {
-                    handleRainSensor(event.getState());
-                }
-        );
-        handleRainSensor(input.getState());
+        input.addListener(new DelayedGpioPinListener(RAIN_STATE,1000,input) {
+                              @Override
+                              public void handleStateChange(boolean state) {
+                                  handleRainSensor(state);
+                              }
+                          });
+        handleRainSensor(raining.get());
 
     }
 
-    static void handleRainSensor(PinState state) {
-        boolean newValue = state == RAIN_STATE;
-        boolean oldValue = raining.getAndSet(newValue);
-        if (raining.get()) {
-            logger.log(Level.INFO, "Prší");
+    static void handleRainSensor(boolean newValue) {
+        if (newValue) {
+            if (raining.compareAndSet(false, newValue)) {
+                logger.log(Level.INFO, "Prší");
+                subscribers.forEach(subscriber -> {
+                    try {
+                        subscriber.accept(newValue);
+                    } catch (RuntimeException ex) {
+                        logger.log(Level.SEVERE, "Subscriber failed.", ex);
+                    }
+                });
+            }
         } else {
-            logger.log(Level.INFO, "Neprší");
-        }
-        if (newValue != oldValue) {
-            subscribers.forEach(subscriber -> {
-                try {
-                    subscriber.accept(newValue);
-                } catch (RuntimeException ex) {
-                    logger.log(Level.SEVERE, "Subscriber failed.", ex);
-                }
-            });
+            if (raining.compareAndSet(true, newValue)) {
+                logger.log(Level.INFO, "Neprší");
+                subscribers.forEach(subscriber -> {
+                    try {
+                        subscriber.accept(newValue);
+                    } catch (RuntimeException ex) {
+                        logger.log(Level.SEVERE, "Subscriber failed.", ex);
+                    }
+                });
+            }
         }
     }
 

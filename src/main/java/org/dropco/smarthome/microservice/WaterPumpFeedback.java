@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.pi4j.io.gpio.GpioPinDigitalInput;
 import com.pi4j.io.gpio.PinState;
 import com.pi4j.io.gpio.event.GpioPinListenerDigital;
+import org.dropco.smarthome.gpioextension.DelayedGpioPinListener;
 import org.dropco.smarthome.stats.StatsCollector;
 
 import java.util.Collections;
@@ -22,30 +23,39 @@ public class WaterPumpFeedback {
         StatsCollector.getInstance().collect("Čerpadlo zavlažovania",input);
         running.set(input.getState() == PinState.HIGH);
         input.setDebounce(1000);
-        input.addListener((GpioPinListenerDigital) event -> {
-                    handlePumpState(event.getState());
-                }
-        );
-        handlePumpState(input.getState());
+        input.addListener(new DelayedGpioPinListener(PinState.HIGH,1000,input) {
+            @Override
+            public void handleStateChange(boolean state) {
+                handlePumpState(state);
+            }
+        });
+        handlePumpState(running.get());
 
     }
 
-    static void handlePumpState(PinState state) {
-        boolean newValue = state == PinState.HIGH;
-        boolean oldValue = running.getAndSet(newValue);
-        if (running.get()) {
-            logger.log(Level.INFO, "Čerpadlo beží");
+    static void handlePumpState(boolean newValue) {
+        if (newValue){
+            if (running.compareAndSet(false, newValue)) {
+                logger.log(Level.INFO, "Čerpadlo beží");
+                subscribers.forEach(subscriber -> {
+                    try {
+                        subscriber.accept(newValue);
+                    } catch (RuntimeException ex) {
+                        logger.log(Level.SEVERE, "Subscriber failed.", ex);
+                    }
+                });
+            }
         } else {
-            logger.log(Level.INFO, "Čerpadlo nebeží");
-        }
-        if (newValue != oldValue) {
-            subscribers.forEach(subscriber -> {
-                try {
-                    subscriber.accept(newValue);
-                } catch (RuntimeException ex) {
-                    logger.log(Level.SEVERE, "Subscriber failed.", ex);
-                }
-            });
+            if (running.compareAndSet(true, newValue)) {
+                logger.log(Level.INFO, "Čerpadlo nebeží");
+                subscribers.forEach(subscriber -> {
+                    try {
+                        subscriber.accept(newValue);
+                    } catch (RuntimeException ex) {
+                        logger.log(Level.SEVERE, "Subscriber failed.", ex);
+                    }
+                });
+            }
         }
     }
 
