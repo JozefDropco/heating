@@ -126,7 +126,7 @@ public class LogDao {
 
     }
 
-    public double readPreviousValue(String series, Date date) {
+    public Double readPreviousValue(String series, Date date) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(date);
         calendar.add(Calendar.DAY_OF_YEAR,-1);
