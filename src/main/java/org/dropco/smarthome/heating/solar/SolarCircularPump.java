@@ -38,9 +38,12 @@ public class SolarCircularPump implements Runnable {
         this.settingsDao = settingsDao;
         this.commandExecutor = commandExecutor;
         ServiceMode.addSubsriber(mode -> {
-            if (state.get() && mode) {
-                commandExecutor.accept(CIRCULAR_PUMP_PORT, false);
+            if (mode) {
+                raiseChange(false);
+            } else {
+                raiseChange(state.get());
             }
+
         });
     }
 

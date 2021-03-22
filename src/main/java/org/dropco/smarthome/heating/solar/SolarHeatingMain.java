@@ -39,46 +39,28 @@ public class SolarHeatingMain {
         StatsCollector.getInstance().collect("V-Z indikator", true, HorizontalMoveFeedback.getInstance()::addRealTimeTicker);
 
         StatsCollector.getInstance().collect("Kolektory - obehové čerpadlo",Main.getOutput(CIRCULAR_PUMP_PORT));
-        StatsCollector.getInstance().collect("3-cestný ventil - Bypass", !ThreeWayValve.getState() && SolarCircularPump.getState(), new Consumer<Consumer<Boolean>>() {
-            @Override
-            public void accept(Consumer<Boolean> addToStats) {
-                ThreeWayValve.addSubscriber(new Consumer<Boolean>() {
-                    @Override
-                    public void accept(Boolean valveOpened) {
-                        //valveShould be closed and pump should be running to add this to Stats otherwise we shouldnt count it to stats
-                        addToStats.accept(!valveOpened && SolarCircularPump.getState());
-                    }
-                });
-                SolarCircularPump.addSubscriber(new Consumer<Boolean>() {
-                    @Override
-                    public void accept(Boolean pumpRunning) {
-                        //if Pump is running we should count it to stats only if valve is closed
-                        addToStats.accept(pumpRunning && !ThreeWayValve.getState());
+        StatsCollector.getInstance().collect("3-cestný ventil - Bypass", !ThreeWayValve.getState() && SolarCircularPump.getState(), addToStats -> {
+            ThreeWayValve.addSubscriber(valveOpened -> {
+                //valveShould be closed and pump should be running to add this to Stats otherwise we shouldnt count it to stats
+                addToStats.accept(!valveOpened && SolarCircularPump.getState());
+            });
+            SolarCircularPump.addSubscriber(pumpRunning -> {
+                //if Pump is running we should count it to stats only if valve is closed
+                addToStats.accept(pumpRunning && !ThreeWayValve.getState());
 
-                    }
-                });
-            }
+            });
         });
-        StatsCollector.getInstance().collect("3-cestný ventil - Ohrev", ThreeWayValve.getState() && SolarCircularPump.getState(), new Consumer<Consumer<Boolean>>() {
-            @Override
-            public void accept(Consumer<Boolean> addToStats) {
-                ThreeWayValve.addSubscriber(new Consumer<Boolean>() {
-                    @Override
-                    public void accept(Boolean valveOpened) {
-                        //valveShould be opened and pump should be running to add this to Stats otherwise we shouldnt count it to stats
-                        addToStats.accept(valveOpened && SolarCircularPump.getState());
-                    }
-                });
-                SolarCircularPump.addSubscriber(new Consumer<Boolean>() {
-                    @Override
-                    public void accept(Boolean pumpRunning) {
-                        //if Pump is running we should count it to stats only if valve is opened
-                        addToStats.accept(pumpRunning && ThreeWayValve.getState());
+        StatsCollector.getInstance().collect("3-cestný ventil - Ohrev", ThreeWayValve.getState() && SolarCircularPump.getState(), addToStats -> {
+            ThreeWayValve.addSubscriber(valveOpened -> {
+                //valveShould be opened and pump should be running to add this to Stats otherwise we shouldnt count it to stats
+                addToStats.accept(valveOpened && SolarCircularPump.getState());
+            });
+            SolarCircularPump.addSubscriber(pumpRunning -> {
+                //if Pump is running we should count it to stats only if valve is opened
+                addToStats.accept(pumpRunning && ThreeWayValve.getState());
 
-                    }
-                });
+            });
 
-            }
         });
         StatsCollector.getInstance().collect("Blokovanie ohrevu TA3", Main.getOutput(BOILER_BLOCK_PIN));
     }

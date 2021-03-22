@@ -22,24 +22,9 @@ private static final String HEATER_BLINK_STOP = "HEATER_BLINK_STOP";
     }
 
     private static void addToStats() {
-        StatsCollector.getInstance().collect("Horák plynového kotla", Flame.getState(), new Consumer<Consumer<Boolean>>() {
-            @Override
-            public void accept(Consumer<Boolean> countStats) {
-                Flame.addSubscriber(countStats);
-            }
-        });
-        StatsCollector.getInstance().collect("Kúrenie chod čerpadla", HeaterCircularPump.getState(), new Consumer<Consumer<Boolean>>() {
-            @Override
-            public void accept(Consumer<Boolean> countStats) {
-                HeaterCircularPump.addSubscriber(countStats);
-            }
-        });
-        StatsCollector.getInstance().collect("Ohrev TA3 plynovým kotlom", Boiler.getState(), new Consumer<Consumer<Boolean>>() {
-            @Override
-            public void accept(Consumer<Boolean> countStats) {
-                Boiler.addSubscriber(countStats);
-            }
-        });
+        StatsCollector.getInstance().collect("Horák plynového kotla", Flame.getState(), countStats -> Flame.addSubscriber(countStats));
+        StatsCollector.getInstance().collect("Kúrenie chod čerpadla", HeaterCircularPump.getState(), countStats -> HeaterCircularPump.addSubscriber(countStats));
+        StatsCollector.getInstance().collect("Ohrev TA3 plynovým kotlom", Boiler.getState(), countStats -> Boiler.addSubscriber(countStats));
     }
 
     private static void configureServiceMode() {

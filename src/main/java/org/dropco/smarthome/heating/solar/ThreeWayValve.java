@@ -34,8 +34,10 @@ public class ThreeWayValve implements Runnable {
         THREE_WAY_VALVE_T2_MEASURE_PLACE =settingsDao.getString("THREE_WAY_VALVE_T2_MEASURE_PLACE");
         this.commandExecutor = commandExecutor;
         ServiceMode.addSubsriber(mode -> {
-            if (state.get() && mode) {
-                commandExecutor.accept(THREE_WAY_PORT, false);
+            if (mode) {
+                raiseChange(false);
+            } else {
+                raiseChange(state.get());
             }
         });
     }
