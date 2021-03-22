@@ -86,7 +86,8 @@ public class TempWebService {
             });
             Data dt = new Data();
             dt.x = currDT;
-            dt.y = (tmpSeries.data.isEmpty()) ? new BigDecimal(logDao.readPreviousValue(series, currDT)).setScale(1, RoundingMode.HALF_UP).doubleValue() :
+            Double prevValue = logDao.readPreviousValue(series, currDT);
+            dt.y = (tmpSeries.data.isEmpty()) ? new BigDecimal(prevValue == null ? 0.0 : prevValue).setScale(1, RoundingMode.HALF_UP).doubleValue() :
                     tmpSeries.data.get(tmpSeries.data.size() - 1).y;
 
             tmpSeries.data.add(dt);
