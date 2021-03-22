@@ -64,16 +64,18 @@ public class SolarCircularPump implements Runnable {
         tempT1.set(TempService.getTemperature(t1MeasurePlace));
         tempT2.set(TempService.getTemperature(getDeviceId(T2_MEASURE_PLACE)));
         while (true) {
-            if (!ServiceMode.isServiceMode()) {
                 double difference = tempT1.get() - tempT2.get();
                 LOGGER.fine("Rozdiel teplôt pre obehové čerpadlo je " + difference);
                 if (difference >= getStartThreshold() && state.compareAndSet(false, true)) {
-                    raiseChange(true);
+                    if (!ServiceMode.isServiceMode()) {
+                        raiseChange(true);
+                    }
                 }
                 if (difference <= getStopThreshold() && state.compareAndSet(true, false)) {
-                    raiseChange(false);
+                    if (!ServiceMode.isServiceMode()) {
+                        raiseChange(false);
+                    }
                 }
-            }
             update.acquireUninterruptibly();
         }
     }

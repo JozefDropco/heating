@@ -59,16 +59,15 @@ public class ThreeWayValve implements Runnable {
         tempT2.set(TempService.getTemperature(getDeviceId(THREE_WAY_VALVE_T2_MEASURE_PLACE)));
 
         while (true) {
-            if (!ServiceMode.isServiceMode()) {
+
                 double difference = tempT31.get() - tempT2.get();
                 LOGGER.fine("Rozdiel teplôt pre 3-cestný ventil je " + difference);
                 if (difference >= SolarHeatingCurrentSetup.get().getThreeWayValveStartDiff() && state.compareAndSet(false, true)) {
-                    raiseChange(true);
+                    if (!ServiceMode.isServiceMode()) raiseChange(true);
                 }
                 if (difference <= SolarHeatingCurrentSetup.get().getThreeWayValveStopDiff() && state.compareAndSet(true, false)) {
-                    raiseChange(false);
+                    if (!ServiceMode.isServiceMode()) raiseChange(false);
                 }
-            }
             update.acquireUninterruptibly();
         }
     }
