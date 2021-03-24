@@ -1,194 +1,189 @@
 package org.dropco.smarthome.solar;
 
+import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Multimap;
-import com.google.common.collect.Multimaps;
-import org.junit.Before;
+import com.google.common.collect.Table;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import java.util.*;
+import java.io.*;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 @Ignore
 public class SolarSystemGenTest {
     int index = 4;
-    List<Clock> clocks = Lists.newArrayList();
-    private Multimap<Schedule, Position> positionMultimap;
 
+    private Table<Integer, Integer, Position> base() {
+        Table<Integer, Integer, Position> positionTable = HashBasedTable.create();
+        positionTable.put(6, 30, new Position(135, 245));
+        positionTable.put(11, 40, new Position(null, 215));
+        positionTable.put(12, 10, new Position(null, 185));
+        positionTable.put(12, 40, new Position(null, 155));
+        positionTable.put(13, 10, new Position(null, 125));
+        positionTable.put(13, 40, new Position(null, 95));
+        positionTable.put(14, 10, new Position(null, 65));
+        positionTable.put(14, 40, new Position(null, 35));
+        positionTable.put(15, 10, new Position(null, 0));
+//        positionTable.put(  15, 10, new Position(null, -280));
+        return positionTable;
+    }
 
-    @Before
-    public void setup() {
-        positionMultimap = Multimaps.newMultimap(new HashMap<>(), ArrayList::new);
-        monthly(positionMultimap, new Schedule(1, 6, 30), new Position(-135, 0));
-        monthly(positionMultimap, new Schedule(1, 11, 40), new Position(null, -35));
-        monthly(positionMultimap, new Schedule(1, 12, 10), new Position(null, -70));
-        monthly(positionMultimap, new Schedule(1, 12, 40), new Position(null, -105));
-        monthly(positionMultimap, new Schedule(1, 13, 10), new Position(null, -140));
-        monthly(positionMultimap, new Schedule(1, 13, 40), new Position(null, -175));
-        monthly(positionMultimap, new Schedule(1, 14, 10), new Position(null, -210));
-        monthly(positionMultimap, new Schedule(1, 14, 40), new Position(null, -245));
-        monthly(positionMultimap, new Schedule(1, 15, 10), new Position(null, -280));
-        put(positionMultimap, new Schedule(1, 21, 0), new Position(0, null), 3, 4, 5, 6, 7, 8, 9, 10);
-        put(positionMultimap, new Schedule(1, 17, 10), new Position(0, null), 11, 12, 1, 2);
-        put(positionMultimap, new Schedule(1, 7, 10), new Position(-135, null), 11, 12, 1);
-        put(positionMultimap, new Schedule(1, 8, 10), new Position(-135, null), 11, 12, 1);
-        put(positionMultimap, new Schedule(1, 9, 10), new Position(-135, null), 11, 12, 1);
-        put(positionMultimap, new Schedule(1, 10, 10), new Position(-135, null), 11, 12, 1);
-        put(positionMultimap, new Schedule(1, 11, 10), new Position(-135, null), 11, 12, 1);
+    private Table<Integer, Integer, Position> prepareJanuary() {
+        Table<Integer, Integer, Position> base = base();
+        merge(base, 17, 10, new Position(0, 0));
+        return base;
+    }
 
-        put(positionMultimap, new Schedule(1, 10, 10), new Position(-125, null), 2, 10);
-        put(positionMultimap, new Schedule(1, 11, 10), new Position(-114, null), 2, 10);
-        put(positionMultimap, new Schedule(1, 12, 10), new Position(-105, null), 2, 10);
-        put(positionMultimap, new Schedule(1, 13, 10), new Position(-96, null), 2, 10);
-        put(positionMultimap, new Schedule(1, 14, 10), new Position(-105, null), 2, 10);
-        put(positionMultimap, new Schedule(1, 15, 10), new Position(-114, null), 2, 10);
-        put(positionMultimap, new Schedule(1, 16, 10), new Position(-125, null), 2, 10);
-        put(positionMultimap, new Schedule(1, 17, 10), new Position(-135, null), 10);
+    private Table<Integer, Integer, Position> prepareFeb() {
+        Table<Integer, Integer, Position> base = base();
+        merge(base, 17, 10, new Position(0, 0));
+        merge(base, 10, 10, new Position(125, null));
+        merge(base, 11, 10, new Position(116, null));
+        merge(base, 12, 10, new Position(107, null));
+        merge(base, 13, 10, new Position(98, null));
+        merge(base, 14, 10, new Position(107, null));
+        merge(base, 15, 10, new Position(116, null));
+        merge(base, 16, 10, new Position(125, null));
+        return base;
+    }
 
-        put(positionMultimap, new Schedule(1, 8, 10), new Position(-125, null), 3, 9);
-        put(positionMultimap, new Schedule(1, 11, 10), new Position(-114, null), 3, 9);
-        put(positionMultimap, new Schedule(1, 12, 10), new Position(-105, null), 3, 9);
-        put(positionMultimap, new Schedule(1, 13, 10), new Position(-96, null), 3, 9);
-        put(positionMultimap, new Schedule(1, 14, 10), new Position(-105, null), 3, 9);
-        put(positionMultimap, new Schedule(1, 15, 10), new Position(-114, null), 3, 9);
-        put(positionMultimap, new Schedule(1, 16, 10), new Position(-125, null), 3, 9);
-        put(positionMultimap, new Schedule(1, 19, 10), new Position(-135, null), 3, 9);
+    private Table<Integer, Integer, Position> prepareMarch() {
+        Table<Integer, Integer, Position> base = base();
+        merge(base, 21, 00, new Position(0, 0));
+        merge(base, 8, 10, new Position(125, null));
+        merge(base, 9, 10, new Position(116, null));
+        merge(base, 10, 10, new Position(107, null));
+        merge(base, 11, 10, new Position(98, null));
+        merge(base, 12, 10, new Position(89, null));
+        merge(base, 13, 10, new Position(80, null));
+        merge(base, 14, 10, new Position(89, null));
+        merge(base, 15, 10, new Position(98, null));
+        merge(base, 16, 10, new Position(107, null));
+        merge(base, 17, 10, new Position(116, null));
+        merge(base, 18, 10, new Position(125, null));
+        return base;
+    }
 
-        put(positionMultimap, new Schedule(1, 8, 10), new Position(-122, null), 4, 8);
-        put(positionMultimap, new Schedule(1, 9, 10), new Position(-110, null), 4, 8);
-        put(positionMultimap, new Schedule(1, 10, 10), new Position(-98, null), 4, 8);
-        put(positionMultimap, new Schedule(1, 11, 10), new Position(-86, null), 4, 8);
-        put(positionMultimap, new Schedule(1, 12, 10), new Position(-74, null), 4, 8);
-        put(positionMultimap, new Schedule(1, 13, 10), new Position(-62, null), 4, 8);
-        put(positionMultimap, new Schedule(1, 14, 10), new Position(-74, null), 4, 8);
-        put(positionMultimap, new Schedule(1, 15, 10), new Position(-86, null), 4, 8);
-        put(positionMultimap, new Schedule(1, 16, 10), new Position(-98, null), 4, 8);
-        put(positionMultimap, new Schedule(1, 17, 10), new Position(-110, null), 4, 8);
-        put(positionMultimap, new Schedule(1, 18, 10), new Position(-122, null), 4, 8);
-        put(positionMultimap, new Schedule(1, 19, 10), new Position(-135, null), 4, 8);
+    private Table<Integer, Integer, Position> prepareApril() {
+        Table<Integer, Integer, Position> base = base();
+        merge(base, 21, 00, new Position(0, 0));
+        merge(base, 8, 10, new Position(122, null));
+        merge(base, 9, 10, new Position(110, null));
+        merge(base, 10, 10, new Position(98, null));
+        merge(base, 11, 10, new Position(86, null));
+        merge(base, 12, 10, new Position(74, null));
+        merge(base, 13, 10, new Position(62, null));
+        merge(base, 14, 10, new Position(74, null));
+        merge(base, 15, 10, new Position(86, null));
+        merge(base, 16, 10, new Position(98, null));
+        merge(base, 17, 10, new Position(110, null));
+        merge(base, 18, 10, new Position(122, null));
+        return base;
+    }
 
-        put(positionMultimap, new Schedule(1, 7, 10), new Position(-119, null), 5, 6, 7);
-        put(positionMultimap, new Schedule(1, 8, 10), new Position(-104, null), 5, 6, 7);
-        put(positionMultimap, new Schedule(1, 9, 10), new Position(-89, null), 5, 6, 7);
-        put(positionMultimap, new Schedule(1, 10, 10), new Position(-74, null), 5, 6, 7);
-        put(positionMultimap, new Schedule(1, 11, 10), new Position(-59, null), 5, 6, 7);
-        put(positionMultimap, new Schedule(1, 12, 10), new Position(-44, null), 5, 6, 7);
-        put(positionMultimap, new Schedule(1, 13, 10), new Position(-29, null), 5, 6, 7);
-        put(positionMultimap, new Schedule(1, 14, 10), new Position(-44, null), 5, 6, 7);
-        put(positionMultimap, new Schedule(1, 15, 10), new Position(-59, null), 5, 6, 7);
-        put(positionMultimap, new Schedule(1, 16, 10), new Position(-74, null), 5, 6, 7);
-        put(positionMultimap, new Schedule(1, 17, 10), new Position(-89, null), 5, 6, 7);
-        put(positionMultimap, new Schedule(1, 18, 10), new Position(-104, null), 5, 6, 7);
-        put(positionMultimap, new Schedule(1, 19, 10), new Position(-119, null), 5, 6, 7);
-        put(positionMultimap, new Schedule(1, 20, 10), new Position(-135, null), 5, 6, 7);
+    private Table<Integer, Integer, Position> prepareMay() {
+        Table<Integer, Integer, Position> base = base();
+        merge(base, 21, 00, new Position(0, 0));
+        merge(base, 7, 10, new Position(119, null));
+        merge(base, 8, 10, new Position(104, null));
+        merge(base, 9, 10, new Position(89, null));
+        merge(base, 10, 10, new Position(74, null));
+        merge(base, 11, 10, new Position(59, null));
+        merge(base, 12, 10, new Position(44, null));
+        merge(base, 13, 10, new Position(29, null));
+        merge(base, 14, 10, new Position(44, null));
+        merge(base, 15, 10, new Position(59, null));
+        merge(base, 16, 10, new Position(74, null));
+        merge(base, 17, 10, new Position(89, null));
+        merge(base, 18, 10, new Position(104, null));
+        merge(base, 19, 10, new Position(119, null));
+        return base;
+    }
 
-        clocks.add(new Clock(6, 30));
-        clocks.add(new Clock(7, 10));
-        clocks.add(new Clock(8, 10));
-        clocks.add(new Clock(9, 10));
-        clocks.add(new Clock(10, 10));
-        clocks.add(new Clock(11, 10));
-        clocks.add(new Clock(11, 40));
-        clocks.add(new Clock(12, 10));
-        clocks.add(new Clock(12, 40));
-        clocks.add(new Clock(13, 10));
-        clocks.add(new Clock(13, 40));
-        clocks.add(new Clock(14, 10));
-        clocks.add(new Clock(14, 40));
-        clocks.add(new Clock(15, 10));
-        clocks.add(new Clock(16, 10));
-        clocks.add(new Clock(17, 10));
-        clocks.add(new Clock(18, 10));
-        clocks.add(new Clock(19, 10));
-        clocks.add(new Clock(20, 10));
-        clocks.add(new Clock(21, 0));
+    private Table<Integer, Integer, Position> prepareJune() {
+        return prepareMay();
+    }
+
+    private Table<Integer, Integer, Position> prepareJuly() {
+        return prepareMay();
+    }
+
+    private Table<Integer, Integer, Position> prepareAug() {
+        return prepareApril();
+    }
+
+    private Table<Integer, Integer, Position> prepareSep() {
+        return prepareMarch();
+    }
+
+    private Table<Integer, Integer, Position> prepareOct() {
+        Table<Integer, Integer, Position> positionTable = prepareFeb();
+        positionTable.remove(17, 10);
+        merge(positionTable, 21, 00, new Position(0, 0));
+        return positionTable;
+    }
+
+    private Table<Integer, Integer, Position> prepareNov() {
+        return prepareJanuary();
+    }
+
+    private Table<Integer, Integer, Position> prepareDec() {
+        Table<Integer, Integer, Position> base = base();
+        merge(base, 17, 10, new Position(0, 0));
+        return base;
+    }
+
+    private void merge(Table<Integer, Integer, Position> base, int hour, int minute, Position position) {
+        if (base.contains(hour, minute)) {
+            Position prevPosition = base.get(hour, minute);
+            if (position.horizontal != null) prevPosition.horizontal = position.horizontal;
+            if (position.vertical != null) prevPosition.vertical = position.vertical;
+        } else base.put(hour, minute, position);
     }
 
     @Test
-    public void generateInserts() {
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(2020, 0, 1, 0, 0, 0);
-        for (int i = 0; i < 366; i++) {
-            int month = calendar.get(Calendar.MONTH) + 1;
-            int dayInMonth = calendar.get(Calendar.DAY_OF_MONTH);
-            for (Clock clock : clocks) {
-                Collection<Position> positions = positionMultimap.get(new Schedule(month, clock.hour, clock.minute));
-                if (positions != null && !positions.isEmpty()) {
-                    Integer horizontal = null;
-                    Integer vertical = null;
-                    for (Position position : positions) {
-                        if (horizontal != null && position.horizontal != null || vertical != null && position.vertical != null)
-                            throw new RuntimeException();
-                        if (position.horizontal != null) horizontal = position.horizontal;
-                        if (position.vertical != null) vertical = position.vertical;
+    public void generateInserts() throws IOException {
+        PrintWriter out = new PrintWriter(new BufferedOutputStream(new FileOutputStream(new File("C:\\SRDEV\\Projects\\heating\\changes.sql"))));
+        print(prepareJanuary(), 1, 31, out);
+        print(prepareFeb(), 2, 29, out);
+        print(prepareMarch(), 3, 31, out);
+        print(prepareApril(), 4, 30, out);
+        print(prepareMay(), 5, 31, out);
+        print(prepareJune(), 6, 30, out);
+        print(prepareJuly(), 7, 31, out);
+        print(prepareAug(), 8, 31, out);
+        print(prepareSep(), 9, 30, out);
+        print(prepareOct(), 10, 31, out);
+        print(prepareNov(), 11, 30, out);
+        print(prepareDec(), 12, 31, out);
+    }
+
+
+    private void print(Table<Integer, Integer, Position> positions, int month, int maxDays, PrintWriter out) {
+        List<Table.Cell<Integer, Integer, Position>> sorted = Lists.newArrayList(positions.cellSet());
+        Collections.sort(sorted, (o1, o2) -> {
+            int res = Integer.compare(o1.getRowKey(), o2.getRowKey());
+            if (res==0) return Integer.compare(o1.getColumnKey(), o2.getColumnKey());
+            return res;
+        });
+        for (int dayInMonth = 1; dayInMonth <= maxDays; dayInMonth++) {
+            int finalDayInMonth = dayInMonth;
+            sorted.forEach(cell -> {
+                        int tmpIndex = index++;
+                        int hour = cell.getRowKey();
+                        int minute = cell.getColumnKey();
+                        Integer horizontal = cell.getValue().horizontal == null ? null : (int) Math.round(cell.getValue().horizontal * 2.464285714285714);
+                        Integer vertical = cell.getValue().vertical == null ? null : (int) Math.round(cell.getValue().vertical * 3.185185185185185);
+                        out.println("INSERT INTO `SOLAR_POSITION`(ID,HORIZONTAL,VERTICAL) VALUES (" + tmpIndex + "," + horizontal + "," + vertical + ");");
+                        out.println("INSERT INTO `SOLAR_SCHEDULE`(MONTH,DAY,HOUR,MINUTE,POSITION) VALUES (" + month + "," + finalDayInMonth + "," + hour + "," + minute + ", " + tmpIndex + ");");
                     }
-                    int tmpIndex = index++;
-                    System.out.println("INSERT INTO SOLAR_POSITION(ID,HORIZONTAL,VERTICAL) VALUES (" + tmpIndex + "," + horizontal + "," + vertical + ");");
-                    System.out.println("INSERT INTO SOLAR_SCHEDULE(MONTH,DAY,HOUR,MINUTE,POSITION) VALUES (" + month + "," + dayInMonth + "," + clock.hour + "," + clock.minute + ", " + tmpIndex + ");");
-                }
-            }
-            calendar.add(Calendar.DAY_OF_YEAR, 1);
-        }
+            );
 
-    }
-
-
-    private void put(Multimap<Schedule, Position> positionMultimap, Schedule key, Position value, Integer... months) {
-        for (int month : months) {
-            Schedule schedule = key.cloneIt();
-            schedule.month = month;
-            positionMultimap.put(schedule, value.cloneIt());
         }
     }
 
-    private void monthly(Multimap<Schedule, Position> positionMultimap, Schedule key, Position value) {
-        for (int i = 1; i < 13; i++) {
-            Schedule schedule = key.cloneIt();
-            schedule.month = i;
-            positionMultimap.put(schedule, value.cloneIt());
-        }
-    }
-
-    public static class Schedule {
-        int month;
-        int hour;
-        int minute;
-
-        public Schedule(int month, int hour, int minute) {
-            this.month = month;
-            this.hour = hour;
-            this.minute = minute;
-        }
-
-        Schedule cloneIt() {
-            return new Schedule(month, hour, minute);
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-            Schedule schedule = (Schedule) o;
-            return month == schedule.month &&
-                    hour == schedule.hour &&
-                    minute == schedule.minute;
-        }
-
-        @Override
-        public int hashCode() {
-            return Objects.hash(month, hour, minute);
-        }
-    }
-
-    public static class Clock {
-        int hour;
-        int minute;
-
-        public Clock(int hour, int minute) {
-            this.hour = hour;
-            this.minute = minute;
-        }
-    }
 
     public static class Position {
         Integer horizontal;
