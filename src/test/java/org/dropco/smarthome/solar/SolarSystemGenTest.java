@@ -158,6 +158,8 @@ public class SolarSystemGenTest {
         print(prepareOct(), 10, 31, out);
         print(prepareNov(), 11, 30, out);
         print(prepareDec(), 12, 31, out);
+        out.flush();
+        out.close();
     }
 
 
