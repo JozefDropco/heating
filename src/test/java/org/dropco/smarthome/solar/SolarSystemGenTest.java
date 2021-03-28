@@ -8,8 +8,8 @@ import org.junit.Test;
 
 import java.io.*;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 
 @Ignore
 public class SolarSystemGenTest {
@@ -26,7 +26,6 @@ public class SolarSystemGenTest {
         positionTable.put(14, 10, new Position(null, 65));
         positionTable.put(14, 40, new Position(null, 35));
         positionTable.put(15, 10, new Position(null, 0));
-//        positionTable.put(  15, 10, new Position(null, -280));
         return positionTable;
     }
 
@@ -167,16 +166,24 @@ public class SolarSystemGenTest {
         List<Table.Cell<Integer, Integer, Position>> sorted = Lists.newArrayList(positions.cellSet());
         Collections.sort(sorted, (o1, o2) -> {
             int res = Integer.compare(o1.getRowKey(), o2.getRowKey());
-            if (res==0) return Integer.compare(o1.getColumnKey(), o2.getColumnKey());
+            if (res == 0) return Integer.compare(o1.getColumnKey(), o2.getColumnKey());
             return res;
         });
+        Integer hor = null;
+        Integer ver = null;
+        for (Table.Cell<Integer, Integer, Position> entry : sorted) {
+            if (entry.getValue().vertical!=null) ver = entry.getValue().vertical;
+            if (entry.getValue().horizontal!=null) hor = entry.getValue().horizontal;
+            entry.getValue().horizontal = Optional.ofNullable(entry.getValue().horizontal).orElse(hor);
+            entry.getValue().vertical = Optional.ofNullable(entry.getValue().vertical).orElse(ver);
+        }
         for (int dayInMonth = 1; dayInMonth <= maxDays; dayInMonth++) {
             int finalDayInMonth = dayInMonth;
             sorted.forEach(cell -> {
                         int tmpIndex = index++;
                         int hour = cell.getRowKey();
                         int minute = cell.getColumnKey();
-                        Integer horizontal = cell.getValue().horizontal == null ? null : (int) Math.round(cell.getValue().horizontal * 2.464285714285714);
+                        Integer horizontal = cell.getValue().horizontal == null ? null : (int) Math.round(cell.getValue().horizontal * 2.816326530612245);
                         Integer vertical = cell.getValue().vertical == null ? null : (int) Math.round(cell.getValue().vertical * 3.185185185185185);
                         out.println("INSERT INTO `SOLAR_POSITION`(ID,HORIZONTAL,VERTICAL) VALUES (" + tmpIndex + "," + horizontal + "," + vertical + ");");
                         out.println("INSERT INTO `SOLAR_SCHEDULE`(MONTH,DAY,HOUR,MINUTE,POSITION) VALUES (" + month + "," + finalDayInMonth + "," + hour + "," + minute + ", " + tmpIndex + ");");
