@@ -37,7 +37,6 @@ public class SolarSystemGenTest {
 
     private Table<Integer, Integer, Position> prepareFeb() {
         Table<Integer, Integer, Position> base = base();
-        merge(base, 17, 10, new Position(0, 0));
         merge(base, 10, 10, new Position(125, null));
         merge(base, 11, 10, new Position(116, null));
         merge(base, 12, 10, new Position(107, null));
@@ -45,12 +44,12 @@ public class SolarSystemGenTest {
         merge(base, 14, 10, new Position(107, null));
         merge(base, 15, 10, new Position(116, null));
         merge(base, 16, 10, new Position(125, null));
+        merge(base, 17, 10, new Position(0, 0));
         return base;
     }
 
     private Table<Integer, Integer, Position> prepareMarch() {
         Table<Integer, Integer, Position> base = base();
-        merge(base, 21, 00, new Position(0, 0));
         merge(base, 8, 10, new Position(125, null));
         merge(base, 9, 10, new Position(116, null));
         merge(base, 10, 10, new Position(107, null));
@@ -62,12 +61,12 @@ public class SolarSystemGenTest {
         merge(base, 16, 10, new Position(107, null));
         merge(base, 17, 10, new Position(116, null));
         merge(base, 18, 10, new Position(125, null));
+        merge(base, 21, 00, new Position(0, 0));
         return base;
     }
 
     private Table<Integer, Integer, Position> prepareApril() {
         Table<Integer, Integer, Position> base = base();
-        merge(base, 21, 00, new Position(0, 0));
         merge(base, 8, 10, new Position(122, null));
         merge(base, 9, 10, new Position(110, null));
         merge(base, 10, 10, new Position(98, null));
@@ -79,12 +78,12 @@ public class SolarSystemGenTest {
         merge(base, 16, 10, new Position(98, null));
         merge(base, 17, 10, new Position(110, null));
         merge(base, 18, 10, new Position(122, null));
+        merge(base, 21, 00, new Position(0, 0));
         return base;
     }
 
     private Table<Integer, Integer, Position> prepareMay() {
         Table<Integer, Integer, Position> base = base();
-        merge(base, 21, 00, new Position(0, 0));
         merge(base, 7, 10, new Position(119, null));
         merge(base, 8, 10, new Position(104, null));
         merge(base, 9, 10, new Position(89, null));
@@ -98,6 +97,7 @@ public class SolarSystemGenTest {
         merge(base, 17, 10, new Position(89, null));
         merge(base, 18, 10, new Position(104, null));
         merge(base, 19, 10, new Position(119, null));
+        merge(base, 21, 00, new Position(0, 0));
         return base;
     }
 

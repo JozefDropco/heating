@@ -116,4 +116,5 @@ public class HeatingDao {
                 .where(SOLAR_HEATING.id.eq(solarHeatingSchedule.getId()))
                 .execute();
     }
+
 }

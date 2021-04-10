@@ -126,14 +126,14 @@ public class LogDao {
 
     }
 
-    public Double readPreviousValue(String series, Date date) {
+    public Double readPreviousValue(String placeRefCd, Date date) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(date);
         calendar.add(Calendar.DAY_OF_YEAR,-1);
         DateExpression<Date> removeMinutes = Expressions.dateTemplate(Date.class, leaveoutminutes, _tlog.timestamp);
         return new MySQLQuery<StringSetting>(getConnection()).select(
                 _tlog.value.avg().as(_tlog.value)).from(_tlog).
-                where(_tlog.placeRefCd.eq(series)
+                where(_tlog.placeRefCd.eq(placeRefCd)
                         .and(_tlog.timestamp.goe(calendar.getTime()))
                         .and(_tlog.timestamp.loe(date))
                 ).orderBy(removeMinutes.desc()).fetchFirst();
@@ -144,7 +144,7 @@ public class LogDao {
         public double min;
         public double max;
         public double avg;
-
+        public double last;
     }
 
     public static class AppMsg {

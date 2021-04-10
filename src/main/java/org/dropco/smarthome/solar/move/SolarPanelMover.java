@@ -71,7 +71,8 @@ public class SolarPanelMover implements Runnable {
                 setState(SOUTH_PIN_REF_CD, false, SOUTH);
             }
             fireUpdate(currentPosition);
-        }, VerticalMoveFeedback.getInstance()::addRealTimeTicker, VerticalMoveFeedback.getInstance()::addSubscriber, VerticalMoveFeedback::getMoving);
+        }, VerticalMoveFeedback.getInstance()::addRealTimeTicker, VerticalMoveFeedback.getInstance()::addSubscriber,
+                VerticalMoveFeedback::getMoving);
     }
 
     private void addHorizontal(SolarPanelPosition currentPosition, int absHorizontal, boolean movingWest) {
@@ -94,9 +95,9 @@ public class SolarPanelMover implements Runnable {
 
     void setState(String pinRefCd, boolean state, String direction) {
         if (state)
-            LOGGER.log(Level.FINE, "Natáčam na " + direction + ".");
+            LOGGER.log(Level.INFO, "Natáčam na " + direction + ".");
         else
-            LOGGER.log(Level.FINE, "Zastavujem otáčanie na " + direction + ".");
+            LOGGER.log(Level.INFO, "Zastavujem otáčanie na " + direction + ".");
         commandExecutor.accept(pinRefCd, state);
     }
 

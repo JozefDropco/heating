@@ -1,6 +1,7 @@
 package org.dropco.smarthome.web;
 
 import com.google.gson.GsonBuilder;
+import com.querydsl.core.Tuple;
 import org.dropco.smarthome.database.LogDao;
 import org.dropco.smarthome.database.querydsl.TemperatureMeasurePlace;
 import org.dropco.smarthome.heating.db.HeatingDao;
@@ -12,8 +13,6 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -38,12 +37,14 @@ public class StatsWebService {
         instance.add(Calendar.SECOND, -1);
         to = instance.getTime();
         Date date = new Date();
-        if (date.before(to)){
-            to=date;
+        if (date.before(to)) {
+            to = date;
         }
         List<LogDao.AggregateTemp> temperatures = new LogDao().retrieveAggregatedTemperatures(from, to);
         for (LogDao.AggregateTemp temp : temperatures) {
-            temp.measurePlace = new HeatingDao().getMeasurePlaceByRefCd(temp.measurePlace).get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.name);
+            Tuple measurePlace = new HeatingDao().getMeasurePlaceByRefCd(temp.measurePlace);
+            temp.measurePlace = measurePlace.get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.name);
+            temp.last = new LogDao().readPreviousValue(temp.measurePlace, new Date());
 
         }
         List<StatsDao.AggregatedStats> aggregatedStats = new StatsDao().listAggregatedStats(from, to);
