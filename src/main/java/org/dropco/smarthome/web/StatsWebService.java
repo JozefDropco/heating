@@ -43,8 +43,8 @@ public class StatsWebService {
         List<LogDao.AggregateTemp> temperatures = new LogDao().retrieveAggregatedTemperatures(from, to);
         for (LogDao.AggregateTemp temp : temperatures) {
             Tuple measurePlace = new HeatingDao().getMeasurePlaceByRefCd(temp.measurePlace);
-            temp.measurePlace = measurePlace.get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.name);
             temp.last = new LogDao().readPreviousValue(temp.measurePlace, new Date());
+            temp.measurePlace = measurePlace.get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.name);
 
         }
         List<StatsDao.AggregatedStats> aggregatedStats = new StatsDao().listAggregatedStats(from, to);

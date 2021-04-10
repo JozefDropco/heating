@@ -144,7 +144,7 @@ public class LogDao {
         public double min;
         public double max;
         public double avg;
-        public double last;
+        public Double last;
     }
 
     public static class AppMsg {
