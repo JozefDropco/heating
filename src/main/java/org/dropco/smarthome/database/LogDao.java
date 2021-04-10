@@ -1,5 +1,6 @@
 package org.dropco.smarthome.database;
 
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Template;
@@ -82,14 +83,14 @@ public class LogDao {
                 )
                 .groupBy(_tlog.placeRefCd)
                 .orderBy(_tlog.placeRefCd.asc()).fetch();
-        return Lists.transform(result, tuple -> {
+        return Lists.newArrayList(Iterables.transform(result, tuple -> {
             AggregateTemp temp = new AggregateTemp();
             temp.measurePlace = tuple.get(_tlog.placeRefCd);
             temp.min = tuple.get(min);
             temp.max = tuple.get(max);
             temp.avg = new BigDecimal(tuple.get(avg)).setScale(1, RoundingMode.HALF_UP).doubleValue();
             return temp;
-        });
+        }));
 
     }
 
