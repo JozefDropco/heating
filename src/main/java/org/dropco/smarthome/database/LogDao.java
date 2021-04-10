@@ -126,6 +126,13 @@ public class LogDao {
 
     }
 
+    public Double readLastValue(String placeRefCd) {
+        return new MySQLQuery<StringSetting>(getConnection()).select(
+                _tlog.value).from(_tlog).
+                where(_tlog.placeRefCd.eq(placeRefCd)
+                ).orderBy(_tlog.timestamp.desc()).fetchFirst();
+    }
+
     public Double readPreviousValue(String placeRefCd, Date date) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(date);
