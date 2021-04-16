@@ -34,7 +34,6 @@ public class Main {
     private static GpioController gpio = GpioFactory.getInstance();
 
     public static void main(String[] args) throws Exception {
-        GpioFactory.setDefaultProvider(new RaspiGpioProvider(RaspiPinNumberingScheme.BROADCOM_PIN_NUMBERING));
         // Create JAX-RS application.
         ConstWebService.SETTINGS_DAO=settingsDao;
         PortWebService.SETTINGS_DAO=settingsDao;
