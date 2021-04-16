@@ -73,7 +73,7 @@ public class LogDao {
         NumberExpression<Double> max = _tlog.value.max().as("max");
         NumberExpression<Double> avg = _tlog.value.avg().as("avg");
         List<Tuple> result = new MySQLQuery<StringSetting>(getConnection()).select(_tlog.placeRefCd,
-                min,
+            min,
                 max,
                 avg
         ).from(_tlog).

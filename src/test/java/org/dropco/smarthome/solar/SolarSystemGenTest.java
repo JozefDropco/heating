@@ -9,204 +9,274 @@ import org.junit.Test;
 import java.io.*;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 @Ignore
 public class SolarSystemGenTest {
-    int index = 4;
+    private SolarSchedule base() {
+        Table<Integer, Integer, Move> MoveTable = HashBasedTable.create();
+        SolarSchedule s = new SolarSchedule();
+        s.sunRiseHour = 6;
+        s.sunRiseMinute = 30;
+        MoveTable.put(11, 40, new Move(0, -1));
+        MoveTable.put(12, 10, new Move(0, -1));
+        MoveTable.put(12, 40, new Move(0, -1));
+        MoveTable.put(13, 10, new Move(0, -1));
+        MoveTable.put(13, 40, new Move(0, -1));
+        MoveTable.put(14, 10, new Move(0, -1));
+        MoveTable.put(14, 40, new Move(0, -1));
+        MoveTable.put(15, 10, new Move(0, -1));
+        s.dailyMoves = MoveTable;
+        s.horizontalStep = 30.625;
+        s.verticalStep = 0;
 
-    private Table<Integer, Integer, Position> base() {
-        Table<Integer, Integer, Position> positionTable = HashBasedTable.create();
-        positionTable.put(6, 30, new Position(135, 245));
-        positionTable.put(11, 40, new Position(null, 215));
-        positionTable.put(12, 10, new Position(null, 185));
-        positionTable.put(12, 40, new Position(null, 155));
-        positionTable.put(13, 10, new Position(null, 125));
-        positionTable.put(13, 40, new Position(null, 95));
-        positionTable.put(14, 10, new Position(null, 65));
-        positionTable.put(14, 40, new Position(null, 35));
-        positionTable.put(15, 10, new Position(null, 0));
-        return positionTable;
+        return s;
     }
 
-    private Table<Integer, Integer, Position> prepareJanuary() {
-        Table<Integer, Integer, Position> base = base();
-        merge(base, 17, 10, new Position(0, 0));
+    private SolarSchedule prepareJanuary() {
+        SolarSchedule base = base();
+        base.month = 1;
+        base.sunSetHour = 17;
+        base.sunSetMinute = 10;
         return base;
     }
 
-    private Table<Integer, Integer, Position> prepareFeb() {
-        Table<Integer, Integer, Position> base = base();
-        merge(base, 10, 10, new Position(125, null));
-        merge(base, 11, 10, new Position(116, null));
-        merge(base, 12, 10, new Position(107, null));
-        merge(base, 13, 10, new Position(98, null));
-        merge(base, 14, 10, new Position(107, null));
-        merge(base, 15, 10, new Position(116, null));
-        merge(base, 16, 10, new Position(125, null));
-        merge(base, 17, 10, new Position(0, 0));
+    private SolarSchedule prepareFeb() {
+        SolarSchedule base = base();
+        base.month = 2;
+        base.sunSetHour = 17;
+        base.sunSetMinute = 10;
+        base.verticalStep = 9;
+        merge(base, 10, 10, new Move(-1, 0));
+        merge(base, 11, 10, new Move(-1, 0));
+        merge(base, 12, 10, new Move(-1, 0));
+        merge(base, 13, 10, new Move(-1, 0));
+        merge(base, 14, 10, new Move(1, 0));
+        merge(base, 15, 10, new Move(1, 0));
+        merge(base, 16, 10, new Move(1, 0));
         return base;
     }
 
-    private Table<Integer, Integer, Position> prepareMarch() {
-        Table<Integer, Integer, Position> base = base();
-        merge(base, 8, 10, new Position(125, null));
-        merge(base, 9, 10, new Position(116, null));
-        merge(base, 10, 10, new Position(107, null));
-        merge(base, 11, 10, new Position(98, null));
-        merge(base, 12, 10, new Position(89, null));
-        merge(base, 13, 10, new Position(80, null));
-        merge(base, 14, 10, new Position(89, null));
-        merge(base, 15, 10, new Position(98, null));
-        merge(base, 16, 10, new Position(107, null));
-        merge(base, 17, 10, new Position(116, null));
-        merge(base, 18, 10, new Position(125, null));
-        merge(base, 21, 00, new Position(0, 0));
+    private SolarSchedule prepareMarch() {
+        SolarSchedule base = base();
+        base.month = 3;
+        base.sunSetHour = 21;
+        base.sunSetMinute = 0;
+        base.verticalStep = 9;
+
+        merge(base, 8, 10, new Move(-1, 0));
+        merge(base, 9, 10, new Move(-1, 0));
+        merge(base, 10, 10, new Move(-1, 0));
+        merge(base, 11, 10, new Move(-1, 0));
+        merge(base, 12, 10, new Move(-1, 0));
+        merge(base, 13, 10, new Move(-1, 0));
+        merge(base, 14, 10, new Move(1, 0));
+        merge(base, 15, 10, new Move(1, 0));
+        merge(base, 16, 10, new Move(1, 0));
+        merge(base, 17, 10, new Move(1, 0));
+        merge(base, 18, 10, new Move(1, 0));
         return base;
     }
 
-    private Table<Integer, Integer, Position> prepareApril() {
-        Table<Integer, Integer, Position> base = base();
-        merge(base, 8, 10, new Position(122, null));
-        merge(base, 9, 10, new Position(110, null));
-        merge(base, 10, 10, new Position(98, null));
-        merge(base, 11, 10, new Position(86, null));
-        merge(base, 12, 10, new Position(74, null));
-        merge(base, 13, 10, new Position(62, null));
-        merge(base, 14, 10, new Position(74, null));
-        merge(base, 15, 10, new Position(86, null));
-        merge(base, 16, 10, new Position(98, null));
-        merge(base, 17, 10, new Position(110, null));
-        merge(base, 18, 10, new Position(122, null));
-        merge(base, 21, 00, new Position(0, 0));
+    private SolarSchedule prepareApril() {
+        SolarSchedule base = base();
+        base.month = 4;
+        base.sunSetHour = 21;
+        base.sunSetMinute = 0;
+        base.verticalStep = 12;
+        merge(base, 8, 10, new Move(-1, 0));
+        merge(base, 9, 10, new Move(-1, 0));
+        merge(base, 10, 10, new Move(-1, 0));
+        merge(base, 11, 10, new Move(-1, 0));
+        merge(base, 12, 10, new Move(-1, 0));
+        merge(base, 13, 10, new Move(-1, 0));
+        merge(base, 14, 10, new Move(1, 0));
+        merge(base, 15, 10, new Move(1, 0));
+        merge(base, 16, 10, new Move(1, 0));
+        merge(base, 17, 10, new Move(1, 0));
+        merge(base, 18, 10, new Move(1, 0));
         return base;
     }
 
-    private Table<Integer, Integer, Position> prepareMay() {
-        Table<Integer, Integer, Position> base = base();
-        merge(base, 7, 10, new Position(119, null));
-        merge(base, 8, 10, new Position(104, null));
-        merge(base, 9, 10, new Position(89, null));
-        merge(base, 10, 10, new Position(74, null));
-        merge(base, 11, 10, new Position(59, null));
-        merge(base, 12, 10, new Position(44, null));
-        merge(base, 13, 10, new Position(29, null));
-        merge(base, 14, 10, new Position(44, null));
-        merge(base, 15, 10, new Position(59, null));
-        merge(base, 16, 10, new Position(74, null));
-        merge(base, 17, 10, new Position(89, null));
-        merge(base, 18, 10, new Position(104, null));
-        merge(base, 19, 10, new Position(119, null));
-        merge(base, 21, 00, new Position(0, 0));
+    private SolarSchedule prepareMay() {
+        SolarSchedule base = base();
+        base.month = 5;
+        base.sunSetHour = 21;
+        base.sunSetMinute = 0;
+        base.verticalStep = 15;
+        merge(base, 7, 10, new Move(-1, 0));
+        merge(base, 8, 10, new Move(-1, 0));
+        merge(base, 9, 10, new Move(-1, 0));
+        merge(base, 10, 10, new Move(-1, 0));
+        merge(base, 11, 10, new Move(-1, 0));
+        merge(base, 12, 10, new Move(-1, 0));
+        merge(base, 13, 10, new Move(-1, 0));
+        merge(base, 14, 10, new Move(1, 0));
+        merge(base, 15, 10, new Move(1, 0));
+        merge(base, 16, 10, new Move(1, 0));
+        merge(base, 17, 10, new Move(1, 0));
+        merge(base, 18, 10, new Move(1, 0));
+        merge(base, 19, 10, new Move(1, 0));
         return base;
     }
 
-    private Table<Integer, Integer, Position> prepareJune() {
-        return prepareMay();
+    private SolarSchedule prepareJune() {
+        SolarSchedule solarSchedule = prepareMay();
+        solarSchedule.month = 6;
+        return solarSchedule;
     }
 
-    private Table<Integer, Integer, Position> prepareJuly() {
-        return prepareMay();
+    private SolarSchedule prepareJuly() {
+        SolarSchedule solarSchedule = prepareMay();
+        solarSchedule.month = 7;
+        return solarSchedule;
     }
 
-    private Table<Integer, Integer, Position> prepareAug() {
-        return prepareApril();
+    private SolarSchedule prepareAug() {
+        SolarSchedule solarSchedule = prepareApril();
+        solarSchedule.month = 8;
+        return solarSchedule;
     }
 
-    private Table<Integer, Integer, Position> prepareSep() {
-        return prepareMarch();
+    private SolarSchedule prepareSep() {
+        SolarSchedule solarSchedule = prepareMarch();
+        solarSchedule.month = 9;
+        return solarSchedule;
     }
 
-    private Table<Integer, Integer, Position> prepareOct() {
-        Table<Integer, Integer, Position> positionTable = prepareFeb();
-        positionTable.remove(17, 10);
-        merge(positionTable, 21, 00, new Position(0, 0));
-        return positionTable;
-    }
-
-    private Table<Integer, Integer, Position> prepareNov() {
-        return prepareJanuary();
-    }
-
-    private Table<Integer, Integer, Position> prepareDec() {
-        Table<Integer, Integer, Position> base = base();
-        merge(base, 17, 10, new Position(0, 0));
+    private SolarSchedule prepareOct() {
+        SolarSchedule base = prepareFeb();
+        base.month = 10;
+        base.sunSetHour = 21;
+        base.sunSetMinute = 0;
         return base;
     }
 
-    private void merge(Table<Integer, Integer, Position> base, int hour, int minute, Position position) {
-        if (base.contains(hour, minute)) {
-            Position prevPosition = base.get(hour, minute);
-            if (position.horizontal != null) prevPosition.horizontal = position.horizontal;
-            if (position.vertical != null) prevPosition.vertical = position.vertical;
-        } else base.put(hour, minute, position);
+    private SolarSchedule prepareNov() {
+        SolarSchedule solarSchedule = prepareJanuary();
+        solarSchedule.month = 11;
+        return solarSchedule;
+    }
+
+    private SolarSchedule prepareDec() {
+        SolarSchedule solarSchedule = prepareJanuary();
+        solarSchedule.month = 12;
+        return solarSchedule;
+    }
+
+    private void merge(SolarSchedule base, int hour, int minute, Move move) {
+        if (base.dailyMoves.contains(hour, minute)) {
+            Move prevMove = base.dailyMoves.get(hour, minute);
+            prevMove.horMove += move.horMove;
+            prevMove.verMove += move.verMove;
+        } else base.dailyMoves.put(hour, minute, move);
     }
 
     @Test
     public void generateInserts() throws IOException {
         PrintWriter out = new PrintWriter(new BufferedOutputStream(new FileOutputStream(new File("C:\\SRDEV\\Projects\\heating\\changes.sql"))));
-        print(prepareJanuary(), 1, 31, out);
-        print(prepareFeb(), 2, 29, out);
-        print(prepareMarch(), 3, 31, out);
-        print(prepareApril(), 4, 30, out);
-        print(prepareMay(), 5, 31, out);
-        print(prepareJune(), 6, 30, out);
-        print(prepareJuly(), 7, 31, out);
-        print(prepareAug(), 8, 31, out);
-        print(prepareSep(), 9, 30, out);
-        print(prepareOct(), 10, 31, out);
-        print(prepareNov(), 11, 30, out);
-        print(prepareDec(), 12, 31, out);
+        out.println("DROP TABLE `SOLAR_SCHEDULE`;");
+        out.println("DROP TABLE `SOLAR_POSITION`;");
+        out.println("create table `SOLAR_SCHEDULE`\n" +
+                "(\n" +
+                "\tMONTH int not null,\n" +
+                "\tHORIZONTAL_STEP int not null,\n" +
+                "\tVERTICAL_STEP int not null,\n" +
+                "\tSUN_RISE_HOUR int not null,\n" +
+                "\tSUN_RISE_MINUTE int not null,\n" +
+                "\tSUN_RISE_ABS_POS_HOR int not null,\n" +
+                "\tSUN_RISE_ABS_POS_VERT int not null,\n" +
+                "\tSUN_SET_HOUR int not null,\n" +
+                "\tSUN_SET_MINUTE int not null,\n" +
+                "\tSUN_SET_ABS_POS_HOR int not null,\n" +
+                "\tSUN_SET_ABS_POS_VERT int not null,\n" +
+                "\tconstraint SOLAR_SCHEDULE_pk\n" +
+                "\t\tprimary key (MONTH)\n" +
+                ");\n" +
+                "\n");
+        out.println("create table `SOLAR_MOVE`\n" +
+                "(\n" +
+                "\tMONTH int not null,\n" +
+                "\tHOUR int not null,\n" +
+                "\tMINUTE int not null,\n" +
+                "\tHORIZONTAL int not null,\n" +
+                "\tVERTICAL int not null,\n" +
+                "\tconstraint SOLAR_MOVE_pk\n" +
+                "\t\tprimary key (MONTH, HOUR, MINUTE)\n" +
+                ");\n" +
+                "\n");
+        print(prepareJanuary(), out);
+        print(prepareFeb(), out);
+        print(prepareMarch(), out);
+        print(prepareApril(), out);
+        print(prepareMay(), out);
+        print(prepareJune(), out);
+        print(prepareJuly(), out);
+        print(prepareAug(), out);
+        print(prepareSep(), out);
+        print(prepareOct(), out);
+        print(prepareNov(), out);
+        print(prepareDec(), out);
         out.flush();
         out.close();
     }
 
 
-    private void print(Table<Integer, Integer, Position> positions, int month, int maxDays, PrintWriter out) {
-        List<Table.Cell<Integer, Integer, Position>> sorted = Lists.newArrayList(positions.cellSet());
+    private void print(SolarSchedule schedule, PrintWriter out) {
+        List<Table.Cell<Integer, Integer, Move>> sorted = Lists.newArrayList(schedule.dailyMoves.cellSet());
         Collections.sort(sorted, (o1, o2) -> {
             int res = Integer.compare(o1.getRowKey(), o2.getRowKey());
             if (res == 0) return Integer.compare(o1.getColumnKey(), o2.getColumnKey());
             return res;
         });
-        Integer hor = null;
-        Integer ver = null;
-        for (Table.Cell<Integer, Integer, Position> entry : sorted) {
-            if (entry.getValue().vertical!=null) ver = entry.getValue().vertical;
-            if (entry.getValue().horizontal!=null) hor = entry.getValue().horizontal;
-            entry.getValue().horizontal = Optional.ofNullable(entry.getValue().horizontal).orElse(hor);
-            entry.getValue().vertical = Optional.ofNullable(entry.getValue().vertical).orElse(ver);
-        }
-        for (int dayInMonth = 1; dayInMonth <= maxDays; dayInMonth++) {
-            int finalDayInMonth = dayInMonth;
-            sorted.forEach(cell -> {
-                        int tmpIndex = index++;
-                        int hour = cell.getRowKey();
-                        int minute = cell.getColumnKey();
-                        Integer horizontal = cell.getValue().horizontal == null ? null : (int) Math.round(cell.getValue().horizontal * 2.816326530612245);
-                        Integer vertical = cell.getValue().vertical == null ? null : (int) Math.round(cell.getValue().vertical * 3.185185185185185);
-                        out.println("INSERT INTO `SOLAR_POSITION`(ID,HORIZONTAL,VERTICAL) VALUES (" + tmpIndex + "," + horizontal + "," + vertical + ");");
-                        out.println("INSERT INTO `SOLAR_SCHEDULE`(MONTH,DAY,HOUR,MINUTE,POSITION) VALUES (" + month + "," + finalDayInMonth + "," + hour + "," + minute + ", " + tmpIndex + ");");
-                    }
-            );
+        schedule.verticalStep = Math.round(schedule.verticalStep * 3.185185185185185);
+        schedule.horizontalStep = Math.round(schedule.horizontalStep * 2.816326530612245);
+        out.println(String.format("INSERT INTO `SOLAR_SCHEDULE`(MONTH,HORIZONTAL_STEP,VERTICAL_STEP," +
+                        "SUN_RISE_HOUR, SUN_RISE_MINUTE, SUN_RISE_ABS_POS_HOR,SUN_RISE_ABS_POS_VERT, " +
+                        "SUN_SET_HOUR, SUN_SET_MINUTE, SUN_SET_ABS_POS_HOR,SUN_SET_ABS_POS_VERT) VALUES (%s,%s,%s," +
+                        "%s,%s,%s,%s," +
+                        "%s,%s,%s,%s);",
+                schedule.month, (int)schedule.horizontalStep, (int)schedule.verticalStep,
+                schedule.sunRiseHour, schedule.sunRiseMinute, 690, 430,
+                schedule.sunSetHour, schedule.sunSetMinute, 0, 0));
 
-        }
+        sorted.forEach(cell -> {
+                    int hour = cell.getRowKey();
+                    int minute = cell.getColumnKey();
+                    out.println(String.format("INSERT INTO `SOLAR_MOVE`(MONTH, HOUR,MINUTE,HORIZONTAL,VERTICAL) VALUES (%s,%s,%s,%s,%s);", schedule.month, hour, minute, cell.getValue().horMove, cell.getValue().verMove));
+                }
+        );
+
     }
 
 
-    public static class Position {
-        Integer horizontal;
-        Integer vertical;
+    public static class SolarSchedule {
+        int month;
+        double horizontalStep;
+        double verticalStep;
+        int sunRiseHour;
+        int sunRiseMinute;
+        int sunSetHour;
+        int sunSetMinute;
+        Table<Integer, Integer, Move> dailyMoves = HashBasedTable.create();
 
-        public Position(Integer vertical, Integer horizontal) {
-            this.horizontal = horizontal;
-            this.vertical = vertical;
-        }
-
-        Position cloneIt() {
-            return new Position(horizontal, vertical);
+        SolarSchedule cloneIt() {
+            SolarSchedule s = new SolarSchedule();
+            s.month = month;
+            s.horizontalStep = horizontalStep;
+            s.verticalStep = verticalStep;
+            s.dailyMoves = HashBasedTable.create(dailyMoves);
+            return s;
         }
     }
 
+    private static class Move {
+        int horMove;
+        int verMove;
+
+        public Move(int verMove, int horMove) {
+            this.horMove = horMove;
+            this.verMove = verMove;
+        }
+    }
 
 }

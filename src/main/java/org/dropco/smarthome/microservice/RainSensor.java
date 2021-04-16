@@ -17,14 +17,14 @@ import java.util.logging.Logger;
 
 public class RainSensor {
     private static final AtomicBoolean raining = new AtomicBoolean(false);
-    private static final PinState RAIN_STATE = PinState.LOW;
+    private static final PinState RAIN_STATE = PinState.HIGH;
     private static Logger logger = Logger.getLogger(RainSensor.class.getName());
     private static final List<Consumer<Boolean>> subscribers = Collections.synchronizedList(Lists.newArrayList());
 
     public static void start(GpioPinDigitalInput input) {
         StatsCollector.getInstance().collect("Dážď",input);
         raining.set(input.getState() == RAIN_STATE);
-        input.addListener(new DelayedGpioPinListener(RAIN_STATE,1000,input) {
+        input.addListener(new DelayedGpioPinListener(RAIN_STATE,10000,input) {
                               @Override
                               public void handleStateChange(boolean state) {
                                   handleRainSensor(state);
