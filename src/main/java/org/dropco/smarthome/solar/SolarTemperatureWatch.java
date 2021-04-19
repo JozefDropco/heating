@@ -1,10 +1,13 @@
 package org.dropco.smarthome.solar;
 
+import com.google.common.collect.Lists;
 import org.dropco.smarthome.heating.db.HeatingDao;
 import org.dropco.smarthome.solar.move.SafetySolarPanel;
 import org.dropco.smarthome.solar.move.SolarPanelManager;
 import org.dropco.smarthome.temp.TempService;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -16,6 +19,7 @@ public class SolarTemperatureWatch {
     private static final String MEASURE_PLACE_REF_CD = "SOLAR";
     private final String deviceId;
     private static final AtomicBoolean solarOverHeated = new AtomicBoolean(false);
+    private static List<Consumer<Boolean>> subscribers = Collections.synchronizedList(Lists.newArrayList());
 
     private final Supplier<SolarPanelPosition> overHeatedPositionProvider;
     private Supplier<Double> threshold;
@@ -53,4 +57,10 @@ public class SolarTemperatureWatch {
         logger.log(Level.INFO, "Presun na pozíciu pri prehriatí, hor=" + solarPanelPosition.getHorizontalPositionInSeconds() + ", ver=" + solarPanelPosition.getVerticalPositionInSeconds());
         SolarPanelManager.move(solarPanelPosition.getHorizontalPositionInSeconds(), solarPanelPosition.getVerticalPositionInSeconds());
     }
+
+
+    public static void addSubscriber(Consumer<Boolean> subscriber) {
+        subscribers.add(subscriber);
+    }
+
 }
