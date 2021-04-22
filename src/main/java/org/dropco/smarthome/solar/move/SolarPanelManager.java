@@ -1,6 +1,10 @@
 package org.dropco.smarthome.solar.move;
 
 import com.google.common.collect.Lists;
+import org.dropco.smarthome.solar.dto.AbsolutePosition;
+import org.dropco.smarthome.solar.dto.DeltaPosition;
+import org.dropco.smarthome.solar.dto.Position;
+import org.dropco.smarthome.solar.dto.PositionProcessor;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -17,10 +21,20 @@ public class SolarPanelManager {
     private static final AtomicReference<Thread> lastThread = new AtomicReference<>();
     private static List<Consumer<Consumer<Void>>> stopListeners = Collections.synchronizedList(new ArrayList<>());
 
-    public static void move(Integer horizontal, Integer vertical) {
-        Thread thread = new Thread(new SolarPanelMover(horizontal, vertical));
+    public static void move(Position position) {
+        Thread thread = new Thread(new SolarPanelMover(position));
         stop(thread);
-        LOGGER.log(Level.FINE, "Natáčanie kolektorov na hor=" + horizontal + ", vert=" + vertical);
+        position.invoke(new PositionProcessor() {
+            @Override
+            public void process(AbsolutePosition absPos) {
+                LOGGER.log(Level.FINE, "Natáčanie kolektorov na hor=" + absPos.getHorizontal() + ", vert=" + absPos.getVertical());
+            }
+
+            @Override
+            public void process(DeltaPosition deltaPos) {
+                LOGGER.log(Level.FINE, "Natáčanie kolektorov o hor=" + deltaPos.getDeltaHorizontalTicks() + ", vert=" + deltaPos.getDeltaVerticalTicks());
+            }
+        });
         Long delay = delaySupplier.get();
         LOGGER.log(Level.FINE, "Pauza na zastavenie motora " + delay + " sek.");
         try {

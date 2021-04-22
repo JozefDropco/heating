@@ -2,7 +2,8 @@ package org.dropco.smarthome.solar.move;
 
 import com.google.common.collect.Lists;
 import org.dropco.smarthome.gpioextension.RemovableGpioPinListenerDigital;
-import org.dropco.smarthome.solar.SolarPanelPosition;
+import org.dropco.smarthome.solar.dto.AbsolutePosition;
+import org.dropco.smarthome.solar.dto.DeltaPosition;
 import org.dropco.smarthome.solar.SolarSystemRefCode;
 import org.junit.Assert;
 import org.junit.Test;
@@ -19,7 +20,7 @@ public class SolarPanelMoverTest {
 
     @Test
     public void moveToSouth() {
-        SolarPanelPosition currentPosition = position(0, 0);
+        AbsolutePosition currentPosition = position(0, 0);
         Set<String> result = new HashSet<>();
         SolarPanelMover.setCommandExecutor((cmdRefCd, value) -> {
             result.add(cmdRefCd + value);
@@ -28,7 +29,7 @@ public class SolarPanelMoverTest {
         SolarPanelManager.delaySupplier=()->1l;
         SolarPanelMover.setCurrentPositionSupplier(()->currentPosition);
         List<Integer> sleepTimes = Lists.newArrayList();
-        new SolarPanelMover(0, 5){
+        new SolarPanelMover(new AbsolutePosition(0,5)){
 
             @Override
             void addWatch(int ticks, Consumer<Integer> onceFinished, Function<Consumer<Boolean>, RemovableGpioPinListenerDigital> addRealTimeTicker, Consumer<BiConsumer<Supplier<Boolean>, Boolean>> addMoveListener, Supplier<Boolean> isMoving) {
@@ -48,14 +49,14 @@ public class SolarPanelMoverTest {
 
     @Test
     public void moveWest() {
-        SolarPanelPosition currentPosition = position(5, 0);
+        AbsolutePosition currentPosition = position(5, 0);
         Set<String> result = new HashSet<>();
         SolarPanelMover.setCommandExecutor((cmdRefCd, value) -> {
             result.add(cmdRefCd + value);
         });
         SolarPanelMover.setCurrentPositionSupplier(()->currentPosition);
         List<Integer> sleepTimes = Lists.newArrayList();
-        new SolarPanelMover(0,0){
+        new SolarPanelMover(new AbsolutePosition(0,0)){
             @Override
             void addWatch(int ticks, Consumer<Integer> onceFinished, Function<Consumer<Boolean>, RemovableGpioPinListenerDigital> addRealTimeTicker, Consumer<BiConsumer<Supplier<Boolean>, Boolean>> addMoveListener, Supplier<Boolean> isMoving) {
                 sleepTimes.add(ticks);
@@ -72,7 +73,7 @@ public class SolarPanelMoverTest {
     }
     @Test
     public void moveToNorth() {
-        SolarPanelPosition currentPosition = position(0, 5);
+        AbsolutePosition currentPosition = position(0, 5);
         Set<String> result = new HashSet<>();
         SolarPanelMover.setCommandExecutor((cmdRefCd, value) -> {
             result.add(cmdRefCd + value);
@@ -81,7 +82,7 @@ public class SolarPanelMoverTest {
         SolarPanelManager.delaySupplier=()->1l;
         SolarPanelMover.setCurrentPositionSupplier(()->currentPosition);
         List<Integer> sleepTimes = Lists.newArrayList();
-        new SolarPanelMover(0, 0){
+        new SolarPanelMover(new AbsolutePosition(0, 0)){
             @Override
             void addWatch(int ticks, Consumer<Integer> onceFinished, Function<Consumer<Boolean>, RemovableGpioPinListenerDigital> addRealTimeTicker, Consumer<BiConsumer<Supplier<Boolean>, Boolean>> addMoveListener, Supplier<Boolean> isMoving) {
                 sleepTimes.add(ticks);
@@ -100,14 +101,14 @@ public class SolarPanelMoverTest {
 
     @Test
     public void moveEast() {
-        SolarPanelPosition currentPosition = position(0, 0);
+        AbsolutePosition currentPosition = position(0, 0);
         Set<String> result = new HashSet<>();
         SolarPanelMover.setCommandExecutor((cmdRefCd, value) -> {
             result.add(cmdRefCd + value);
         });
         SolarPanelMover.setCurrentPositionSupplier(()->currentPosition);
         List<Integer> sleepTimes = Lists.newArrayList();
-        new SolarPanelMover(5,0){
+        new SolarPanelMover(new AbsolutePosition(5,0)){
             @Override
             void addWatch(int ticks, Consumer<Integer> onceFinished, Function<Consumer<Boolean>, RemovableGpioPinListenerDigital> addRealTimeTicker, Consumer<BiConsumer<Supplier<Boolean>, Boolean>> addMoveListener, Supplier<Boolean> isMoving) {
                 sleepTimes.add(ticks);
@@ -125,14 +126,14 @@ public class SolarPanelMoverTest {
 
     @Test
     public void moveSouthEast() {
-        SolarPanelPosition currentPosition = position(0, 0);
+        AbsolutePosition currentPosition = position(0, 0);
         Set<String> result = new HashSet<>();
         SolarPanelMover.setCommandExecutor((cmdRefCd, value) -> {
             result.add(cmdRefCd + value);
         });
         SolarPanelMover.setCurrentPositionSupplier(()->currentPosition);
         List<Integer> sleepTimes = Lists.newArrayList();
-        new SolarPanelMover(280,135){
+        new SolarPanelMover(new AbsolutePosition(280,135)){
             @Override
             void addWatch(int ticks, Consumer<Integer> onceFinished, Function<Consumer<Boolean>, RemovableGpioPinListenerDigital> addRealTimeTicker, Consumer<BiConsumer<Supplier<Boolean>, Boolean>> addMoveListener, Supplier<Boolean> isMoving) {
                 sleepTimes.add(ticks);
@@ -150,10 +151,8 @@ public class SolarPanelMoverTest {
         Assert.assertTrue(result.isEmpty());
     }
 
-    private SolarPanelPosition position(int horizontalPositionInSeconds, int verticalPositionInSeconds) {
-        SolarPanelPosition panelPosition = new SolarPanelPosition();
-        panelPosition.setHorizontalPositionInSeconds(horizontalPositionInSeconds);
-        panelPosition.setVerticalPositionInSeconds(verticalPositionInSeconds);
+    private AbsolutePosition position(int horizontalPositionInSeconds, int verticalPositionInSeconds) {
+        AbsolutePosition panelPosition = new AbsolutePosition(horizontalPositionInSeconds,verticalPositionInSeconds);
         return panelPosition;
     }
 }

@@ -2,6 +2,8 @@ package org.dropco.smarthome.solar;
 
 import com.google.common.collect.Lists;
 import org.dropco.smarthome.heating.db.HeatingDao;
+import org.dropco.smarthome.solar.dto.AbsolutePosition;
+import org.dropco.smarthome.solar.dto.DeltaPosition;
 import org.dropco.smarthome.solar.move.SafetySolarPanel;
 import org.dropco.smarthome.solar.move.SolarPanelManager;
 import org.dropco.smarthome.temp.TempService;
@@ -21,11 +23,9 @@ public class SolarTemperatureWatch {
     private static final AtomicBoolean solarOverHeated = new AtomicBoolean(false);
     private static List<Consumer<Boolean>> subscribers = Collections.synchronizedList(Lists.newArrayList());
 
-    private final Supplier<SolarPanelPosition> overHeatedPositionProvider;
     private Supplier<Double> threshold;
 
-    public SolarTemperatureWatch(Supplier<SolarPanelPosition> overHeatedPositionProvider, HeatingDao dao, Supplier<Double> threshold) {
-        this.overHeatedPositionProvider = overHeatedPositionProvider;
+    public SolarTemperatureWatch(HeatingDao dao, Supplier<Double> threshold) {
         this.deviceId = dao.getDeviceId(MEASURE_PLACE_REF_CD);
         this.threshold = threshold;
     }
@@ -41,7 +41,7 @@ public class SolarTemperatureWatch {
                 public void accept(Double temperature) {
                     if (temperature > threshold.get()) {
                         boolean successFullySet = solarOverHeated.compareAndSet(false, true);
-                        if (successFullySet) moveToOverheatedPosition();
+                        if (successFullySet) safetySolarPanel.moveToOverheatedPosition();
                     } else {
                         boolean successFullySet = solarOverHeated.compareAndSet(true, false);
                         if (successFullySet) safetySolarPanel.backToNormal();
@@ -50,12 +50,6 @@ public class SolarTemperatureWatch {
             });
         else
             logger.log(Level.SEVERE, "Meracie miesto prehriatia kolektorov nie je nastavené (REF_CD=" + MEASURE_PLACE_REF_CD + ")");
-    }
-
-    private void moveToOverheatedPosition() {
-        SolarPanelPosition solarPanelPosition = overHeatedPositionProvider.get();
-        logger.log(Level.INFO, "Presun na pozíciu pri prehriatí, hor=" + solarPanelPosition.getHorizontalPositionInSeconds() + ", ver=" + solarPanelPosition.getVerticalPositionInSeconds());
-        SolarPanelManager.move(solarPanelPosition.getHorizontalPositionInSeconds(), solarPanelPosition.getVerticalPositionInSeconds());
     }
 
 

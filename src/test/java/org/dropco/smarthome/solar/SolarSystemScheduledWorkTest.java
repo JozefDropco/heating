@@ -1,5 +1,8 @@
 package org.dropco.smarthome.solar;
 
+import org.dropco.smarthome.solar.dto.AbsolutePosition;
+import org.dropco.smarthome.solar.dto.DeltaPosition;
+import org.dropco.smarthome.solar.dto.SolarPanelStepRecord;
 import org.dropco.smarthome.solar.move.SafetySolarPanel;
 import org.dropco.smarthome.solar.move.SolarPanelMover;
 import org.dropco.smarthome.solar.move.SolarPanelManager;
@@ -10,50 +13,51 @@ import java.util.function.Supplier;
 
 public class SolarSystemScheduledWorkTest {
 
-    private SolarPanelPosition currentPos;
+    private AbsolutePosition currentPos;
 
     @Test
     public void run() throws InterruptedException {
 
         SolarPanelManager.delaySupplier=()->1l;
-        SolarPanelMover.setCurrentPositionSupplier(startPos()::getPanelPosition);
+        SolarPanelMover.setCurrentPositionSupplier(()-> (AbsolutePosition) startPos().getPosition());
         SolarPanelMover.setCommandExecutor((s, aBoolean) -> {});
         SolarPanelMover.addListener(position -> currentPos = position);
-        SafetySolarPanel solarPanel =solarPanel( startPos()::getPanelPosition);
-        SolarSystemScheduledWork worker = new SolarSystemScheduledWork(solarPanel, true, new SolarPanelPosition(0,-10));
+        SafetySolarPanel solarPanel =solarPanel( ()-> new DeltaPosition(-10,0));
+        SolarSystemScheduledWork worker = new SolarSystemScheduledWork(solarPanel, true, new DeltaPosition(-10, 0));
         Thread thread = new Thread(worker);
         thread.start();
         thread.join();
         Thread.sleep(11000);
-        Assert.assertEquals(0,(long)currentPos.getVerticalPositionInSeconds());
-        Assert.assertEquals(-10,(long)currentPos.getHorizontalPositionInSeconds());
+        Assert.assertEquals(0,(long)currentPos.getVertical());
+        Assert.assertEquals(-10,(long)currentPos.getHorizontal());
 
     }
+
 
     @Test
     public void runStrongWind() throws InterruptedException {
 
         SolarPanelManager.delaySupplier=()->1l;
-        final SolarPanelPosition[] currentPos = {new SolarPanelPosition(-30, -15)};
+        final AbsolutePosition[] currentPos = {new AbsolutePosition(-15, -30)};
         SolarPanelMover.setCommandExecutor((s, aBoolean) -> {});
         SolarPanelMover.setCurrentPositionSupplier(()-> currentPos[0]);
         SolarPanelMover.addListener(position -> {
             currentPos[0] =position;
         });
-        SafetySolarPanel solarPanel =solarPanel(()->new SolarPanelPosition(-40,0));
-        SolarSystemScheduledWork worker = new SolarSystemScheduledWork(solarPanel, true, new SolarPanelPosition(0,-20));
+        SafetySolarPanel solarPanel =solarPanel(()->new DeltaPosition(0, -40));
+        SolarSystemScheduledWork worker = new SolarSystemScheduledWork(solarPanel, true, new DeltaPosition(-20, 0));
         Thread thread = new Thread(worker);
         thread.start();
         Thread.sleep(5 * 1000);
         StrongWind.set(true);
         solarPanel.moveToStrongWindPosition();
-        worker = new SolarSystemScheduledWork(solarPanel, true, new SolarPanelPosition(-200,-20));
+        worker = new SolarSystemScheduledWork(solarPanel, true, new DeltaPosition(-20, -200));
         thread = new Thread(worker);
         thread.start();
         thread.join();
         Thread.sleep(50000);
-        Assert.assertEquals(0, (long)currentPos[0].getHorizontalPositionInSeconds());
-        Assert.assertEquals(-40,(long) currentPos[0].getVerticalPositionInSeconds());
+        Assert.assertEquals(0, currentPos[0].getHorizontal());
+        Assert.assertEquals(-40, currentPos[0].getVertical());
         Assert.assertFalse(thread.isAlive());
     }
 
@@ -61,36 +65,36 @@ public class SolarSystemScheduledWorkTest {
     public void runStrongWindBackToNormal() throws InterruptedException {
 
         SolarPanelManager.delaySupplier=()->1l;
-        final SolarPanelPosition[] currentPos = {new SolarPanelPosition(-30, -15)};
+        final AbsolutePosition[] currentPos = {new AbsolutePosition(-15, -30)};
         SolarPanelMover.setCommandExecutor((s, aBoolean) -> {});
         SolarPanelMover.setCurrentPositionSupplier(()-> currentPos[0]);
         SolarPanelMover.addListener(position -> {
             currentPos[0] =position;
         });
-        SafetySolarPanel solarPanel =solarPanel(()->new SolarPanelPosition(-40,0));
-        SolarSystemScheduledWork worker = new SolarSystemScheduledWork(solarPanel, true, new SolarPanelPosition(0,-20));
+        SafetySolarPanel solarPanel =solarPanel(()->new DeltaPosition(0, -40));
+        SolarSystemScheduledWork worker = new SolarSystemScheduledWork(solarPanel, true, new DeltaPosition(-20, 0));
         Thread thread = new Thread(worker);
         thread.start();
         Thread.sleep(5 * 1000);
         StrongWind.set(true);
         solarPanel.moveToStrongWindPosition();
-        worker = new SolarSystemScheduledWork(solarPanel, true, new SolarPanelPosition(0,0));
+        worker = new SolarSystemScheduledWork(solarPanel, true, new DeltaPosition(0, 0));
         thread = new Thread(worker);
         thread.start();
         thread.join();
         Thread.sleep(50000);
-        Assert.assertEquals(0,(long) currentPos[0].getHorizontalPositionInSeconds());
-        Assert.assertEquals(-40,(long) currentPos[0].getVerticalPositionInSeconds());
+        Assert.assertEquals(0,(long) currentPos[0].getHorizontal());
+        Assert.assertEquals(-40,(long) currentPos[0].getVertical());
         Assert.assertFalse(thread.isAlive());
         solarPanel.backToNormal();
         Thread.sleep(45000);
-        Assert.assertEquals(0, (long)currentPos[0].getHorizontalPositionInSeconds());
-        Assert.assertEquals(0,(long) currentPos[0].getVerticalPositionInSeconds());
+        Assert.assertEquals(0, (long)currentPos[0].getHorizontal());
+        Assert.assertEquals(0,(long) currentPos[0].getVertical());
 
     }
 
-    private SafetySolarPanel solarPanel(Supplier<SolarPanelPosition> positionProvider) {
-        return new SafetySolarPanel(positionProvider);
+    private SafetySolarPanel solarPanel(Supplier<DeltaPosition> positionProvider) {
+        return new SafetySolarPanel((p)->{}, null, null,null);
     }
 
     private SolarPanelStepRecord startPos() {
@@ -99,14 +103,9 @@ public class SolarSystemScheduledWorkTest {
 
     private SolarPanelStepRecord position(int horizontalPositionInSeconds, int verticalPositionInSeconds, int hour, int minute, int month, int day) {
         SolarPanelStepRecord currentPosition = new SolarPanelStepRecord();
-        SolarPanelPosition position = new SolarPanelPosition();
-        position.setHorizontalPositionInSeconds(horizontalPositionInSeconds);
-        position.setVerticalPositionInSeconds(verticalPositionInSeconds);
-        currentPosition.setPanelPosition(position);
+        currentPosition.setPosition(new AbsolutePosition(horizontalPositionInSeconds,verticalPositionInSeconds));
         currentPosition.setHour(hour);
         currentPosition.setMinute(minute);
-        currentPosition.setMonth(month);
-        currentPosition.setDay(day);
         return currentPosition;
     }
 }

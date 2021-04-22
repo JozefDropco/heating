@@ -39,7 +39,10 @@ public class SettingsDao {
         updateIfNeeded();
         return Optional.ofNullable(longCacheMap.get(key)).map(LongConstant::getValue).orElse(null);
     }
-
+    public Optional<LongConstant> getLongConst(String key) {
+        updateIfNeeded();
+        return Optional.ofNullable(longCacheMap.get(key));
+    }
     public double getDouble(String key) {
         updateIfNeeded();
         return Optional.ofNullable(doubleCacheMap.get(key)).map(DoubleConstant::getValue).orElse(null);

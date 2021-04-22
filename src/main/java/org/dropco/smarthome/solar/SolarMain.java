@@ -43,9 +43,11 @@ public class SolarMain {
         SolarPanelMover.setCommandExecutor((key, value) -> Main.getOutput(getExtendedProvider(), ExtendedPin.class, key).setState(value));
         SolarPanelMover.setCurrentPositionSupplier(() -> solarSystemDao.getLastKnownPosition());
         SolarPanelMover.addListener(panel -> solarSystemDao.updateLastKnownPosition(panel));
-        SafetySolarPanel safetySolarPanel = new SafetySolarPanel(() -> solarSystemDao.getStrongWindPosition());
+        SafetySolarPanel safetySolarPanel = new SafetySolarPanel(position -> solarSystemDao.saveNormalPosition(position),() -> solarSystemDao.getStrongWindPosition(),
+                () -> solarSystemDao.getLastKnownPosition(),
+                () -> solarSystemDao.getOverheatedPosition());
         StrongWind.connect(Main.getInput(STRONG_WIND_PIN_REF_CD), safetySolarPanel);
-        new SolarTemperatureWatch(() -> solarSystemDao.getOverheatedPosition(), new HeatingDao(),
+        new SolarTemperatureWatch(new HeatingDao(),
                 () -> settingsDao.getDouble(SOLAR_OVERHEATED)).attach(safetySolarPanel);
         SolarSystemScheduler solarSystemScheduler = new SolarSystemScheduler(solarSystemDao);
         solarSystemScheduler.moveToLastPosition(safetySolarPanel);

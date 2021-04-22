@@ -1,8 +1,8 @@
 package org.dropco.smarthome.solar.move;
 
-import org.dropco.smarthome.solar.SolarPanelPosition;
+import org.dropco.smarthome.solar.dto.AbsolutePosition;
 
 public interface PositionChangeListener {
 
-    void onUpdate(SolarPanelPosition position);
+    void onUpdate(AbsolutePosition position);
 }

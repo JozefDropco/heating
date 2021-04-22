@@ -1,10 +1,12 @@
 package org.dropco.smarthome.web;
 
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import org.dropco.smarthome.ServiceMode;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.solar.*;
+import org.dropco.smarthome.solar.dto.*;
 import org.dropco.smarthome.solar.move.HorizontalMoveFeedback;
 import org.dropco.smarthome.solar.move.VerticalMoveFeedback;
 
@@ -12,10 +14,8 @@ import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -26,19 +26,17 @@ public class SolarWebService {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getTimetable(@QueryParam("date") String date, @QueryParam("month") String month) throws ParseException {
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-        List<SolarPanelStepRecord> records;
-        if (date != null) {
-            Date datum = format.parse(date);
-            Calendar cal = Calendar.getInstance();
-            cal.setTime(datum);
-            records = new SolarSystemDao(SETTINGS_DAO).getTodayRecords(cal);
-        } else {
-            records = new SolarSystemDao(SETTINGS_DAO).getMonthRecords(Integer.parseInt(month));
-        }
+    public Response getTimetable(@QueryParam("month") String month) throws ParseException {
+        Calendar instance = Calendar.getInstance();
+        instance.set(Calendar.DAY_OF_MONTH,1);
+        instance.set(Calendar.MONTH, Integer.parseInt(month)-1);
+        instance.set(Calendar.HOUR_OF_DAY,0);
+        instance.set(Calendar.MINUTE,0);
+        instance.set(Calendar.SECOND,0);
+        instance.set(Calendar.MILLISECOND,0);
+        SolarSchedule schedule = new SolarSystemDao(SETTINGS_DAO).getForMonth(instance);
 
-        return Response.ok(new Gson().toJson(Lists.transform(records, this::toSolarDTO))).build();
+        return Response.ok(new Gson().toJson(toScheduleDTO(schedule))).build();
     }
 
 
@@ -46,80 +44,79 @@ public class SolarWebService {
     @Path("/currentState")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getCurrentPosition() throws ParseException {
-        SolarPanelPosition lastKnownPosition = new SolarSystemDao(SETTINGS_DAO).getLastKnownPosition();
+        AbsolutePosition lastKnownPosition = new SolarSystemDao(SETTINGS_DAO).getLastKnownPosition();
         Position pos = new Position();
-        pos.x = lastKnownPosition.getHorizontalPositionInSeconds();
-        pos.y = lastKnownPosition.getVerticalPositionInSeconds();
-        State src = new State();
+        pos.x = lastKnownPosition.getHorizontal();
+        pos.y = lastKnownPosition.getVertical();
+        CurrentState src = new CurrentState();
         src.pos = pos;
         src.dayLight = DayLight.inst().enoughLight();
         src.windy = StrongWind.isWindy();
         src.overHeated = SolarTemperatureWatch.isOverHeated();
-        List<SolarPanelStepRecord> todayRecords = new SolarSystemDao(SETTINGS_DAO).getTodayRecords(Calendar.getInstance());
+        SolarSchedule forMonth = new SolarSystemDao(SETTINGS_DAO).getForMonth(Calendar.getInstance());
+        List<SolarPanelStepRecord> todayRecords = forMonth.getRemainingSteps();
 
-        src.remainingPositions = Lists.transform(todayRecords,this::toSolarDTO);
-        if (ServiceMode.getPort(SolarSystemRefCode.NORTH_PIN_REF_CD).isHigh()  && VerticalMoveFeedback.getMoving()){
+        src.remainingPositions = Lists.transform(todayRecords, this::toSolarDTO);
+        if (ServiceMode.getPort(SolarSystemRefCode.NORTH_PIN_REF_CD).isHigh() && VerticalMoveFeedback.getMoving()) {
             src.movement.add("NORTH");
         }
-        if (ServiceMode.getPort(SolarSystemRefCode.SOUTH_PIN_REF_CD).isHigh() && VerticalMoveFeedback.getMoving()){
+        if (ServiceMode.getPort(SolarSystemRefCode.SOUTH_PIN_REF_CD).isHigh() && VerticalMoveFeedback.getMoving()) {
             src.movement.add("SOUTH");
         }
-        if (ServiceMode.getPort(SolarSystemRefCode.WEST_PIN_REF_CD).isHigh()  && HorizontalMoveFeedback.getMoving()){
+        if (ServiceMode.getPort(SolarSystemRefCode.WEST_PIN_REF_CD).isHigh() && HorizontalMoveFeedback.getMoving()) {
             src.movement.add("WEST");
         }
-        if (ServiceMode.getPort(SolarSystemRefCode.EAST_PIN_REF_CD).isHigh()  && HorizontalMoveFeedback.getMoving()) {
+        if (ServiceMode.getPort(SolarSystemRefCode.EAST_PIN_REF_CD).isHigh() && HorizontalMoveFeedback.getMoving()) {
             src.movement.add("EAST");
         }
         return Response.ok(new Gson().toJson(src)).build();
     }
 
-    @PUT
-    @Path("/cmd/update")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
-    public Response updateSolarTimeTable(@QueryParam("date") String date, @QueryParam("month") String month, String entry) throws ParseException {
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-        SolarDTO dto = new Gson().fromJson(entry, SolarDTO.class);
-        if (date != null) {
-            Date datum = format.parse(date);
-            Calendar cal = Calendar.getInstance();
-            cal.setTime(datum);
-            new SolarSystemDao(SETTINGS_DAO).updateForDate(dto, cal);
-        } else {
-            new SolarSystemDao(SETTINGS_DAO).updateForMonth(dto, Integer.parseInt(month));
-        }
-        return Response.ok().build();
-    }
+    private Schedule toScheduleDTO(SolarSchedule schedule) {
+        Schedule s = new Schedule();
+        s.horizontalStep=schedule.getHorizontalTickCountForStep();
+        s.verticalStep=schedule.getVerticalTickCountForStep();
 
-    @POST
-    @Path("/cmd/delete")
-    @Produces(MediaType.APPLICATION_JSON)
-    @Consumes(MediaType.APPLICATION_JSON)
-    public Response deleteSolarTimeTable(@QueryParam("date") String date, @QueryParam("month") String month, String entry) throws ParseException {
-        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
-        SolarDTO dto = new Gson().fromJson(entry, SolarDTO.class);
-        if (date != null) {
-            Date datum = format.parse(date);
-            Calendar cal = Calendar.getInstance();
-            cal.setTime(datum);
-            new SolarSystemDao(SETTINGS_DAO).deleteForDate(dto, cal);
-        } else {
-            new SolarSystemDao(SETTINGS_DAO).deleteForMonth(dto, Integer.parseInt(month));
-        }
-        return Response.ok().build();
-    }
+        s.sunRiseHour= schedule.getSunRise().getHour();
+        s.sunRiseMinute= schedule.getSunRise().getMinute();
+        s.sunRiseAbsVer= ((AbsolutePosition)schedule.getSunRise().getPosition()).getVertical();
+        s.sunRiseAbsHor= ((AbsolutePosition)schedule.getSunRise().getPosition()).getHorizontal();
 
+        s.sunSetHour= schedule.getSunSet().getHour();
+        s.sunSetMinute= schedule.getSunSet().getMinute();
+        s.sunSetAbsVer= ((AbsolutePosition)schedule.getSunSet().getPosition()).getVertical();
+        s.sunSetAbsHor= ((AbsolutePosition)schedule.getSunSet().getPosition()).getHorizontal();
+        for (SolarPanelStepRecord r: Iterables.limit(Iterables.skip(schedule.getRemainingSteps(),1),schedule.getRemainingSteps().size()-2)){
+            SolarDTO dto = toSolarDTO(r);
+            dto.vert = dto.vert/s.verticalStep;
+            dto.hor = dto.hor/s.horizontalStep;
+            s.positions.add(dto);
+        }
+        return s;
+    }
     private SolarDTO toSolarDTO(SolarPanelStepRecord rec) {
         SolarDTO solarDTO = new SolarDTO();
-        solarDTO.hor = rec.getPanelPosition().getHorizontalPositionInSeconds();
-        solarDTO.vert = rec.getPanelPosition().getVerticalPositionInSeconds();
+        rec.getPosition().invoke(new PositionProcessor() {
+            @Override
+            public void process(AbsolutePosition absPos) {
+                solarDTO.moveType="Absolútna";
+                solarDTO.hor = absPos.getHorizontal();
+                solarDTO.vert = absPos.getVertical();
+            }
+
+            @Override
+            public void process(DeltaPosition deltaPos) {
+                solarDTO.moveType="Relatívna";
+                solarDTO.hor = deltaPos.getDeltaHorizontalTicks();
+                solarDTO.vert = deltaPos.getDeltaVerticalTicks();
+            }
+        });
         solarDTO.hour = rec.getHour();
-        solarDTO.ignore = rec.getIgnoreDaylight();
         solarDTO.minute = rec.getMinute();
         return solarDTO;
     }
 
-    public static class State {
+    public static class CurrentState {
         public List<SolarDTO> remainingPositions;
         private boolean windy;
         private boolean dayLight;
@@ -129,12 +126,30 @@ public class SolarWebService {
 
     }
 
+    public static class Schedule{
+        private int horizontalStep;
+        private int verticalStep;
+
+        private int sunRiseHour;
+        private int sunRiseMinute;
+        private int sunRiseAbsHor;
+        private int sunRiseAbsVer;
+
+        private int sunSetHour;
+        private int sunSetMinute;
+        private int sunSetAbsHor;
+        private int sunSetAbsVer;
+
+        List<SolarDTO> positions = Lists.newArrayList();
+    }
+
     public static class Position {
         int x, y;
     }
 
     public static class SolarDTO {
         private int hour, minute;
+        private String moveType;
         private Integer hor, vert;
         private boolean ignore;
 
@@ -178,5 +193,4 @@ public class SolarWebService {
             return ignore;
         }
     }
-
 }

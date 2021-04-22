@@ -1,7 +1,10 @@
 package org.dropco.smarthome.solar.move;
 
 import org.dropco.smarthome.gpioextension.RemovableGpioPinListenerDigital;
-import org.dropco.smarthome.solar.SolarPanelPosition;
+import org.dropco.smarthome.solar.dto.AbsolutePosition;
+import org.dropco.smarthome.solar.dto.DeltaPosition;
+import org.dropco.smarthome.solar.dto.Position;
+import org.dropco.smarthome.solar.dto.PositionProcessor;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -23,27 +26,34 @@ public class SolarPanelMover implements Runnable {
     protected static final String EAST = "Východ";
     protected static final String SOUTH = "Juh";
     protected static final String NORTH = "Sever";
-    private static Supplier<SolarPanelPosition> currentPositionSupplier;
+    private static Supplier<AbsolutePosition> currentPositionSupplier;
     private static BiConsumer<String, Boolean> commandExecutor;
     private static List<PositionChangeListener> listeners = Collections.synchronizedList(new ArrayList<>());
-    private Integer horizontal;
-    private Integer vertical;
+    private Position position;
 
-    SolarPanelMover(Integer horizontal, Integer vertical) {
-        this.horizontal = horizontal;
-        this.vertical = vertical;
+    private int diffHorizontal = 0;
+    private int diffVertical = 0;
+
+    SolarPanelMover(Position position) {
+        this.position = position;
     }
 
     @Override
     public void run() {
-        SolarPanelPosition currentPosition = currentPositionSupplier.get();
-        int diffHorizontal = 0;
-        if (horizontal != null)
-            diffHorizontal = horizontal - currentPosition.getHorizontalPositionInSeconds();
-        int diffVertical = 0;
-        if (vertical != null)
-            diffVertical = vertical - currentPosition.getVerticalPositionInSeconds();
+        position.invoke(new PositionProcessor() {
+            @Override
+            public void process(AbsolutePosition absPos) {
+                AbsolutePosition currentPosition = currentPositionSupplier.get();
+                diffHorizontal = absPos.getHorizontal() - currentPosition.getHorizontal();
+                diffVertical = absPos.getVertical() - currentPosition.getVertical();
+            }
 
+            @Override
+            public void process(DeltaPosition deltaPos) {
+                diffHorizontal = deltaPos.getDeltaHorizontalTicks();
+                diffVertical = deltaPos.getDeltaVerticalTicks();
+            }
+        });
         int absHorizontal = abs(diffHorizontal);
         int absVertical = abs(diffVertical);
         boolean movingNorth = diffVertical < 0;
@@ -54,20 +64,20 @@ public class SolarPanelMover implements Runnable {
         setState(EAST_PIN_REF_CD, !movingWest && diffHorizontal != 0, EAST);
 
         if (absVertical > 0) {
-            addVertical(currentPosition, absVertical, movingNorth);
+            addVertical(currentPositionSupplier.get(), absVertical, movingNorth);
         }
         if (absHorizontal > 0) {
-            addHorizontal(currentPosition, absHorizontal, movingWest);
+            addHorizontal(currentPositionSupplier.get(), absHorizontal, movingWest);
         }
     }
 
-    private void addVertical(SolarPanelPosition currentPosition, int absVertical, boolean movingNorth) {
+    private void addVertical(AbsolutePosition currentPosition, int absVertical, boolean movingNorth) {
         addWatch(absVertical, ticks -> {
             if (movingNorth) {
-                currentPosition.setVerticalPositionInSeconds(currentPosition.getVerticalPositionInSeconds() - ticks);
+                currentPosition.setVertical(currentPosition.getVertical() - ticks);
                 setState(NORTH_PIN_REF_CD, false, NORTH);
             } else {
-                currentPosition.setVerticalPositionInSeconds(currentPosition.getVerticalPositionInSeconds() + ticks);
+                currentPosition.setVertical(currentPosition.getVertical() + ticks);
                 setState(SOUTH_PIN_REF_CD, false, SOUTH);
             }
             fireUpdate(currentPosition);
@@ -75,13 +85,13 @@ public class SolarPanelMover implements Runnable {
                 VerticalMoveFeedback::getMoving);
     }
 
-    private void addHorizontal(SolarPanelPosition currentPosition, int absHorizontal, boolean movingWest) {
+    private void addHorizontal(AbsolutePosition currentPosition, int absHorizontal, boolean movingWest) {
         addWatch(absHorizontal, ticks -> {
             if (movingWest) {
-                currentPosition.setHorizontalPositionInSeconds(currentPosition.getHorizontalPositionInSeconds() - ticks);
+                currentPosition.setHorizontal(currentPosition.getHorizontal() - ticks);
                 setState(WEST_PIN_REF_CD, false, WEST);
             } else {
-                currentPosition.setHorizontalPositionInSeconds(currentPosition.getHorizontalPositionInSeconds() + ticks);
+                currentPosition.setHorizontal(currentPosition.getHorizontal() + ticks);
                 setState(EAST_PIN_REF_CD, false, EAST);
             }
             fireUpdate(currentPosition);
@@ -89,7 +99,7 @@ public class SolarPanelMover implements Runnable {
                 HorizontalMoveFeedback::getMoving);
     }
 
-    void addWatch(int ticks, Consumer<Integer> onceFinished, Function<Consumer<Boolean>, RemovableGpioPinListenerDigital> addRealTimeTicker, Consumer<BiConsumer<Supplier<Boolean>,Boolean>> addMoveListener, Supplier<Boolean> isMoving) {
+   void addWatch(int ticks, Consumer<Integer> onceFinished, Function<Consumer<Boolean>, RemovableGpioPinListenerDigital> addRealTimeTicker, Consumer<BiConsumer<Supplier<Boolean>,Boolean>> addMoveListener, Supplier<Boolean> isMoving) {
         new CountDownWatcher(ticks).start(onceFinished, addRealTimeTicker, addMoveListener,isMoving);
     }
 
@@ -101,7 +111,7 @@ public class SolarPanelMover implements Runnable {
         commandExecutor.accept(pinRefCd, state);
     }
 
-    private void fireUpdate(SolarPanelPosition currentPosition) {
+    private void fireUpdate(AbsolutePosition currentPosition) {
         for (PositionChangeListener listener : listeners)
             listener.onUpdate(currentPosition);
     }
@@ -110,7 +120,7 @@ public class SolarPanelMover implements Runnable {
         listeners.add(listener);
     }
 
-    public static void setCurrentPositionSupplier(Supplier<SolarPanelPosition> currentPositionSupplier) {
+    public static void setCurrentPositionSupplier(Supplier<AbsolutePosition> currentPositionSupplier) {
         SolarPanelMover.currentPositionSupplier = currentPositionSupplier;
     }
 

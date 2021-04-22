@@ -27,7 +27,7 @@ public class SolarSystemGenTest {
         MoveTable.put(15, 10, new Move(0, -1));
         s.dailyMoves = MoveTable;
         s.horizontalStep = 30.625;
-        s.verticalStep = 0;
+        s.verticalStep = 9;
 
         return s;
     }
