@@ -22,7 +22,7 @@ public class RainSensor {
     private static final List<Consumer<Boolean>> subscribers = Collections.synchronizedList(Lists.newArrayList());
 
     public static void start(GpioPinDigitalInput input) {
-        StatsCollector.getInstance().collect("Dážď",input);
+        StatsCollector.getInstance().collect("Dážď",input,RAIN_STATE);
         raining.set(input.getState() == RAIN_STATE);
         input.addListener(new DelayedGpioPinListener(RAIN_STATE,10000,input) {
                               @Override
