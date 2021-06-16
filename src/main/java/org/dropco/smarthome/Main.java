@@ -32,6 +32,7 @@ public class Main {
     private static Map<String, GpioPinDigitalOutput> outputMap = Collections.synchronizedMap(new HashMap<>());
 
     private static GpioController gpio = GpioFactory.getInstance();
+    public static final Set<String> INPUTS = Sets.newHashSet();
 
     public static void main(String[] args) throws Exception {
         // Create JAX-RS application.
@@ -47,18 +48,18 @@ public class Main {
         logger.addHandler(handler);
         handler.setLevel(Level.ALL);
         StatsCollector.getInstance().start(settingsDao);
-        Set<String> inputs = Sets.newHashSet(args);
-        if (!inputs.contains("--noWatering")) {
+        INPUTS.addAll(Arrays.asList(args));
+        if (!INPUTS.contains("--noWatering")) {
             ServiceMode.addInput(new NamedPort(WaterPumpFeedback.getMicroServicePinKey(), "Stav čerpadla"), ()->Main.getInput(WaterPumpFeedback.getMicroServicePinKey()).isHigh());
             WaterPumpFeedback.start(getInput(WaterPumpFeedback.getMicroServicePinKey()));
             ServiceMode.addInput(new NamedPort(RainSensor.getMicroServicePinKey(), "Dažďový senzor"), ()->Main.getInput(RainSensor.getMicroServicePinKey()).isHigh());
             RainSensor.start(getInput(RainSensor.getMicroServicePinKey()));
             WateringMain.main(settingsDao);
         }
-        if (inputs.contains("--heating")) {
+        if (INPUTS.contains("--heating")) {
             HeatingMain.start(settingsDao);
         }
-        if (inputs.contains("--solar")) {
+        if (INPUTS.contains("--solar")) {
             SolarMain.main(settingsDao);
         }
 
