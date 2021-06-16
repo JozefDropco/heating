@@ -50,9 +50,9 @@ public class Main {
         StatsCollector.getInstance().start(settingsDao);
         INPUTS.addAll(Arrays.asList(args));
         if (!INPUTS.contains("--noWatering")) {
-            ServiceMode.addInput(new NamedPort(WaterPumpFeedback.getMicroServicePinKey(), "Stav čerpadla"), ()->Main.getInput(WaterPumpFeedback.getMicroServicePinKey()).isHigh());
+            ServiceMode.addInput(new NamedPort(WaterPumpFeedback.getMicroServicePinKey(), "Stav čerpadla"), ()->Main.getInput(WaterPumpFeedback.getMicroServicePinKey()).getState()==WaterPumpFeedback.LOGICAL_HIGH_STATE);
             WaterPumpFeedback.start(getInput(WaterPumpFeedback.getMicroServicePinKey()));
-            ServiceMode.addInput(new NamedPort(RainSensor.getMicroServicePinKey(), "Dažďový senzor"), ()->Main.getInput(RainSensor.getMicroServicePinKey()).isHigh());
+            ServiceMode.addInput(new NamedPort(RainSensor.getMicroServicePinKey(), "Dažďový senzor"), ()->Main.getInput(RainSensor.getMicroServicePinKey()).getState()==RainSensor.RAIN_STATE);
             RainSensor.start(getInput(RainSensor.getMicroServicePinKey()));
             WateringMain.main(settingsDao);
         }

@@ -16,12 +16,13 @@ import java.util.logging.Logger;
 
 public class WaterPumpFeedback {
     public static final AtomicBoolean running = new AtomicBoolean(false);
+    public static final PinState LOGICAL_HIGH_STATE = PinState.HIGH;
     private static Logger logger = Logger.getLogger(WaterPumpFeedback.class.getName());
     private static final List<Consumer<Boolean>> subscribers = Collections.synchronizedList(Lists.newArrayList());
 
     public static void start(GpioPinDigitalInput input) {
         StatsCollector.getInstance().collect("Čerpadlo zavlažovania",input);
-        running.set(input.getState() == PinState.HIGH);
+        running.set(input.getState() == LOGICAL_HIGH_STATE);
         input.setDebounce(1000);
         input.addListener(new DelayedGpioPinListener(PinState.HIGH,1000,input) {
             @Override
