@@ -5,8 +5,6 @@ import com.pi4j.io.gpio.*;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.dto.NamedPort;
 import org.dropco.smarthome.heating.HeatingMain;
-import org.dropco.smarthome.heating.heater.HeatingHeaterMain;
-import org.dropco.smarthome.heating.solar.SolarHeatingMain;
 import org.dropco.smarthome.microservice.RainSensor;
 import org.dropco.smarthome.microservice.WaterPumpFeedback;
 import org.dropco.smarthome.solar.SolarMain;
@@ -77,24 +75,11 @@ public class Main {
     }
 
     public static GpioPinDigitalOutput getOutput(String key) {
-        return getOutput(GpioFactory.getDefaultProvider(), RaspiPin.class, key);
-    }
-
-    public static GpioPinDigitalOutput getOutput(GpioProvider extendedProvider, Class<? extends PinProvider> pinClass, String key) {
         String pinName = settingsDao.getString(key);
         GpioPinDigitalOutput output = outputMap.get(pinName);
         if (output == null) {
-            Pin pin = null;
-            try {
-                pin = (Pin) pinClass.getMethod("getPinByName", String.class).invoke(null, pinName);
-            } catch (IllegalAccessException e) {
-                e.printStackTrace();
-            } catch (InvocationTargetException e) {
-                e.printStackTrace();
-            } catch (NoSuchMethodException e) {
-                e.printStackTrace();
-            }
-            output = gpio.provisionDigitalOutputPin(extendedProvider, pin, key, PinState.LOW);
+            Pin pin = RaspiPin.getPinByName(pinName);
+            output = gpio.provisionDigitalOutputPin(pin, key, PinState.LOW);
             outputMap.put(pinName, output);
         }
         return output;
