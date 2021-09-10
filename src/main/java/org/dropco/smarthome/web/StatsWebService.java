@@ -2,6 +2,7 @@ package org.dropco.smarthome.web;
 
 import com.google.gson.GsonBuilder;
 import com.querydsl.core.Tuple;
+import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.database.LogDao;
 import org.dropco.smarthome.database.querydsl.TemperatureMeasurePlace;
 import org.dropco.smarthome.heating.db.HeatingDao;
@@ -40,17 +41,24 @@ public class StatsWebService {
         if (date.before(to)) {
             to = date;
         }
-        List<LogDao.AggregateTemp> temperatures = new LogDao().retrieveAggregatedTemperatures(from, to);
-        for (LogDao.AggregateTemp temp : temperatures) {
-            Tuple measurePlace = new HeatingDao().getMeasurePlaceByRefCd(temp.measurePlace);
-            temp.last = new LogDao().readLastValue(temp.measurePlace);
-            temp.measurePlace = measurePlace.get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.name);
-
-        }
-        List<StatsDao.AggregatedStats> aggregatedStats = new StatsDao().listAggregatedStats(from, to);
+        Date finalTo = to;
         FullStats fullStats = new FullStats();
-        fullStats.ports = aggregatedStats;
-        fullStats.temps = temperatures;
+        Db.acceptDao(new LogDao(), logDao -> {
+            HeatingDao heatingDao = new HeatingDao();
+            heatingDao.setConnection(logDao.getConnection());
+            List<LogDao.AggregateTemp> temperatures = logDao.retrieveAggregatedTemperatures(from, finalTo);
+            fullStats.temps = temperatures;
+            for (LogDao.AggregateTemp temp : temperatures) {
+                Tuple measurePlace = heatingDao.getMeasurePlaceByRefCd(temp.measurePlace);
+                temp.last = logDao.readLastValue(temp.measurePlace);
+                temp.measurePlace = measurePlace.get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.name);
+
+            }
+            StatsDao statsDao = new StatsDao();
+            statsDao.setConnection(logDao.getConnection());
+            List<StatsDao.AggregatedStats> aggregatedStats = statsDao.listAggregatedStats(from, finalTo);
+            fullStats.ports = aggregatedStats;
+        });
         return Response.ok(new GsonBuilder().setDateFormat("MM-dd-yyyy HH:mm:ss z").create().toJson(fullStats)).build();
     }
 

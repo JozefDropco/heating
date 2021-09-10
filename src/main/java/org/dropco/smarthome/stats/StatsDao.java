@@ -12,7 +12,7 @@ import com.querydsl.sql.SQLTemplates;
 import com.querydsl.sql.dml.SQLInsertClause;
 import com.querydsl.sql.dml.SQLUpdateClause;
 import com.querydsl.sql.mysql.MySQLQuery;
-import org.dropco.smarthome.database.DBConnection;
+import org.dropco.smarthome.database.Dao;
 import org.dropco.smarthome.database.querydsl.Stats;
 import org.dropco.smarthome.database.querydsl.StringSetting;
 
@@ -20,9 +20,9 @@ import java.sql.Connection;
 import java.util.Date;
 import java.util.List;
 
-import static org.dropco.smarthome.database.DBConnection.getConnection;
 
-public class StatsDao {
+public class StatsDao implements Dao {
+    private Connection connection;
     public static Stats _s = new Stats("s");
 
     private static final Template secondsDiff = TemplateFactory.DEFAULT.create("TIMESTAMPDIFF(SECOND,{0},IF({1}<{2},{1},{2}))");
@@ -69,7 +69,12 @@ public class StatsDao {
 
 
     private Connection getConnection() {
-        return DBConnection.getConnection();
+        return connection;
+    }
+
+    @Override
+    public void setConnection(Connection connection) {
+        this.connection = connection;
     }
 
     public static class AggregatedStats {

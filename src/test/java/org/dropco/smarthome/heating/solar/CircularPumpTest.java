@@ -22,7 +22,7 @@ public class CircularPumpTest {
     @Test
     public void test() throws InterruptedException {
         BiConsumer COMMAND_EXECUTOR = mock(BiConsumer.class);
-        SolarCircularPump pump= spy(new SolarCircularPump(new SettingsDao(),COMMAND_EXECUTOR));
+        SolarCircularPump pump= spy(new SolarCircularPump(COMMAND_EXECUTOR));
         doAnswer(mock -> 10.0d).when(pump).getStartThreshold();
         doAnswer(mock -> 5.0d).when(pump).getStopThreshold();
         doAnswer(mock -> "Ke").when(pump);
@@ -41,7 +41,7 @@ public class CircularPumpTest {
     @Test
     public void test2() throws InterruptedException {
         BiConsumer COMMAND_EXECUTOR = mock(BiConsumer.class);
-        SolarCircularPump pump= spy(new SolarCircularPump(new SettingsDao(),COMMAND_EXECUTOR));
+        SolarCircularPump pump= spy(new SolarCircularPump(COMMAND_EXECUTOR));
         doAnswer(mock -> 10.0d).when(pump).getStartThreshold();
         doAnswer(mock -> 5.0d).when(pump).getStopThreshold();
         doAnswer(mock -> "Ke").when(pump);
@@ -61,7 +61,7 @@ public class CircularPumpTest {
     @Test
     public void test3() throws InterruptedException {
         BiConsumer COMMAND_EXECUTOR = mock(BiConsumer.class);
-        SolarCircularPump pump= spy(new SolarCircularPump(new SettingsDao(),COMMAND_EXECUTOR));
+        SolarCircularPump pump= spy(new SolarCircularPump(COMMAND_EXECUTOR));
         doAnswer(mock -> 10.0d).when(pump).getStartThreshold();
         doAnswer(mock -> 5.0d).when(pump).getStopThreshold();
         doAnswer(mock -> "Ke").when(pump);
@@ -80,7 +80,7 @@ public class CircularPumpTest {
     @Test
     public void test4() throws InterruptedException {
         BiConsumer COMMAND_EXECUTOR = mock(BiConsumer.class);
-        SolarCircularPump pump= spy(new SolarCircularPump(new SettingsDao(),COMMAND_EXECUTOR));
+        SolarCircularPump pump= spy(new SolarCircularPump(COMMAND_EXECUTOR));
         doAnswer(mock -> 10.0d).when(pump).getStartThreshold();
         doAnswer(mock -> 5.0d).when(pump).getStopThreshold();
         doAnswer(mock -> "Ke").when(pump);

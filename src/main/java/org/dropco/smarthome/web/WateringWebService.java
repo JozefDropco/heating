@@ -1,6 +1,7 @@
 package org.dropco.smarthome.web;
 
 import com.google.gson.Gson;
+import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.microservice.RainSensor;
 import org.dropco.smarthome.microservice.WaterPumpFeedback;
 import org.dropco.smarthome.watering.WateringThreadManager;
@@ -10,6 +11,7 @@ import org.dropco.smarthome.watering.db.WateringRecord;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.List;
 
 @Path("/ws/watering")
 public class WateringWebService {
@@ -17,7 +19,8 @@ public class WateringWebService {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response list() {
-        return Response.ok(new Gson().toJson(new WateringDao().getAllRecords())).build();
+        List<WateringRecord> wateringRecords = Db.applyDao(new WateringDao(), WateringDao::getAllRecords);
+        return Response.ok(new Gson().toJson(wateringRecords)).build();
     }
 
     @GET
@@ -33,7 +36,7 @@ public class WateringWebService {
     public Response update(@PathParam("id") Long id, String wateringRecord) {
         WateringRecord record = new Gson().fromJson(wateringRecord, WateringRecord.class);
         if (id.equals(record.getId())) {
-            new WateringDao().updateRecord(record);
+            Db.acceptDao(new WateringDao(),dao->dao.updateRecord(record));
             return Response.ok().build();
         } else
             return Response.notModified().build();
@@ -43,7 +46,7 @@ public class WateringWebService {
     @Produces(MediaType.APPLICATION_JSON)
     public Response update(String wateringRecord) {
         WateringRecord record = new Gson().fromJson(wateringRecord, WateringRecord.class);
-        long id = new WateringDao().insertRecord(record);
+        long id = Db.applyDao(new WateringDao(),dao->dao.insertRecord(record));
         record.setId(id);
         return Response.ok(new Gson().toJson(record)).build();
     }

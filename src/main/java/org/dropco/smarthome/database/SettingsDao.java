@@ -1,7 +1,6 @@
 package org.dropco.smarthome.database;
 
 import com.google.common.collect.Lists;
-import com.google.gson.Gson;
 import com.querydsl.core.Tuple;
 import com.querydsl.sql.MySQLTemplates;
 import com.querydsl.sql.SQLTemplates;
@@ -21,12 +20,14 @@ import static org.dropco.smarthome.database.querydsl.DoubleSetting.DOUBLE;
 import static org.dropco.smarthome.database.querydsl.LongSetting.LONG;
 import static org.dropco.smarthome.database.querydsl.StringSetting.STRING;
 
-public class SettingsDao {
+public class SettingsDao implements Dao {
+    private Connection connection;
+
     protected static final SQLTemplates SQL_TEMPLATES = new MySQLTemplates();
-    private final Map<String, StringConstant> stringCacheMap = Collections.synchronizedMap(new HashMap<>());
-    private final Map<String, LongConstant> longCacheMap =  Collections.synchronizedMap(new HashMap<>());
-    private final Map<String, DoubleConstant> doubleCacheMap =  Collections.synchronizedMap(new HashMap<>());
-    private AtomicBoolean loaded =new AtomicBoolean();
+    private static final Map<String, StringConstant> stringCacheMap = Collections.synchronizedMap(new HashMap<>());
+    private static final Map<String, LongConstant> longCacheMap = Collections.synchronizedMap(new HashMap<>());
+    private static final Map<String, DoubleConstant> doubleCacheMap = Collections.synchronizedMap(new HashMap<>());
+    private static AtomicBoolean loaded = new AtomicBoolean();
 
 
     public String getString(String key) {
@@ -39,10 +40,12 @@ public class SettingsDao {
         updateIfNeeded();
         return Optional.ofNullable(longCacheMap.get(key)).map(LongConstant::getValue).orElse(null);
     }
+
     public Optional<LongConstant> getLongConst(String key) {
         updateIfNeeded();
         return Optional.ofNullable(longCacheMap.get(key));
     }
+
     public double getDouble(String key) {
         updateIfNeeded();
         return Optional.ofNullable(doubleCacheMap.get(key)).map(DoubleConstant::getValue).orElse(null);
@@ -82,7 +85,11 @@ public class SettingsDao {
     }
 
     private Connection getConnection() {
-        return DBConnection.getConnection();
+        return connection;
+    }
+
+    public void setConnection(Connection connection) {
+        this.connection = connection;
     }
 
     public void setLong(String key, long value) {
@@ -174,7 +181,7 @@ public class SettingsDao {
                 .set(LONG.valueType, longConstant.getValueType())
                 .where(LONG.refCd.eq(longConstant.getRefCd()))
                 .execute();
-        if (execute == 1) longCacheMap.put(longConstant.getRefCd(),longConstant);
+        if (execute == 1) longCacheMap.put(longConstant.getRefCd(), longConstant);
 
     }
 
@@ -187,7 +194,7 @@ public class SettingsDao {
                 .set(STRING.valueType, stringConstant.getValueType())
                 .where(STRING.refCd.eq(stringConstant.getRefCd()))
                 .execute();
-        if (execute == 1) stringCacheMap.put(stringConstant.getRefCd(),stringConstant);
+        if (execute == 1) stringCacheMap.put(stringConstant.getRefCd(), stringConstant);
     }
 
     public void updateDoubleConstant(DoubleConstant doubleConst) {
@@ -199,6 +206,6 @@ public class SettingsDao {
                 .set(DOUBLE.valueType, doubleConst.getValueType())
                 .where(DOUBLE.refCd.eq(doubleConst.getRefCd()))
                 .execute();
-        if (execute == 1) doubleCacheMap.put(doubleConst.getRefCd(),doubleConst);
+        if (execute == 1) doubleCacheMap.put(doubleConst.getRefCd(), doubleConst);
     }
 }

@@ -5,7 +5,7 @@ import com.querydsl.core.Tuple;
 import com.querydsl.sql.MySQLTemplates;
 import com.querydsl.sql.SQLTemplates;
 import com.querydsl.sql.mysql.MySQLQuery;
-import org.dropco.smarthome.database.DBConnection;
+import org.dropco.smarthome.database.Dao;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.database.querydsl.SolarMove;
 import org.dropco.smarthome.dto.LongConstant;
@@ -19,17 +19,17 @@ import java.util.List;
 import static org.dropco.smarthome.database.querydsl.SolarMove.SOLAR_MOVE;
 import static org.dropco.smarthome.database.querydsl.SolarPanelSchedule.SOLAR_SCHEDULE;
 
-public class SolarSystemDao {
+public class SolarSystemDao implements Dao {
     protected static final String SOLAR_PANEL_DELAY = "SOLAR_PANEL_DELAY";
     protected static final SQLTemplates DEFAULT = new MySQLTemplates();
-    private SettingsDao settingsDao;
+    private SettingsDao settingsDao = new SettingsDao();
     private static LongConstant HORIZONTAL = new LongConstant();
     private static LongConstant NORMAL_HORIZONTAL = new LongConstant();
     private static LongConstant VERTICAL = new LongConstant();
     private static LongConstant NORMAL_VERTICAL = new LongConstant();
+    private Connection connection;
 
-    public SolarSystemDao(SettingsDao settingsDao) {
-        this.settingsDao = settingsDao;
+    public SolarSystemDao() {
         HORIZONTAL.setRefCd(SolarSystemRefCode.LAST_KNOWN_POSITION_HORIZONTAL).setDescription("Posledná známa horizontálna pozícia")
                 .setConstantType("number").setGroup("Kolektory").setValueType("number");
         VERTICAL.setRefCd(SolarSystemRefCode.LAST_KNOWN_POSITION_VERTICAL).setDescription("Posledná známa vertikálna pozícia")
@@ -120,7 +120,12 @@ public class SolarSystemDao {
     }
 
     private Connection getConnection() {
-        return DBConnection.getConnection();
+        return connection;
+    }
+
+    public void setConnection(Connection connection) {
+        this.connection = connection;
+        settingsDao.setConnection(connection);
     }
 
     public long getDelay() {

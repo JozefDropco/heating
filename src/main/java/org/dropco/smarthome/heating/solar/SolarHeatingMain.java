@@ -20,10 +20,10 @@ import static org.dropco.smarthome.heating.solar.ThreeWayValve.THREE_WAY_PORT;
 public class SolarHeatingMain {
 
 
-    public static void start(SettingsDao settingsDao, BiConsumer<String, Boolean> commandExecutor) {
-        SolarHeatingCurrentSetup.start(new HeatingDao());
-        new Thread(new SolarCircularPump(settingsDao,commandExecutor)).start();
-        new Thread(new ThreeWayValve(settingsDao,commandExecutor)).start();
+    public static void start(BiConsumer<String, Boolean> commandExecutor) {
+        SolarHeatingCurrentSetup.start();
+        new Thread(new SolarCircularPump(commandExecutor)).start();
+        new Thread(new ThreeWayValve(commandExecutor)).start();
         new Thread(new BoilerBlocker(commandExecutor)).start();
         configureServiceMode();
         addToStats();

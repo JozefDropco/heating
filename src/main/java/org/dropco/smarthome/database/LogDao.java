@@ -19,13 +19,15 @@ import org.dropco.smarthome.database.querydsl.TemperatureLog;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.sql.Connection;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
-import static org.dropco.smarthome.database.DBConnection.getConnection;
 
-public class LogDao {
+public class LogDao implements Dao {
+    private Connection connection;
+
 
     private static final Template leaveoutminutes = TemplateFactory.DEFAULT.create("STR_TO_DATE(DATE_FORMAT({0},'%Y-%m-%d %H'),'%Y-%m-%d %H')");
     protected static final SQLTemplates SQL_TEMPLATES = new MySQLTemplates();
@@ -44,8 +46,8 @@ public class LogDao {
     public List<Tuple> retrieveTemperaturesWithPlaces(Date from, Date to) {
         DateExpression<Date> removeMinutes = Expressions.dateTemplate(Date.class, leaveoutminutes, _tlog.timestamp);
         return new MySQLQuery<StringSetting>(getConnection()).select(_tlog.placeRefCd,
-                removeMinutes.as(_tlog.timestamp),
-                _tlog.value.avg().as(_tlog.value)).from(_tlog).
+                        removeMinutes.as(_tlog.timestamp),
+                        _tlog.value.avg().as(_tlog.value)).from(_tlog).
                 where(_tlog.placeRefCd.isNotNull()
                         .and(_tlog.timestamp.goe(from))
                         .and(_tlog.timestamp.loe(to))
@@ -73,10 +75,10 @@ public class LogDao {
         NumberExpression<Double> max = _tlog.value.max().as("max");
         NumberExpression<Double> avg = _tlog.value.avg().as("avg");
         List<Tuple> result = new MySQLQuery<StringSetting>(getConnection()).select(_tlog.placeRefCd,
-            min,
-                max,
-                avg
-        ).from(_tlog).
+                        min,
+                        max,
+                        avg
+                ).from(_tlog).
                 where(_tlog.placeRefCd.isNotNull()
                         .and(_tlog.timestamp.goe(from))
                         .and(_tlog.timestamp.loe(to))
@@ -107,10 +109,10 @@ public class LogDao {
         NumberExpression<Integer> hour = _alog.date.hour().as("hour");
         NumberExpression<Integer> min = _alog.date.minute().as("min");
         List<Tuple> result = new MySQLQuery<StringSetting>(getConnection()).select(hour,
-                min,
-                _alog.message,
-                _alog.id
-        ).from(_alog).
+                        min,
+                        _alog.message,
+                        _alog.id
+                ).from(_alog).
                 where(_alog.logLevel.in(levels)
                         .and(_alog.date.goe(from))
                         .and(_alog.date.loe(to))
@@ -129,7 +131,7 @@ public class LogDao {
 
     public Double readLastValue(String placeRefCd) {
         return new MySQLQuery<StringSetting>(getConnection()).select(
-                _tlog.value).from(_tlog).
+                        _tlog.value).from(_tlog).
                 where(_tlog.placeRefCd.eq(placeRefCd)
                 ).orderBy(_tlog.timestamp.desc()).fetchFirst();
     }
@@ -137,14 +139,26 @@ public class LogDao {
     public Double readPreviousValue(String placeRefCd, Date date) {
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(date);
-        calendar.add(Calendar.DAY_OF_YEAR,-1);
+        calendar.add(Calendar.DAY_OF_YEAR, -1);
         DateExpression<Date> removeMinutes = Expressions.dateTemplate(Date.class, leaveoutminutes, _tlog.timestamp);
         return new MySQLQuery<StringSetting>(getConnection()).select(
-                _tlog.value.avg().as(_tlog.value)).from(_tlog).
+                        _tlog.value.avg().as(_tlog.value)).from(_tlog).
                 where(_tlog.placeRefCd.eq(placeRefCd)
                         .and(_tlog.timestamp.goe(calendar.getTime()))
                         .and(_tlog.timestamp.loe(date))
                 ).orderBy(removeMinutes.desc()).fetchFirst();
+    }
+
+    /***
+     * Gets the connection
+     * @return
+     */
+    public Connection getConnection() {
+        return connection;
+    }
+
+    public void setConnection(Connection connection) {
+        this.connection = connection;
     }
 
     public static class AggregateTemp {

@@ -5,14 +5,15 @@ import com.pi4j.io.gpio.GpioFactory;
 import com.pi4j.io.gpio.GpioPinDigitalOutput;
 import org.dropco.smarthome.Main;
 import org.dropco.smarthome.ServiceMode;
+import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.dto.NamedPort;
 import org.dropco.smarthome.gpioextension.ExtendedGpioProvider;
 import org.dropco.smarthome.gpioextension.ExtendedPin;
 import org.dropco.smarthome.heating.db.HeatingDao;
 import org.dropco.smarthome.solar.move.SafetySolarPanel;
-import org.dropco.smarthome.solar.move.SolarPanelMover;
 import org.dropco.smarthome.solar.move.SolarPanelManager;
+import org.dropco.smarthome.solar.move.SolarPanelMover;
 import org.dropco.smarthome.stats.StatsCollector;
 
 import java.util.Calendar;
@@ -36,20 +37,18 @@ public class SolarMain {
         ServiceMode.addSubsriber(state -> {
             if (state) SolarPanelManager.stop();
         });
-        DayLight.setInstance(settingsDao,Main.getInput(DAY_LIGHT_PIN_REF_CD), () -> (int) settingsDao.getLong(LIGHT_THRESHOLD));
+        DayLight.setInstance(Main.getInput(DAY_LIGHT_PIN_REF_CD), () -> Db.applyDao(new SettingsDao(),dao-> (int)dao.getLong(LIGHT_THRESHOLD)));
         connectDayLight(settingsDao);
-        SolarSystemDao solarSystemDao = new SolarSystemDao(settingsDao);
-        SolarPanelManager.delaySupplier = (solarSystemDao::getDelay);
+        SolarPanelManager.delaySupplier = () -> Db.applyDao(new SolarSystemDao(), SolarSystemDao::getDelay);
         SolarPanelMover.setCommandExecutor((key, value) -> Main.getOutput(getExtendedProvider(), ExtendedPin.class, key).setState(value));
-        SolarPanelMover.setCurrentPositionSupplier(() -> solarSystemDao.getLastKnownPosition());
-        SolarPanelMover.addListener(panel -> solarSystemDao.updateLastKnownPosition(panel));
-        SafetySolarPanel safetySolarPanel = new SafetySolarPanel(position -> solarSystemDao.saveNormalPosition(position),() -> solarSystemDao.getStrongWindPosition(),
-                () -> solarSystemDao.getLastKnownPosition(),
-                () -> solarSystemDao.getOverheatedPosition());
+        SolarPanelMover.setCurrentPositionSupplier(() -> Db.applyDao(new SolarSystemDao(), SolarSystemDao::getLastKnownPosition));
+        SolarPanelMover.addListener(panel -> Db.acceptDao(new SolarSystemDao(), dao -> dao.updateLastKnownPosition(panel)));
+        SafetySolarPanel safetySolarPanel = new SafetySolarPanel(position -> Db.acceptDao(new SolarSystemDao(), dao->dao.saveNormalPosition(position)), () -> Db.applyDao(new SolarSystemDao(), dao->dao.getStrongWindPosition()),
+                () -> Db.applyDao(new SolarSystemDao(), SolarSystemDao::getLastKnownPosition),
+                () -> Db.applyDao(new SolarSystemDao(), SolarSystemDao::getOverheatedPosition));
         StrongWind.connect(Main.getInput(STRONG_WIND_PIN_REF_CD), safetySolarPanel);
-        new SolarTemperatureWatch(new HeatingDao(),
-                () -> settingsDao.getDouble(SOLAR_OVERHEATED)).attach(safetySolarPanel);
-        SolarSystemScheduler solarSystemScheduler = new SolarSystemScheduler(solarSystemDao);
+        new SolarTemperatureWatch(() ->  Db.applyDao(new SettingsDao(),dao->dao.getDouble(SOLAR_OVERHEATED))).attach(safetySolarPanel);
+        SolarSystemScheduler solarSystemScheduler = new SolarSystemScheduler();
         solarSystemScheduler.moveToLastPosition(safetySolarPanel);
         solarSystemScheduler.schedule(safetySolarPanel);
         DayLight.inst().subscribe(enoughLight -> {
@@ -73,10 +72,10 @@ public class SolarMain {
     }
 
     private static void addToStats() {
-        StatsCollector.getInstance().collect("Kolektory - Sever",Main.getOutput(getExtendedProvider(), ExtendedPin.class, SolarSystemRefCode.NORTH_PIN_REF_CD));
-        StatsCollector.getInstance().collect("Kolektory - Juh",Main.getOutput(getExtendedProvider(), ExtendedPin.class, SolarSystemRefCode.SOUTH_PIN_REF_CD));
-        StatsCollector.getInstance().collect("Kolektory - Východ",Main.getOutput(getExtendedProvider(), ExtendedPin.class, SolarSystemRefCode.EAST_PIN_REF_CD));
-        StatsCollector.getInstance().collect("Kolektory - Západ",Main.getOutput(getExtendedProvider(), ExtendedPin.class, SolarSystemRefCode.WEST_PIN_REF_CD));
+        StatsCollector.getInstance().collect("Kolektory - Sever", Main.getOutput(getExtendedProvider(), ExtendedPin.class, SolarSystemRefCode.NORTH_PIN_REF_CD));
+        StatsCollector.getInstance().collect("Kolektory - Juh", Main.getOutput(getExtendedProvider(), ExtendedPin.class, SolarSystemRefCode.SOUTH_PIN_REF_CD));
+        StatsCollector.getInstance().collect("Kolektory - Východ", Main.getOutput(getExtendedProvider(), ExtendedPin.class, SolarSystemRefCode.EAST_PIN_REF_CD));
+        StatsCollector.getInstance().collect("Kolektory - Západ", Main.getOutput(getExtendedProvider(), ExtendedPin.class, SolarSystemRefCode.WEST_PIN_REF_CD));
     }
 
     private static void connectDayLight(SettingsDao settingsDao) {

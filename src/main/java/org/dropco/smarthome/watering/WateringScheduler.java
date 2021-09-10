@@ -2,6 +2,7 @@ package org.dropco.smarthome.watering;
 
 import com.google.common.collect.FluentIterable;
 import com.pi4j.io.gpio.GpioFactory;
+import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.watering.db.WateringDao;
 import org.dropco.smarthome.watering.db.WateringRecord;
 
@@ -17,17 +18,15 @@ import java.util.logging.Logger;
 public class WateringScheduler {
     private static Logger logger = Logger.getLogger(WateringScheduler.class.getName());
     private static SimpleDateFormat format = new SimpleDateFormat("HH:mm");
-    private WateringDao wateringDao;
     public static final int ONE_DAY_IN_MILLIS = 24 * 60 * 60 * 1000;
     private static final ScheduledExecutorService EXECUTOR_SERVICE = GpioFactory.getExecutorServiceFactory().getScheduledExecutorService();
 
-    public WateringScheduler(WateringDao wateringDao) {
-        this.wateringDao = wateringDao;
+    public WateringScheduler() {
     }
 
     public void schedule() {
         Calendar calendar = Calendar.getInstance();
-        List<WateringRecord> allWaterings = wateringDao.getActiveRecords();
+        List<WateringRecord> allWaterings = Db.applyDao(new WateringDao(), WateringDao::getActiveRecords);
         int dayOfYear = calendar.get(Calendar.DAY_OF_YEAR);
 
         FluentIterable<WateringRecord> todays = FluentIterable.from(allWaterings).filter(rec -> (dayOfYear % rec.getModulo()) == rec.getReminder());

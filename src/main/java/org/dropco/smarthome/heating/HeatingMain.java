@@ -13,7 +13,7 @@ import java.util.function.Consumer;
 public class HeatingMain {
 
     public static void start(SettingsDao settingsDao) {
-        SolarHeatingMain.start(settingsDao,(key, value) -> {
+        SolarHeatingMain.start((key, value) -> {
             Main.getOutput(key).setState(value);
         });
         HeatingHeaterMain.start(settingsDao);

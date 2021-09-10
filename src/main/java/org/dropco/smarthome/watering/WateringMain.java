@@ -2,6 +2,7 @@ package org.dropco.smarthome.watering;
 
 import org.dropco.smarthome.Main;
 import org.dropco.smarthome.ServiceMode;
+import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.dto.NamedPort;
 import org.dropco.smarthome.stats.StatsCollector;
@@ -18,7 +19,7 @@ public class WateringMain {
         WateringJob.setCommandExecutor((key, value) -> {
             Main.getOutput(key).setState(value);
         });
-        Supplier<Set<NamedPort>> getActiveZones = new WateringDao()::getActiveZones;
+        Supplier<Set<NamedPort>> getActiveZones = ()-> Db.applyDao(new WateringDao(), WateringDao::getActiveZones);
         Set<NamedPort> activeZones = getActiveZones.get();
         activeZones.forEach(port-> {
             ServiceMode.addOutput(port, key -> Main.getOutput(key));
@@ -26,7 +27,7 @@ public class WateringMain {
         });
         WateringJob.setZones(getActiveZones);
         ServiceMode.addSubsriber(state-> {if (state) WateringThreadManager.stop();});
-        new WateringScheduler(new WateringDao()).schedule();
+        new WateringScheduler().schedule();
     }
 
 

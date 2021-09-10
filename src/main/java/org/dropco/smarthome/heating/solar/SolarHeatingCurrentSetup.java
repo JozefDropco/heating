@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.pi4j.io.gpio.GpioFactory;
 import com.pi4j.io.gpio.PinState;
 import org.dropco.smarthome.Main;
+import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.heating.db.HeatingDao;
 import org.dropco.smarthome.heating.dto.SolarHeatingSchedule;
 import org.dropco.smarthome.solar.move.HorizontalMoveFeedback;
@@ -31,16 +32,16 @@ public class SolarHeatingCurrentSetup {
     private static final AtomicReference<SolarHeatingSchedule> CURRENT_RECORD = new AtomicReference<>();
 
 
-    public static void start(HeatingDao heatingDao) {
+    public static void start() {
         VerticalMoveFeedback.getInstance().setInput(Main.getInput(NORTH_SOUTH_MOVE_INDICATOR)).start();
         HorizontalMoveFeedback.getInstance().setInput(Main.getInput(EAST_WEST_MOVE_INDICATOR)).start();
-        SolarHeatingSchedule currentRecord = heatingDao.getCurrentRecord();
+        SolarHeatingSchedule currentRecord = Db.applyDao(new HeatingDao(),HeatingDao::getCurrentRecord);
         SolarHeatingCurrentSetup.CURRENT_RECORD.set(currentRecord);
         Logger.getLogger(SolarHeatingCurrentSetup.class.getName()).info(currentRecord.toString());
         subscribers.forEach(subs-> subs.accept(currentRecord));
         LocalTime endTime = SolarHeatingCurrentSetup.CURRENT_RECORD.get().getToTime();
         long sleepTime = LocalTime.now().until(endTime, ChronoUnit.SECONDS)+2;
-        EXECUTOR_SERVICE.schedule(() -> start(heatingDao),sleepTime,TimeUnit.SECONDS);
+        EXECUTOR_SERVICE.schedule(() -> start(),sleepTime,TimeUnit.SECONDS);
     }
 
     /***

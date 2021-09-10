@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.pi4j.io.gpio.GpioPinDigitalInput;
 import com.pi4j.io.gpio.PinPullResistance;
 import com.pi4j.io.gpio.PinState;
+import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.gpioextension.DelayedGpioPinListener;
 import org.dropco.smarthome.stats.StatsCollector;
@@ -23,11 +24,9 @@ public class DayLight {
     private final GpioPinDigitalInput input;
     private final Supplier<Integer> lightThreshold;
     private DelayedGpioPinListener pinListener;
-    private SettingsDao settingsDao;
     private static final Logger LOGGER = Logger.getLogger(DayLight.class.getName());
 
-    private DayLight(SettingsDao settingsDao, GpioPinDigitalInput input, Supplier<Integer> lightThreshold) {
-        this.settingsDao = settingsDao;
+    private DayLight(GpioPinDigitalInput input, Supplier<Integer> lightThreshold) {
         this.input = input;
         this.lightThreshold = lightThreshold;
     }
@@ -36,8 +35,8 @@ public class DayLight {
      * Gets the instance
      * @return
      */
-    public static void setInstance(SettingsDao settingsDao, GpioPinDigitalInput input, Supplier<Integer> lightThreshold) {
-        instance = new DayLight(settingsDao, input, lightThreshold);
+    public static void setInstance(GpioPinDigitalInput input, Supplier<Integer> lightThreshold) {
+        instance = new DayLight(input, lightThreshold);
     }
 
     /***
@@ -59,7 +58,7 @@ public class DayLight {
                 if (state) {
                     boolean success = enoughLight.compareAndSet(false, state);
                     if (success) {
-                        settingsDao.setLong(SolarSystemRefCode.DAYLIGHT, 1);
+                        Db.acceptDao(new SettingsDao(), dao -> dao.setLong(SolarSystemRefCode.DAYLIGHT, 1));
                         LOGGER.log(Level.INFO, "Denný jas splnený");
                         subscribers.forEach(booleanConsumer -> booleanConsumer.accept(true));
                     }
@@ -82,7 +81,7 @@ public class DayLight {
     public void clear() {
         enoughLight.set(false);
         LOGGER.log(Level.INFO, "Reset denného jasu");
-        settingsDao.setLong(SolarSystemRefCode.DAYLIGHT, 0);
+        Db.acceptDao(new SettingsDao(), dao -> dao.setLong(SolarSystemRefCode.DAYLIGHT, 0));
         if (input.isLow()) {
             pinListener.delayedCheck();
         }

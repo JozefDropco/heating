@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AtomicDouble;
 import com.pi4j.io.gpio.GpioFactory;
 import org.dropco.smarthome.ServiceMode;
+import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.heating.db.HeatingDao;
 import org.dropco.smarthome.solar.SolarTemperatureWatch;
@@ -36,12 +37,12 @@ public class SolarCircularPump implements Runnable {
     private static final Semaphore update = new Semaphore(0);
     private BiConsumer<String, Boolean> commandExecutor;
     private static List<Consumer<Boolean>> subscribers = Collections.synchronizedList(Lists.newArrayList());
-    private SettingsDao settingsDao;
 
-    public SolarCircularPump(SettingsDao settingsDao, BiConsumer<String, Boolean> commandExecutor) {
-        T1_MEASURE_PLACE = settingsDao.getString("SOLAR_CIRCULAR_PUMP_T1_MEASURE_PLACE");
-        T2_MEASURE_PLACE = settingsDao.getString("SOLAR_CIRCULAR_PUMP_T2_MEASURE_PLACE");
-        this.settingsDao = settingsDao;
+    public SolarCircularPump(BiConsumer<String, Boolean> commandExecutor) {
+        Db.acceptDao(new SettingsDao(), dao -> {
+            T1_MEASURE_PLACE = dao.getString("SOLAR_CIRCULAR_PUMP_T1_MEASURE_PLACE");
+            T2_MEASURE_PLACE = dao.getString("SOLAR_CIRCULAR_PUMP_T2_MEASURE_PLACE");
+        });
         this.commandExecutor = commandExecutor;
         ServiceMode.addSubsriber(mode -> {
             if (mode) {
@@ -83,12 +84,12 @@ public class SolarCircularPump implements Runnable {
                 if (state.compareAndSet(false, true)) {
                     if (!ServiceMode.isServiceMode()) {
                         raiseChange(true);
-                        GpioFactory.getExecutorServiceFactory().getScheduledExecutorService().schedule(() -> update.release(), settingsDao.getLong(CIRCULAR_PUMP_OVERHEATED_CYCLE_ON), TimeUnit.MILLISECONDS);
+                        GpioFactory.getExecutorServiceFactory().getScheduledExecutorService().schedule(() -> update.release(), Db.applyDao(new SettingsDao(), dao->dao.getLong(CIRCULAR_PUMP_OVERHEATED_CYCLE_ON)), TimeUnit.MILLISECONDS);
                     }
                 } else if (state.compareAndSet(true, false)) {
                     if (!ServiceMode.isServiceMode()) {
                         raiseChange(false);
-                        GpioFactory.getExecutorServiceFactory().getScheduledExecutorService().schedule(() -> update.release(), settingsDao.getLong(CIRCULAR_PUMP_OVERHEATED_CYCLE_OFF), TimeUnit.MILLISECONDS);
+                        GpioFactory.getExecutorServiceFactory().getScheduledExecutorService().schedule(() -> update.release(), Db.applyDao(new SettingsDao(), dao->dao.getLong(CIRCULAR_PUMP_OVERHEATED_CYCLE_OFF)), TimeUnit.MILLISECONDS);
 
                     }
                 }
@@ -121,16 +122,16 @@ public class SolarCircularPump implements Runnable {
     }
 
 
-    String getDeviceId(String key) {
-        return new HeatingDao().getDeviceId(key);
+    String getDeviceId(String devideId) {
+        return Db.applyDao(new HeatingDao(), dao-> dao.getDeviceId(devideId));
     }
 
     double getStopThreshold() {
-        return settingsDao.getDouble(CIRCULAR_PUMP_DIFF_STOP_TEMP);
+        return Db.applyDao(new SettingsDao(), dao->dao.getDouble(CIRCULAR_PUMP_DIFF_STOP_TEMP));
     }
 
     double getStartThreshold() {
-        return settingsDao.getDouble(CIRCULAR_PUMP_DIFF_START_TEMP);
+        return Db.applyDao(new SettingsDao(), dao->dao.getDouble(CIRCULAR_PUMP_DIFF_START_TEMP));
     }
 
     public static void addSubscriber(Consumer<Boolean> subscriber) {

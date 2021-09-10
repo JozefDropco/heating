@@ -7,6 +7,7 @@ import com.google.common.collect.Sets;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.querydsl.core.Tuple;
+import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.database.LogDao;
 import org.dropco.smarthome.database.querydsl.TemperatureMeasurePlace;
 import org.dropco.smarthome.heating.db.HeatingDao;
@@ -32,56 +33,59 @@ public class TempWebService {
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
         Date from = format.parse(fromDate);
         Date to = format.parse(toDate);
-        LogDao logDao = new LogDao();
-        List<Tuple> temperatures = logDao.retrieveTemperaturesWithPlaces(from, to);
-        Set<String> measurePlaces = Sets.newHashSet(FluentIterable.from(temperatures).transform(t -> t.get(LogDao._tlog.placeRefCd)));
+        return Db.applyDao(new LogDao(), logDao -> {
+            HeatingDao heatingDao = new HeatingDao();
+            heatingDao.setConnection(logDao.getConnection());
+            List<Tuple> temperatures = logDao.retrieveTemperaturesWithPlaces(from, to);
+            Set<String> measurePlaces = Sets.newHashSet(FluentIterable.from(temperatures).transform(t -> t.get(LogDao._tlog.placeRefCd)));
 
-        Map<String, Series> seriesMap = Maps.newHashMap();
-        Date dataLastDate = new Date(from.getTime());
-        Date currDT = null;
-        Set<String> tmpPlaces = Sets.newHashSet(measurePlaces);
-        for (Tuple tuple : temperatures) {
-            Series currSeries = seriesMap.computeIfAbsent(tuple.get(LogDao._tlog.placeRefCd), key -> {
-                Series series = new Series();
-                series.placeRefCd = key;
-                series.name = new HeatingDao().getMeasurePlaceByRefCd(key).get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.name);
-                return series;
-            });
-            Data data = new Data();
-            data.x = tuple.get(LogDao._tlog.timestamp);
-            if (dataLastDate.before(data.x)) {
-                dataLastDate = data.x;
-            }
-            data.y = new BigDecimal(tuple.get(LogDao._tlog.value).toString()).setScale(1, RoundingMode.HALF_UP).doubleValue();
-            currSeries.data.add(data);
-            if (currDT == null) {
-                currDT = data.x;
-                tmpPlaces.remove(currSeries.placeRefCd);
-            } else {
-                if (currDT.before(data.x)) {
-                    addMissingEntries(logDao, seriesMap, currDT, tmpPlaces);
+            Map<String, Series> seriesMap = Maps.newHashMap();
+            Date dataLastDate = new Date(from.getTime());
+            Date currDT = null;
+            Set<String> tmpPlaces = Sets.newHashSet(measurePlaces);
+            for (Tuple tuple : temperatures) {
+                Series currSeries = seriesMap.computeIfAbsent(tuple.get(LogDao._tlog.placeRefCd), key -> {
+                    Series series = new Series();
+                    series.placeRefCd = key;
+                    series.name = heatingDao.getMeasurePlaceByRefCd(key).get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.name);
+                    return series;
+                });
+                Data data = new Data();
+                data.x = tuple.get(LogDao._tlog.timestamp);
+                if (dataLastDate.before(data.x)) {
+                    dataLastDate = data.x;
+                }
+                data.y = new BigDecimal(tuple.get(LogDao._tlog.value).toString()).setScale(1, RoundingMode.HALF_UP).doubleValue();
+                currSeries.data.add(data);
+                if (currDT == null) {
                     currDT = data.x;
-                    tmpPlaces = Sets.newHashSet(measurePlaces);
                     tmpPlaces.remove(currSeries.placeRefCd);
-
                 } else {
-                    tmpPlaces.remove(currSeries.placeRefCd);
+                    if (currDT.before(data.x)) {
+                        addMissingEntries(logDao, seriesMap, currDT, tmpPlaces, heatingDao);
+                        currDT = data.x;
+                        tmpPlaces = Sets.newHashSet(measurePlaces);
+                        tmpPlaces.remove(currSeries.placeRefCd);
+
+                    } else {
+                        tmpPlaces.remove(currSeries.placeRefCd);
+                    }
                 }
             }
-        }
-        addMissingEntries(logDao, seriesMap, currDT, tmpPlaces);
-        TempResult tempResult = new TempResult();
-        tempResult.lastDate = dataLastDate;
-        tempResult.series = seriesMap.values();
-        return Response.ok(new GsonBuilder().setDateFormat("MM-dd-yyyy HH:mm:ss z").create().toJson(tempResult)).build();
+            addMissingEntries(logDao, seriesMap, currDT, tmpPlaces, heatingDao);
+            TempResult tempResult = new TempResult();
+            tempResult.lastDate = dataLastDate;
+            tempResult.series = seriesMap.values();
+            return Response.ok(new GsonBuilder().setDateFormat("MM-dd-yyyy HH:mm:ss z").create().toJson(tempResult)).build();
+        });
     }
 
-    void addMissingEntries(LogDao logDao, Map<String, Series> seriesMap, Date currDT, Set<String> tmpPlaces) {
+    void addMissingEntries(LogDao logDao, Map<String, Series> seriesMap, Date currDT, Set<String> tmpPlaces, HeatingDao heatingDao) {
         for (String series : tmpPlaces) {
             Series tmpSeries = seriesMap.computeIfAbsent(series, key -> {
                 Series tmp = new Series();
                 tmp.placeRefCd = key;
-                tmp.name = new HeatingDao().getMeasurePlaceByRefCd(key).get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.name);
+                tmp.name = heatingDao.getMeasurePlaceByRefCd(key).get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.name);
                 return tmp;
             });
             Data dt = new Data();
@@ -108,27 +112,33 @@ public class TempWebService {
         last = instance.getTime();
         instance.add(Calendar.DAY_OF_YEAR, 1);
         Date to = instance.getTime();
-        List<Tuple> temperatures = new LogDao().retrieveTemperaturesWithPlaces(last, to);
-        Map<String, Series> seriesMap = Maps.newHashMap();
-        Date dataLastDate = new Date(last.getTime());
-        for (Tuple tuple : temperatures) {
-            Series currSeries = seriesMap.computeIfAbsent(tuple.get(LogDao._tlog.placeRefCd), key -> {
-                Series series = new Series();
-                series.placeRefCd = key;
-                series.name = new HeatingDao().getMeasurePlaceByRefCd(key).get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.name);
-                return series;
-            });
-            Data data = new Data();
-            data.x = tuple.get(LogDao._tlog.timestamp);
-            if (dataLastDate.before(data.x)) {
-                dataLastDate = data.x;
-            }
-            data.y = new BigDecimal(tuple.get(LogDao._tlog.value).toString()).setScale(1, RoundingMode.HALF_UP).doubleValue();
-            currSeries.data.add(data);
-        }
+        Date finalLast = last;
+
         TempResult tempResult = new TempResult();
-        tempResult.lastDate = dataLastDate;
-        tempResult.series = seriesMap.values();
+        Db.acceptDao(new LogDao(), logDao -> {
+            HeatingDao heatingDao = new HeatingDao();
+            heatingDao.setConnection(logDao.getConnection());
+            List<Tuple> temperatures = logDao.retrieveTemperaturesWithPlaces(finalLast, to);
+            Map<String, Series> seriesMap = Maps.newHashMap();
+            Date dataLastDate = new Date(finalLast.getTime());
+            for (Tuple tuple : temperatures) {
+                Series currSeries = seriesMap.computeIfAbsent(tuple.get(LogDao._tlog.placeRefCd), key -> {
+                    Series series = new Series();
+                    series.placeRefCd = key;
+                    series.name = heatingDao.getMeasurePlaceByRefCd(key).get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.name);
+                    return series;
+                });
+                Data data = new Data();
+                data.x = tuple.get(LogDao._tlog.timestamp);
+                if (dataLastDate.before(data.x)) {
+                    dataLastDate = data.x;
+                }
+                data.y = new BigDecimal(tuple.get(LogDao._tlog.value).toString()).setScale(1, RoundingMode.HALF_UP).doubleValue();
+                currSeries.data.add(data);
+            }
+            tempResult.lastDate = dataLastDate;
+            tempResult.series = seriesMap.values();
+        });
         return Response.ok(new GsonBuilder().setDateFormat("MM-dd-yyyy HH:mm:ss z").create().toJson(tempResult)).build();
     }
 
@@ -136,7 +146,7 @@ public class TempWebService {
     @Path("/measurePlace")
     @Produces(MediaType.APPLICATION_JSON)
     public Response measurePlace() {
-        List<Tuple> measurePlaces = new HeatingDao().listMeasurePlaces();
+        List<Tuple> measurePlaces = Db.applyDao(new HeatingDao(), HeatingDao::listMeasurePlaces);
         List<MeasurePlace> result = Lists.newArrayList();
         for (Tuple tuple : measurePlaces) {
             MeasurePlace data = new MeasurePlace();
@@ -152,7 +162,7 @@ public class TempWebService {
     @Path("/freeDeviceIds")
     @Produces(MediaType.APPLICATION_JSON)
     public Response freeDeviceIds() {
-        List<String> unassignedDeviceIds = new LogDao().listUnassignedDeviceIds();
+        List<String> unassignedDeviceIds = Db.applyDao(new LogDao(), LogDao::listUnassignedDeviceIds);
         return Response.ok(new Gson().toJson(unassignedDeviceIds)).build();
     }
 
@@ -163,8 +173,12 @@ public class TempWebService {
     public Response saveMeasurePlace(String payload) {
         MeasurePlace measurePlace = new Gson().fromJson(payload, MeasurePlace.class);
         String refCd = getRefCd(measurePlace.name);
-        new HeatingDao().saveMeasurePlace(measurePlace.name, refCd, measurePlace.deviceId);
-        new LogDao().updateLogs(measurePlace.deviceId, refCd);
+        Db.acceptDao(new HeatingDao(), heatingDao -> {
+            heatingDao.saveMeasurePlace(measurePlace.name, refCd, measurePlace.deviceId);
+            LogDao logDao = new LogDao();
+            logDao.setConnection(heatingDao.getConnection());
+            logDao.updateLogs(measurePlace.deviceId, refCd);
+        });
         return Response.ok().build();
     }
 
@@ -174,8 +188,12 @@ public class TempWebService {
     @Produces(MediaType.APPLICATION_JSON)
     public Response editMeasurePlace(@PathParam("refCd") String refCd, String payload) {
         MeasurePlace measurePlace = new Gson().fromJson(payload, MeasurePlace.class);
-        new HeatingDao().updateMeasurePlace(measurePlace.name, measurePlace.deviceId, refCd);
-        new LogDao().updateLogs(measurePlace.deviceId, refCd);
+        Db.acceptDao(new HeatingDao(), heatingDao -> {
+            heatingDao.updateMeasurePlace(measurePlace.name, measurePlace.deviceId, refCd);
+            LogDao logDao = new LogDao();
+            logDao.setConnection(heatingDao.getConnection());
+            logDao.updateLogs(measurePlace.deviceId, refCd);
+        });
         return Response.ok().build();
     }
 
@@ -184,7 +202,7 @@ public class TempWebService {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response deleteMeasurePlace(@PathParam("refCd") String refCd) {
-        new HeatingDao().deleteMeasurePlace(refCd);
+        Db.acceptDao(new HeatingDao(), dao->dao.deleteMeasurePlace(refCd));
         return Response.ok().build();
     }
 

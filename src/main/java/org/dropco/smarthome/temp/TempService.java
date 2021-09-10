@@ -9,6 +9,7 @@ import com.pi4j.io.w1.W1Device;
 import com.pi4j.io.w1.W1Master;
 import com.pi4j.temperature.TemperatureScale;
 import org.dropco.smarthome.ServiceMode;
+import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.database.LogDao;
 import org.dropco.smarthome.heating.db.HeatingDao;
 
@@ -22,8 +23,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class TempService implements Runnable {
-    private HeatingDao heatingDao = new HeatingDao();
-    private LogDao logDao = new LogDao();
     private static final Map<String, AtomicDouble> recentTemperatures = new HashMap<>();
     private static final Map<String, List<Consumer<Double>>> subscribers = Maps.newHashMap();
 
@@ -43,7 +42,10 @@ public class TempService implements Runnable {
                             AtomicDouble value = recentTemperatures.computeIfAbsent(deviceId, key -> new AtomicDouble(-999));
                             double oldValue = value.getAndSet(temperature);
                             if (Double.compare(oldValue, temperature) != 0) {
-                                logDao.logTemperature(deviceId, heatingDao.getPlaceRefCd(deviceId), new Date(), temperature);
+                                Db.acceptDao(new LogDao() ,log-> {
+                                    HeatingDao heatingDao = new HeatingDao();
+                                    heatingDao.setConnection(log.getConnection());
+                                    log.logTemperature(deviceId, heatingDao.getPlaceRefCd(deviceId), new Date(), temperature);});
                                 subscribers.computeIfAbsent(deviceId, key -> Lists.newArrayList()).forEach(subscriber -> subscriber.accept(temperature));
                             }
                         }
@@ -65,7 +67,7 @@ public class TempService implements Runnable {
     }
 
     public static double getOutsideTemperature() {
-        return recentTemperatures.getOrDefault(new HeatingDao().getDeviceId(TempRefCode.EXTERNAL_TEMPERATURE_PLACE_REF_CD), new AtomicDouble(-999)).get();
+        return recentTemperatures.getOrDefault(Db.applyDao(new HeatingDao(), dao->dao.getDeviceId(TempRefCode.EXTERNAL_TEMPERATURE_PLACE_REF_CD)), new AtomicDouble(-999)).get();
     }
 
     public static double getTemperature(String deviceId) {

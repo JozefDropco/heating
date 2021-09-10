@@ -8,7 +8,7 @@ import com.querydsl.sql.dml.SQLDeleteClause;
 import com.querydsl.sql.dml.SQLInsertClause;
 import com.querydsl.sql.dml.SQLUpdateClause;
 import com.querydsl.sql.mysql.MySQLQuery;
-import org.dropco.smarthome.database.DBConnection;
+import org.dropco.smarthome.database.Dao;
 import org.dropco.smarthome.database.querydsl.StringSetting;
 import org.dropco.smarthome.heating.dto.SolarHeatingSchedule;
 
@@ -20,9 +20,10 @@ import java.util.List;
 import static org.dropco.smarthome.database.querydsl.SolarHeating.SOLAR_HEATING;
 import static org.dropco.smarthome.database.querydsl.TemperatureMeasurePlace.TEMP_MEASURE_PLACE;
 
-public class HeatingDao {
+public class HeatingDao implements Dao {
 
     public static final MySQLTemplates SQL_TEMPLATES = new MySQLTemplates();
+    private Connection connection;
 
     public String getDeviceId(String placeRefCd) {
         return new MySQLQuery<StringSetting>(getConnection()).select(TEMP_MEASURE_PLACE.devideId)
@@ -47,10 +48,14 @@ public class HeatingDao {
                 .from(TEMP_MEASURE_PLACE).where(TEMP_MEASURE_PLACE.placeRefCd.eq(refCd)).fetchFirst();
     }
 
-    private Connection getConnection() {
-        return DBConnection.getConnection();
+    public Connection getConnection() {
+        return connection;
     }
 
+    @Override
+    public void setConnection(Connection connection) {
+        this.connection = connection;
+    }
 
     public List<Tuple> listMeasurePlaces() {
         return new MySQLQuery<StringSetting>(getConnection()).select(TEMP_MEASURE_PLACE.all())
@@ -98,17 +103,18 @@ public class HeatingDao {
     public void saveHeatingSchedule(SolarHeatingSchedule solarHeatingSchedule) {
         new SQLInsertClause(getConnection(), SQL_TEMPLATES, SOLAR_HEATING)
                 .set(SOLAR_HEATING.fromTime, solarHeatingSchedule.getFromTime())
-                .set(SOLAR_HEATING.day,solarHeatingSchedule.getDay())
+                .set(SOLAR_HEATING.day, solarHeatingSchedule.getDay())
                 .set(SOLAR_HEATING.toTime, solarHeatingSchedule.getToTime())
                 .set(SOLAR_HEATING.threeWayValveStartDiff, solarHeatingSchedule.getThreeWayValveStartDiff())
                 .set(SOLAR_HEATING.threeWayValveStopDiff, solarHeatingSchedule.getThreeWayValveStopDiff())
                 .set(SOLAR_HEATING.boilerBlocked, solarHeatingSchedule.getBoilerBlock())
                 .execute();
     }
+
     public void updateHeatingSchedule(SolarHeatingSchedule solarHeatingSchedule) {
         new SQLUpdateClause(getConnection(), SQL_TEMPLATES, SOLAR_HEATING)
                 .set(SOLAR_HEATING.fromTime, solarHeatingSchedule.getFromTime())
-                .set(SOLAR_HEATING.day,solarHeatingSchedule.getDay())
+                .set(SOLAR_HEATING.day, solarHeatingSchedule.getDay())
                 .set(SOLAR_HEATING.toTime, solarHeatingSchedule.getToTime())
                 .set(SOLAR_HEATING.threeWayValveStartDiff, solarHeatingSchedule.getThreeWayValveStartDiff())
                 .set(SOLAR_HEATING.threeWayValveStopDiff, solarHeatingSchedule.getThreeWayValveStopDiff())

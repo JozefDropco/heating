@@ -3,9 +3,9 @@ package org.dropco.smarthome.stats;
 import com.pi4j.io.gpio.GpioFactory;
 import com.pi4j.io.gpio.GpioPinDigital;
 import com.pi4j.io.gpio.PinState;
-import com.pi4j.io.gpio.event.GpioPinDigitalStateChangeEvent;
 import com.pi4j.io.gpio.event.GpioPinListenerDigital;
 import org.dropco.smarthome.ServiceMode;
+import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.gpioextension.DelayedGpioPinListener;
 import org.dropco.smarthome.temp.TempService;
@@ -24,15 +24,21 @@ import java.util.logging.Logger;
 public class StatsCollector {
     private static final StatsCollector instance = new StatsCollector();
 
-    private StatsDao statsDao = new StatsDao();
     private Map<String, Long> lastIdMap = Collections.synchronizedMap(new HashMap<>());
     private SimpleDateFormat format = new SimpleDateFormat("dd. MM. yyyy HH:mm:ss z");
 
-    public void start(SettingsDao settingsDao) throws ParseException {
-        statsDao.markAllFinished(format.parse(settingsDao.getString(StatsRefCode.LAST_HEARTBEAT)));
+    public void start(SettingsDao settingsDao) {
+        Db.acceptDao(new StatsDao(), statsDao -> {
+            try {
+                statsDao.markAllFinished(format.parse(settingsDao.getString(StatsRefCode.LAST_HEARTBEAT)));
+            } catch (ParseException e) {
+                Logger.getLogger(TempService.class.getName()).log(Level.FINE, "Last Heartbeat not parsable. setting finished to current date", e);
+                statsDao.markAllFinished(new Date());
+            }
+        });
         GpioFactory.getExecutorServiceFactory().getScheduledExecutorService().scheduleAtFixedRate(() -> {
             try {
-                settingsDao.setString(StatsRefCode.LAST_HEARTBEAT, format.format(new Date()));
+                Db.acceptDao(new SettingsDao(), dao -> dao.setString(StatsRefCode.LAST_HEARTBEAT, format.format(new Date())));
             } catch (RuntimeException e) {
                 Logger.getLogger(TempService.class.getName()).log(Level.FINE, "Stats collector service not working", e);
             }
@@ -85,15 +91,18 @@ public class StatsCollector {
             if (name.length() > 100) {
                 name = name.substring(0, 99);
             }
-            long id = statsDao.addEntry(name, new Date());
-            Long prevId = lastIdMap.put(name, id);
-            if (prevId != null) {
-                statsDao.finishEntry(prevId, new Date());
-            }
+            String finalName = name;
+            Db.acceptDao(new StatsDao(), statsDao -> {
+                long id = statsDao.addEntry(finalName, new Date());
+                Long prevId = lastIdMap.put(finalName, id);
+                if (prevId != null) {
+                    statsDao.finishEntry(prevId, new Date());
+                }
+            });
         } else {
             Long previousId = lastIdMap.remove(name);
             if (previousId != null) {
-                statsDao.finishEntry(previousId, new Date());
+                Db.acceptDao(new StatsDao(), statsDao -> statsDao.finishEntry(previousId, new Date()));
             }
         }
     }

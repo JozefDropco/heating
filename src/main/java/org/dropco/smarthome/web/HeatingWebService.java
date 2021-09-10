@@ -5,6 +5,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
+import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.heating.FireplaceCircularPump;
 import org.dropco.smarthome.heating.db.HeatingDao;
 import org.dropco.smarthome.heating.dto.SolarHeatingSchedule;
@@ -24,6 +25,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalQueries;
+import java.util.List;
 import java.util.logging.Logger;
 
 @Path("/ws/heating")
@@ -73,21 +75,22 @@ public class HeatingWebService {
     @Path("/query/forDay/{ID}")
     @Produces(MediaType.APPLICATION_JSON)
     public Response forDay(@PathParam("ID") int day) throws ParseException {
-        return Response.ok(GSON.toJson(new HeatingDao().getScheduleForDay(day))).build();
+        List<SolarHeatingSchedule> heatingSchedules = Db.applyDao(new HeatingDao(), dao -> dao.getScheduleForDay(day));
+        return Response.ok(GSON.toJson(heatingSchedules)).build();
     }
 
     @PUT
     @Path("/cmd/update/{ID}")
     public Response create(@PathParam("ID")int id, String payload){
         SolarHeatingSchedule solarHeatingSchedule = GSON.fromJson(payload, SolarHeatingSchedule.class);
-        new HeatingDao().updateHeatingSchedule(solarHeatingSchedule);
+        Db.acceptDao(new HeatingDao(),dao->dao.updateHeatingSchedule(solarHeatingSchedule));
         return Response.ok().build();
     }
     @POST
     @Path("/cmd/create")
     public Response create(String payload){
         SolarHeatingSchedule solarHeatingSchedule = GSON.fromJson(payload, SolarHeatingSchedule.class);
-        new HeatingDao().saveHeatingSchedule(solarHeatingSchedule);
+        Db.acceptDao(new HeatingDao(),dao->dao.saveHeatingSchedule(solarHeatingSchedule));
         return Response.ok().build();
     }
 }

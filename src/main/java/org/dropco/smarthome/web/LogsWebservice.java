@@ -2,6 +2,7 @@ package org.dropco.smarthome.web;
 
 import com.google.common.collect.Lists;
 import com.google.gson.GsonBuilder;
+import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.database.LogDao;
 import org.dropco.smarthome.database.querydsl.TemperatureMeasurePlace;
 import org.dropco.smarthome.heating.db.HeatingDao;
@@ -41,7 +42,7 @@ public class LogsWebservice {
         for (Level lvl : Arrays.asList(Level.ALL,Level.CONFIG,Level.FINE,Level.FINER,Level.FINEST,Level.INFO,Level.SEVERE,Level.WARNING,Level.OFF)){
             if (current.intValue()<=lvl.intValue()) levels.add(lvl.getName());
         }
-        List<LogDao.AppMsg> logs = new LogDao().getLogs(from, to, maxCount, levels);
+        List<LogDao.AppMsg> logs = Db.applyDao(new LogDao(), dao-> dao.getLogs(from, to, maxCount, levels));
         return Response.ok(new GsonBuilder().setDateFormat("MM-dd-yyyy HH:mm:ss z").create().toJson(logs)).build();
     }
 

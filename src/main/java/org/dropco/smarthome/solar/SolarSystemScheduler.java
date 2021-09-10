@@ -2,6 +2,7 @@ package org.dropco.smarthome.solar;
 
 import com.google.common.collect.Iterables;
 import com.pi4j.io.gpio.GpioFactory;
+import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.solar.dto.AbsolutePosition;
 import org.dropco.smarthome.solar.dto.DeltaPosition;
 import org.dropco.smarthome.solar.dto.SolarPanelStepRecord;
@@ -17,14 +18,10 @@ import java.util.logging.Logger;
 
 public class SolarSystemScheduler {
     private static Logger logger = Logger.getLogger(SolarSystemScheduler.class.getName());
-    private SolarSystemDao solarSystemDao;
 
-    public SolarSystemScheduler(SolarSystemDao solarSystemDao) {
-        this.solarSystemDao = solarSystemDao;
-    }
 
     public void moveToLastPosition(SafetySolarPanel safetySolarPanel){
-        AbsolutePosition position = solarSystemDao.getNormalPosition();
+        AbsolutePosition position = Db.applyDao(new SolarSystemDao(),SolarSystemDao::getNormalPosition);
         if (position!=null) {
             logger.log(Level.INFO, "Posun na poslednú pozíciu podľa rozvruhu");
             logger.log(Level.FINE, "Posledná pozícia" + position);
@@ -34,7 +31,7 @@ public class SolarSystemScheduler {
     public void schedule(SafetySolarPanel safetySolarPanel) {
         ScheduledExecutorService executorService = GpioFactory.getExecutorServiceFactory().getScheduledExecutorService();
         Calendar calendar = Calendar.getInstance();
-        List<SolarPanelStepRecord> todayRecords = solarSystemDao.getForMonth(calendar).getRemainingSteps();
+        List<SolarPanelStepRecord> todayRecords = Db.applyDao(new SolarSystemDao(), dao-> dao.getForMonth(calendar)).getRemainingSteps();
         for (SolarPanelStepRecord record : todayRecords) {
             long delay = millisRemaining(Calendar.getInstance(), record.getHour(), record.getMinute());
             logger.log(Level.FINE, "Scheduling "+record + " with delay of "+ delay);

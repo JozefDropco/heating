@@ -1,6 +1,7 @@
 package org.dropco.smarthome.solar;
 
 import com.google.common.collect.Lists;
+import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.heating.db.HeatingDao;
 import org.dropco.smarthome.solar.dto.AbsolutePosition;
 import org.dropco.smarthome.solar.dto.DeltaPosition;
@@ -25,8 +26,8 @@ public class SolarTemperatureWatch {
 
     private Supplier<Double> threshold;
 
-    public SolarTemperatureWatch(HeatingDao dao, Supplier<Double> threshold) {
-        this.deviceId = dao.getDeviceId(MEASURE_PLACE_REF_CD);
+    public SolarTemperatureWatch(Supplier<Double> threshold) {
+        this.deviceId = Db.applyDao(new HeatingDao(), dao->dao.getDeviceId(MEASURE_PLACE_REF_CD));
         this.threshold = threshold;
     }
 
