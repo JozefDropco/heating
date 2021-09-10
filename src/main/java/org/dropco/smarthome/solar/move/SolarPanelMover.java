@@ -60,26 +60,16 @@ public class SolarPanelMover implements Runnable {
         LOGGER.fine("Posun o [hor="+diffHorizontal+", vert="+diffVertical+"]");
         if (absHorizontal > 0) {
             boolean movingWest = diffHorizontal < 0;
-            if (movingWest) {
-                setState(EAST_PIN_REF_CD, false);
-                setState(WEST_PIN_REF_CD, true);
-            } else {
-                setState(WEST_PIN_REF_CD, false);
-                setState(EAST_PIN_REF_CD, true);
-            }
+            setState(WEST_PIN_REF_CD, movingWest);
+            setState(EAST_PIN_REF_CD, !movingWest);
             LOGGER.fine("Pridavam kontrolu horizontalneho posunu");
             addHorizontal(currentPositionSupplier.get(), absHorizontal, movingWest);
         }
         int absVertical = abs(diffVertical);
         if (absVertical > 0) {
             boolean movingNorth = diffVertical < 0;
-            if (movingNorth) {
-                setState(SOUTH_PIN_REF_CD, false);
-                setState(NORTH_PIN_REF_CD, true);
-            } else {
-                setState(NORTH_PIN_REF_CD, false);
-                setState(SOUTH_PIN_REF_CD, true);
-            }
+            setState(NORTH_PIN_REF_CD, movingNorth);
+            setState(SOUTH_PIN_REF_CD, !movingNorth);
             LOGGER.fine("Pridavam kontrolu vertikalneho posunu");
             addVertical(currentPositionSupplier.get(), absVertical, movingNorth);
         }
