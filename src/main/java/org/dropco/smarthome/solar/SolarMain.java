@@ -29,8 +29,6 @@ public class SolarMain {
     protected static final String LIGHT_THRESHOLD = "LIGHT_THRESHOLD";
     protected static final String SOLAR_OVERHEATED = "SOLAR_OVERHEATED";
 
-    private static ExtendedGpioProvider extendedGpioProvider;
-
     public static void main(SettingsDao settingsDao) {
         configureServiceMode();
         addToStats();
@@ -40,7 +38,7 @@ public class SolarMain {
         DayLight.setInstance(Main.getInput(DAY_LIGHT_PIN_REF_CD), () -> Db.applyDao(new SettingsDao(),dao-> (int)dao.getLong(LIGHT_THRESHOLD)));
         connectDayLight(settingsDao);
         SolarPanelManager.delaySupplier = () -> Db.applyDao(new SolarSystemDao(), SolarSystemDao::getDelay);
-        SolarPanelMover.setCommandExecutor((key, value) -> Main.getOutput(getExtendedProvider(), ExtendedPin.class, key).setState(value));
+        SolarPanelMover.setCommandExecutor((key, value) -> Main.getOutput(key).setState(value));
         SolarPanelMover.setCurrentPositionSupplier(() -> Db.applyDao(new SolarSystemDao(), SolarSystemDao::getLastKnownPosition));
         SolarPanelMover.addListener(panel -> Db.acceptDao(new SolarSystemDao(), dao -> dao.updateLastKnownPosition(panel)));
         SafetySolarPanel safetySolarPanel = new SafetySolarPanel(position -> Db.acceptDao(new SolarSystemDao(), dao->dao.saveNormalPosition(position)), () -> Db.applyDao(new SolarSystemDao(), dao->dao.getStrongWindPosition()),
@@ -57,10 +55,10 @@ public class SolarMain {
     }
 
     private static void configureServiceMode() {
-        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.EAST_PIN_REF_CD, "Kolektory - Východ"), key -> Main.getOutput(getExtendedProvider(), ExtendedPin.class, key));
-        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.WEST_PIN_REF_CD, "Kolektory - Západ"), key -> Main.getOutput(getExtendedProvider(), ExtendedPin.class, key));
-        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.NORTH_PIN_REF_CD, "Kolektory - Sever"), key -> Main.getOutput(getExtendedProvider(), ExtendedPin.class, key));
-        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.SOUTH_PIN_REF_CD, "Kolektory - Juh"), key -> Main.getOutput(getExtendedProvider(), ExtendedPin.class, key));
+        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.EAST_PIN_REF_CD, "Kolektory - Východ"), key -> Main.getOutput( key));
+        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.WEST_PIN_REF_CD, "Kolektory - Západ"), key -> Main.getOutput( key));
+        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.NORTH_PIN_REF_CD, "Kolektory - Sever"), key -> Main.getOutput(key));
+        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.SOUTH_PIN_REF_CD, "Kolektory - Juh"), key -> Main.getOutput(key));
         ServiceMode.addInput(new NamedPort(STRONG_WIND_PIN_REF_CD, "Silný vietor"), () -> Main.getInput(STRONG_WIND_PIN_REF_CD).isHigh());
         ServiceMode.addInput(new NamedPort("STRONG_WIND_LIMIT", "Silný vietor - limit splnený"), () -> StrongWind.isWindy());
         ServiceMode.addInput(new NamedPort(DAY_LIGHT_PIN_REF_CD, "Jas"), () -> DayLight.inst().getCurrentState());
@@ -72,10 +70,10 @@ public class SolarMain {
     }
 
     private static void addToStats() {
-        StatsCollector.getInstance().collect("Kolektory - Sever", Main.getOutput(getExtendedProvider(), ExtendedPin.class, SolarSystemRefCode.NORTH_PIN_REF_CD));
-        StatsCollector.getInstance().collect("Kolektory - Juh", Main.getOutput(getExtendedProvider(), ExtendedPin.class, SolarSystemRefCode.SOUTH_PIN_REF_CD));
-        StatsCollector.getInstance().collect("Kolektory - Východ", Main.getOutput(getExtendedProvider(), ExtendedPin.class, SolarSystemRefCode.EAST_PIN_REF_CD));
-        StatsCollector.getInstance().collect("Kolektory - Západ", Main.getOutput(getExtendedProvider(), ExtendedPin.class, SolarSystemRefCode.WEST_PIN_REF_CD));
+        StatsCollector.getInstance().collect("Kolektory - Sever", Main.getOutput(SolarSystemRefCode.NORTH_PIN_REF_CD));
+        StatsCollector.getInstance().collect("Kolektory - Juh", Main.getOutput(SolarSystemRefCode.SOUTH_PIN_REF_CD));
+        StatsCollector.getInstance().collect("Kolektory - Východ", Main.getOutput ( SolarSystemRefCode.EAST_PIN_REF_CD));
+        StatsCollector.getInstance().collect("Kolektory - Západ", Main.getOutput(SolarSystemRefCode.WEST_PIN_REF_CD));
     }
 
     private static void connectDayLight(SettingsDao settingsDao) {
@@ -89,18 +87,5 @@ public class SolarMain {
         if (!modifiedAfter) dayLight = false;
         DayLight.inst().connect(dayLight);
     }
-
-
-    static ExtendedGpioProvider getExtendedProvider() {
-        if (extendedGpioProvider == null) {
-            GpioPinDigitalOutput dataOutPin = Main.getOutput(EXTEND_DATA_OUT_PIN);
-            GpioPinDigitalOutput clockPin = Main.getOutput(EXTEND_CLOCK_PIN);
-            GpioPinDigitalOutput gatePin = Main.getOutput(EXTEND_GATE_PIN);
-            extendedGpioProvider = new ExtendedGpioProvider(gpio, dataOutPin, clockPin, gatePin);
-        }
-        //reload if needed
-        return extendedGpioProvider;
-    }
-
 
 }
