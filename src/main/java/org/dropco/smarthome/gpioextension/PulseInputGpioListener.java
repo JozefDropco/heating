@@ -16,12 +16,10 @@ public abstract class PulseInputGpioListener implements GpioPinListenerDigital {
     private long delayedShutdown;
     private AtomicReference<ScheduledFuture> inWaitMode = new AtomicReference<>();
     private AtomicLong counter = new AtomicLong();
-    private GpioPinDigital sourcePin;
 
     public PulseInputGpioListener(PinState logicalHighState, long delayedShutdown, GpioPinDigital sourcePin) {
         this.logicalHighState = logicalHighState;
         this.delayedShutdown = delayedShutdown;
-        this.sourcePin = sourcePin;
         if (sourcePin.getState() == logicalHighState) {
             delayedShutdown(counter.incrementAndGet());
         }
