@@ -1,4 +1,4 @@
-package org.dropco.smarthome.solar.move;
+package org.dropco.smarthome.heating.solar.move;
 
 import com.google.common.collect.Lists;
 import com.pi4j.io.gpio.GpioPinDigitalInput;

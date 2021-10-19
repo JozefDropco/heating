@@ -8,7 +8,7 @@ import org.dropco.smarthome.dto.NamedPort;
 import org.dropco.smarthome.heating.HeatingMain;
 import org.dropco.smarthome.microservice.RainSensor;
 import org.dropco.smarthome.microservice.WaterPumpFeedback;
-import org.dropco.smarthome.solar.SolarMain;
+import org.dropco.smarthome.heating.solar.SolarMain;
 import org.dropco.smarthome.stats.StatsCollector;
 import org.dropco.smarthome.temp.TempService;
 import org.dropco.smarthome.watering.WateringMain;
@@ -46,7 +46,6 @@ public class Main {
                 HeatingMain.start(settingsDao);
             }
             if (INPUTS.contains("--solar")) {
-                SolarMain.main(settingsDao);
             }
 
         });

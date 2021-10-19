@@ -1,17 +1,13 @@
 package org.dropco.smarthome.heating.solar;
 
-import com.pi4j.io.gpio.PinState;
 import org.dropco.smarthome.Main;
 import org.dropco.smarthome.ServiceMode;
-import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.dto.NamedPort;
-import org.dropco.smarthome.heating.db.HeatingDao;
-import org.dropco.smarthome.solar.move.HorizontalMoveFeedback;
-import org.dropco.smarthome.solar.move.VerticalMoveFeedback;
+import org.dropco.smarthome.heating.solar.move.HorizontalMoveFeedback;
+import org.dropco.smarthome.heating.solar.move.VerticalMoveFeedback;
 import org.dropco.smarthome.stats.StatsCollector;
 
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 import static org.dropco.smarthome.heating.solar.BoilerBlocker.BOILER_BLOCK_PIN;
 import static org.dropco.smarthome.heating.solar.SolarCircularPump.CIRCULAR_PUMP_PORT;

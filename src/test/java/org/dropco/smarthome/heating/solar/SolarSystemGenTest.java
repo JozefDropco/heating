@@ -1,4 +1,4 @@
-package org.dropco.smarthome.solar;
+package org.dropco.smarthome.heating.solar;
 
 import com.google.common.collect.HashBasedTable;
 import com.google.common.collect.Lists;

@@ -5,11 +5,10 @@ import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import org.dropco.smarthome.ServiceMode;
 import org.dropco.smarthome.database.Db;
-import org.dropco.smarthome.database.SettingsDao;
-import org.dropco.smarthome.solar.*;
-import org.dropco.smarthome.solar.dto.*;
-import org.dropco.smarthome.solar.move.HorizontalMoveFeedback;
-import org.dropco.smarthome.solar.move.VerticalMoveFeedback;
+import org.dropco.smarthome.heating.solar.*;
+import org.dropco.smarthome.heating.solar.dto.*;
+import org.dropco.smarthome.heating.solar.move.HorizontalMoveFeedback;
+import org.dropco.smarthome.heating.solar.move.VerticalMoveFeedback;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;

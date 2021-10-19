@@ -1,9 +1,9 @@
-package org.dropco.smarthome.solar;
+package org.dropco.smarthome.heating.solar;
 
 import com.pi4j.io.gpio.GpioPinDigitalInput;
 import com.pi4j.io.gpio.PinState;
 import org.dropco.smarthome.gpioextension.DelayedGpioPinListener;
-import org.dropco.smarthome.solar.move.SafetySolarPanel;
+import org.dropco.smarthome.heating.solar.move.SafetySolarPanel;
 import org.dropco.smarthome.stats.StatsCollector;
 
 import java.util.concurrent.atomic.AtomicBoolean;

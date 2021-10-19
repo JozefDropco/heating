@@ -1,11 +1,11 @@
-package org.dropco.smarthome.solar.move;
+package org.dropco.smarthome.heating.solar.move;
 
 import com.google.common.collect.ImmutableMap;
 import org.dropco.smarthome.gpioextension.RemovableGpioPinListenerDigital;
-import org.dropco.smarthome.solar.dto.AbsolutePosition;
-import org.dropco.smarthome.solar.dto.DeltaPosition;
-import org.dropco.smarthome.solar.dto.Position;
-import org.dropco.smarthome.solar.dto.PositionProcessor;
+import org.dropco.smarthome.heating.solar.dto.AbsolutePosition;
+import org.dropco.smarthome.heating.solar.dto.DeltaPosition;
+import org.dropco.smarthome.heating.solar.dto.Position;
+import org.dropco.smarthome.heating.solar.dto.PositionProcessor;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,7 +19,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import static java.lang.Math.abs;
-import static org.dropco.smarthome.solar.SolarSystemRefCode.*;
+import static org.dropco.smarthome.heating.solar.SolarSystemRefCode.*;
 
 public class SolarPanelMover implements Runnable {
 

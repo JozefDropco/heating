@@ -1,4 +1,4 @@
-package org.dropco.smarthome.solar;
+package org.dropco.smarthome.heating.solar;
 
 public class SolarSystemRefCode {
     public static final String SOUTH_PIN_REF_CD = "SOLAR_SOUTH";

@@ -1,4 +1,4 @@
-package org.dropco.smarthome.solar.dto;
+package org.dropco.smarthome.heating.solar.dto;
 
 public interface Position {
     void invoke(PositionProcessor processor);

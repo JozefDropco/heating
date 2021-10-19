@@ -7,7 +7,6 @@ import org.dropco.smarthome.ServiceMode;
 import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.heating.db.HeatingDao;
-import org.dropco.smarthome.solar.SolarTemperatureWatch;
 import org.dropco.smarthome.temp.TempService;
 
 import java.util.Collections;
@@ -84,12 +83,12 @@ public class SolarCircularPump implements Runnable {
                 if (state.compareAndSet(false, true)) {
                     if (!ServiceMode.isServiceMode()) {
                         raiseChange(true);
-                        GpioFactory.getExecutorServiceFactory().getScheduledExecutorService().schedule(() -> update.release(), Db.applyDao(new SettingsDao(), dao->dao.getLong(CIRCULAR_PUMP_OVERHEATED_CYCLE_ON)), TimeUnit.MILLISECONDS);
+                        GpioFactory.getExecutorServiceFactory().getScheduledExecutorService().schedule(() -> update.release(), Db.applyDao(new SettingsDao(), dao -> dao.getLong(CIRCULAR_PUMP_OVERHEATED_CYCLE_ON)), TimeUnit.MILLISECONDS);
                     }
                 } else if (state.compareAndSet(true, false)) {
                     if (!ServiceMode.isServiceMode()) {
                         raiseChange(false);
-                        GpioFactory.getExecutorServiceFactory().getScheduledExecutorService().schedule(() -> update.release(), Db.applyDao(new SettingsDao(), dao->dao.getLong(CIRCULAR_PUMP_OVERHEATED_CYCLE_OFF)), TimeUnit.MILLISECONDS);
+                        GpioFactory.getExecutorServiceFactory().getScheduledExecutorService().schedule(() -> update.release(), Db.applyDao(new SettingsDao(), dao -> dao.getLong(CIRCULAR_PUMP_OVERHEATED_CYCLE_OFF)), TimeUnit.MILLISECONDS);
 
                     }
                 }
@@ -123,15 +122,15 @@ public class SolarCircularPump implements Runnable {
 
 
     String getDeviceId(String devideId) {
-        return Db.applyDao(new HeatingDao(), dao-> dao.getDeviceId(devideId));
+        return Db.applyDao(new HeatingDao(), dao -> dao.getDeviceId(devideId));
     }
 
     double getStopThreshold() {
-        return Db.applyDao(new SettingsDao(), dao->dao.getDouble(CIRCULAR_PUMP_DIFF_STOP_TEMP));
+        return Db.applyDao(new SettingsDao(), dao -> dao.getDouble(CIRCULAR_PUMP_DIFF_STOP_TEMP));
     }
 
     double getStartThreshold() {
-        return Db.applyDao(new SettingsDao(), dao->dao.getDouble(CIRCULAR_PUMP_DIFF_START_TEMP));
+        return Db.applyDao(new SettingsDao(), dao -> dao.getDouble(CIRCULAR_PUMP_DIFF_START_TEMP));
     }
 
     public static void addSubscriber(Consumer<Boolean> subscriber) {

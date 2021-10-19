@@ -1,12 +1,12 @@
-package org.dropco.smarthome.solar;
+package org.dropco.smarthome.heating.solar;
 
 import com.google.common.collect.Lists;
 import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.heating.db.HeatingDao;
-import org.dropco.smarthome.solar.dto.AbsolutePosition;
-import org.dropco.smarthome.solar.dto.DeltaPosition;
-import org.dropco.smarthome.solar.move.SafetySolarPanel;
-import org.dropco.smarthome.solar.move.SolarPanelManager;
+import org.dropco.smarthome.heating.solar.dto.AbsolutePosition;
+import org.dropco.smarthome.heating.solar.dto.DeltaPosition;
+import org.dropco.smarthome.heating.solar.move.SafetySolarPanel;
+import org.dropco.smarthome.heating.solar.move.SolarPanelManager;
 import org.dropco.smarthome.temp.TempService;
 
 import java.util.Collections;

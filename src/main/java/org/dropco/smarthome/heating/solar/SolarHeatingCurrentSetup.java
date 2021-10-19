@@ -2,14 +2,12 @@ package org.dropco.smarthome.heating.solar;
 
 import com.google.common.collect.Lists;
 import com.pi4j.io.gpio.GpioFactory;
-import com.pi4j.io.gpio.PinState;
 import org.dropco.smarthome.Main;
 import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.heating.db.HeatingDao;
 import org.dropco.smarthome.heating.dto.SolarHeatingSchedule;
-import org.dropco.smarthome.solar.move.HorizontalMoveFeedback;
-import org.dropco.smarthome.solar.move.VerticalMoveFeedback;
-import org.dropco.smarthome.stats.StatsCollector;
+import org.dropco.smarthome.heating.solar.move.HorizontalMoveFeedback;
+import org.dropco.smarthome.heating.solar.move.VerticalMoveFeedback;
 
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;

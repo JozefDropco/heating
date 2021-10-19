@@ -1,4 +1,4 @@
-package org.dropco.smarthome.solar;
+package org.dropco.smarthome.heating.solar;
 
 import com.google.common.collect.Lists;
 import com.querydsl.core.Tuple;
@@ -9,7 +9,7 @@ import org.dropco.smarthome.database.Dao;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.database.querydsl.SolarMove;
 import org.dropco.smarthome.dto.LongConstant;
-import org.dropco.smarthome.solar.dto.*;
+import org.dropco.smarthome.heating.solar.dto.*;
 
 import java.sql.Connection;
 import java.util.Calendar;

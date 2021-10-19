@@ -3,9 +3,7 @@ package org.dropco.smarthome.microservice;
 import com.google.common.collect.Lists;
 import com.pi4j.io.gpio.GpioPinDigitalInput;
 import com.pi4j.io.gpio.PinState;
-import com.pi4j.io.gpio.event.GpioPinListenerDigital;
 import org.dropco.smarthome.gpioextension.DelayedGpioPinListener;
-import org.dropco.smarthome.solar.StrongWind;
 import org.dropco.smarthome.stats.StatsCollector;
 
 import java.util.Collections;

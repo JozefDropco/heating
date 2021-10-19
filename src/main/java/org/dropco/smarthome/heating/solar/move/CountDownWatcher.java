@@ -1,4 +1,4 @@
-package org.dropco.smarthome.solar.move;
+package org.dropco.smarthome.heating.solar.move;
 
 import com.pi4j.io.gpio.GpioFactory;
 import org.dropco.smarthome.gpioextension.RemovableGpioPinListenerDigital;

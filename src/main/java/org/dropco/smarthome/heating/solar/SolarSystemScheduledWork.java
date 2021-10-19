@@ -1,10 +1,9 @@
-package org.dropco.smarthome.solar;
+package org.dropco.smarthome.heating.solar;
 
-import org.dropco.smarthome.solar.dto.DeltaPosition;
-import org.dropco.smarthome.solar.dto.Position;
-import org.dropco.smarthome.solar.move.SafetySolarPanel;
+import org.dropco.smarthome.heating.solar.dto.DeltaPosition;
+import org.dropco.smarthome.heating.solar.dto.Position;
+import org.dropco.smarthome.heating.solar.move.SafetySolarPanel;
 
-import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class SolarSystemScheduledWork implements Runnable {

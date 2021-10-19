@@ -1,15 +1,10 @@
-package org.dropco.smarthome.solar.move;
+package org.dropco.smarthome.heating.solar.move;
 
 import org.dropco.smarthome.ServiceMode;
-import org.dropco.smarthome.database.SettingsDao;
-import org.dropco.smarthome.dto.LongConstant;
-import org.dropco.smarthome.solar.DayLight;
-import org.dropco.smarthome.solar.SolarTemperatureWatch;
-import org.dropco.smarthome.solar.StrongWind;
-import org.dropco.smarthome.solar.dto.AbsolutePosition;
-import org.dropco.smarthome.solar.dto.DeltaPosition;
-import org.dropco.smarthome.solar.dto.Position;
-import org.dropco.smarthome.solar.dto.PositionProcessor;
+import org.dropco.smarthome.heating.solar.DayLight;
+import org.dropco.smarthome.heating.solar.SolarTemperatureWatch;
+import org.dropco.smarthome.heating.solar.StrongWind;
+import org.dropco.smarthome.heating.solar.dto.*;
 
 import java.util.function.Consumer;
 import java.util.function.Supplier;
