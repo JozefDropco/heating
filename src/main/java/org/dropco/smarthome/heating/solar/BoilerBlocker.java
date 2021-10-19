@@ -9,7 +9,7 @@ import java.util.logging.Logger;
 
 public class BoilerBlocker implements Runnable {
 
-    static final String BOILER_BLOCK_PIN = "BOILER_BLOCK_PIN";
+    public static final String BOILER_BLOCK_PIN = "BOILER_BLOCK_PIN";
     static final Semaphore update = new Semaphore(0);
     private BiConsumer<String, Boolean> commandExecutor;
     static AtomicBoolean state = new AtomicBoolean(false);

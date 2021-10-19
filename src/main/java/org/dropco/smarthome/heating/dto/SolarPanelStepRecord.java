@@ -1,4 +1,4 @@
-package org.dropco.smarthome.heating.solar.dto;
+package org.dropco.smarthome.heating.dto;
 
 public class SolarPanelStepRecord {
     private int hour;

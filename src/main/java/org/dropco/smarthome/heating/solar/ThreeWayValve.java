@@ -17,7 +17,7 @@ import java.util.function.Consumer;
 import java.util.logging.Logger;
 
 public class ThreeWayValve implements Runnable {
-    protected static final String THREE_WAY_PORT = "THREE_WAY_PORT";
+    public static final String THREE_WAY_PORT = "THREE_WAY_PORT";
     static String THREE_WAY_VALVE_T31_MEASURE_PLACE;
     static String THREE_WAY_VALVE_T2_MEASURE_PLACE;
     static AtomicBoolean state = new AtomicBoolean(false);

@@ -5,8 +5,9 @@ import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import org.dropco.smarthome.ServiceMode;
 import org.dropco.smarthome.database.Db;
+import org.dropco.smarthome.heating.db.SolarSystemDao;
+import org.dropco.smarthome.heating.dto.*;
 import org.dropco.smarthome.heating.solar.*;
-import org.dropco.smarthome.heating.solar.dto.*;
 import org.dropco.smarthome.heating.solar.move.HorizontalMoveFeedback;
 import org.dropco.smarthome.heating.solar.move.VerticalMoveFeedback;
 

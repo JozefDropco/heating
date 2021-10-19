@@ -1,10 +1,8 @@
 package org.dropco.smarthome.heating.solar;
 
-import org.dropco.smarthome.heating.solar.SolarSystemScheduledWork;
-import org.dropco.smarthome.heating.solar.StrongWind;
-import org.dropco.smarthome.heating.solar.dto.AbsolutePosition;
-import org.dropco.smarthome.heating.solar.dto.DeltaPosition;
-import org.dropco.smarthome.heating.solar.dto.SolarPanelStepRecord;
+import org.dropco.smarthome.heating.dto.AbsolutePosition;
+import org.dropco.smarthome.heating.dto.DeltaPosition;
+import org.dropco.smarthome.heating.dto.SolarPanelStepRecord;
 import org.dropco.smarthome.heating.solar.move.SafetySolarPanel;
 import org.dropco.smarthome.heating.solar.move.SolarPanelMover;
 import org.dropco.smarthome.heating.solar.move.SolarPanelManager;

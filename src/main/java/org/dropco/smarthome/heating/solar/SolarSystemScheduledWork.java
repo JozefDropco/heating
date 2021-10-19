@@ -1,7 +1,6 @@
 package org.dropco.smarthome.heating.solar;
 
-import org.dropco.smarthome.heating.solar.dto.DeltaPosition;
-import org.dropco.smarthome.heating.solar.dto.Position;
+import org.dropco.smarthome.heating.dto.Position;
 import org.dropco.smarthome.heating.solar.move.SafetySolarPanel;
 
 import java.util.logging.Logger;

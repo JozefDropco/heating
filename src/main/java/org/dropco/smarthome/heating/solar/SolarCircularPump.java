@@ -21,7 +21,7 @@ import java.util.logging.Logger;
 public class SolarCircularPump implements Runnable {
     protected static final String CIRCULAR_PUMP_DIFF_START_TEMP = "SOLAR_CIRCULAR_PUMP_DIFF_START_TEMP";
     protected static final String CIRCULAR_PUMP_DIFF_STOP_TEMP = "SOLAR_CIRCULAR_PUMP_DIFF_STOP_TEMP";
-    protected static final String CIRCULAR_PUMP_PORT = "SOLAR_CIRCULAR_PUMP_PORT";
+    public static final String CIRCULAR_PUMP_PORT = "SOLAR_CIRCULAR_PUMP_PORT";
     protected static final String CIRCULAR_PUMP_OVERHEATED_CYCLE_ON = "CIRCULAR_PUMP_OVERHEATED_CYCLE_ON";
     protected static final String CIRCULAR_PUMP_OVERHEATED_CYCLE_OFF = "CIRCULAR_PUMP_OVERHEATED_CYCLE_OFF";
 

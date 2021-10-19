@@ -2,10 +2,10 @@ package org.dropco.smarthome.heating.solar.move;
 
 import com.google.common.collect.ImmutableMap;
 import org.dropco.smarthome.gpioextension.RemovableGpioPinListenerDigital;
-import org.dropco.smarthome.heating.solar.dto.AbsolutePosition;
-import org.dropco.smarthome.heating.solar.dto.DeltaPosition;
-import org.dropco.smarthome.heating.solar.dto.Position;
-import org.dropco.smarthome.heating.solar.dto.PositionProcessor;
+import org.dropco.smarthome.heating.dto.AbsolutePosition;
+import org.dropco.smarthome.heating.dto.DeltaPosition;
+import org.dropco.smarthome.heating.dto.Position;
+import org.dropco.smarthome.heating.dto.PositionProcessor;
 
 import java.util.ArrayList;
 import java.util.Collections;

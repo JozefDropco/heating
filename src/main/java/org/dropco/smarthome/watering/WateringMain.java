@@ -5,6 +5,8 @@ import org.dropco.smarthome.ServiceMode;
 import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.dto.NamedPort;
+import org.dropco.smarthome.microservice.RainSensor;
+import org.dropco.smarthome.microservice.WaterPumpFeedback;
 import org.dropco.smarthome.stats.StatsCollector;
 import org.dropco.smarthome.watering.db.WateringDao;
 
@@ -15,19 +17,33 @@ import java.util.function.Supplier;
 public class WateringMain {
 
     public static void main(SettingsDao settingsDao) {
+        WaterPumpFeedback.start(Main.getInput(WaterPumpFeedback.getMicroServicePinKey()));
+        RainSensor.start(Main.getInput(RainSensor.getMicroServicePinKey()));
         WateringThreadManager.thresholdTempValue = settingsDao.getDouble("TEMP_THRESHOLD");
         WateringJob.setCommandExecutor((key, value) -> {
             Main.getOutput(key).setState(value);
         });
         Supplier<Set<NamedPort>> getActiveZones = ()-> Db.applyDao(new WateringDao(), WateringDao::getActiveZones);
         Set<NamedPort> activeZones = getActiveZones.get();
+        configureServiceMode(activeZones);
+        new WateringScheduler().schedule();
+        addToStatsCollector(activeZones);
+        WateringJob.setZones(getActiveZones);
+    }
+
+    private static void addToStatsCollector(Set<NamedPort> activeZones) {
         activeZones.forEach(port-> {
-            ServiceMode.addOutput(port, key -> Main.getOutput(key));
             StatsCollector.getInstance().collect(port.getName(),Main.getOutput(port.getRefCd()));
         });
-        WateringJob.setZones(getActiveZones);
+    }
+
+    private static void configureServiceMode(Set<NamedPort> activeZones) {
+        ServiceMode.addInput(new NamedPort(WaterPumpFeedback.getMicroServicePinKey(), "Stav čerpadla"), () -> Main.getInput(WaterPumpFeedback.getMicroServicePinKey()).getState() == WaterPumpFeedback.LOGICAL_HIGH_STATE);
+        ServiceMode.addInput(new NamedPort(RainSensor.getMicroServicePinKey(), "Dažďový senzor"), () -> Main.getInput(RainSensor.getMicroServicePinKey()).getState() == RainSensor.RAIN_STATE);
         ServiceMode.addSubsriber(state-> {if (state) WateringThreadManager.stop();});
-        new WateringScheduler().schedule();
+        activeZones.forEach(port-> {
+            ServiceMode.addOutput(port, key -> Main.getOutput(key));
+        });
     }
 
 

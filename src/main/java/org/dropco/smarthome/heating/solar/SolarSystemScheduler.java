@@ -2,9 +2,9 @@ package org.dropco.smarthome.heating.solar;
 
 import com.pi4j.io.gpio.GpioFactory;
 import org.dropco.smarthome.database.Db;
-import org.dropco.smarthome.heating.solar.dto.AbsolutePosition;
-import org.dropco.smarthome.heating.solar.dto.DeltaPosition;
-import org.dropco.smarthome.heating.solar.dto.SolarPanelStepRecord;
+import org.dropco.smarthome.heating.db.SolarSystemDao;
+import org.dropco.smarthome.heating.dto.AbsolutePosition;
+import org.dropco.smarthome.heating.dto.SolarPanelStepRecord;
 import org.dropco.smarthome.heating.solar.move.SafetySolarPanel;
 
 import java.util.Calendar;
