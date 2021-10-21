@@ -27,7 +27,8 @@ public class WateringWebService {
     @Produces(MediaType.APPLICATION_JSON)
     @Path("/{id}")
     public Response get(@PathParam("id") Long id) {
-        return Response.ok(new Gson().toJson(new WateringDao().getRecord(id))).build();
+        WateringRecord record = Db.applyDao(new WateringDao(), dao -> dao.getRecord(id));
+        return Response.ok(new Gson().toJson(record)).build();
     }
 
     @PUT
