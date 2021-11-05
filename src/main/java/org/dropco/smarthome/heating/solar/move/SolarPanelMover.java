@@ -1,7 +1,5 @@
 package org.dropco.smarthome.heating.solar.move;
 
-import com.google.common.collect.ImmutableMap;
-import org.dropco.smarthome.gpioextension.RemovableGpioPinListenerDigital;
 import org.dropco.smarthome.heating.dto.AbsolutePosition;
 import org.dropco.smarthome.heating.dto.DeltaPosition;
 import org.dropco.smarthome.heating.dto.Position;
@@ -10,10 +8,12 @@ import org.dropco.smarthome.heating.dto.PositionProcessor;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -21,98 +21,164 @@ import java.util.logging.Logger;
 import static java.lang.Math.abs;
 import static org.dropco.smarthome.heating.solar.SolarSystemRefCode.*;
 
-public class SolarPanelMover implements Runnable {
+public class SolarPanelMover implements Mover {
 
+    private static final Semaphore waitForEnd = new Semaphore(0);
     private static final Logger LOGGER = Logger.getLogger(SolarPanelMover.class.getName());
-    private static final Map<String, String> translationMap = ImmutableMap.of(WEST_PIN_REF_CD,"Západ",
-                                                                              EAST_PIN_REF_CD, "Východ",
-                                                                              NORTH_PIN_REF_CD, "Sever",
-                                                                              SOUTH_PIN_REF_CD, "Juh");
-    private static Supplier<AbsolutePosition> currentPositionSupplier;
-    private static BiConsumer<String, Boolean> commandExecutor;
-    private static List<PositionChangeListener> listeners = Collections.synchronizedList(new ArrayList<>());
+    private Supplier<AbsolutePosition> currentPositionSupplier;
+    private BiConsumer<String, Boolean> commandExecutor;
+    private List<PositionChangeListener> listeners = Collections.synchronizedList(new ArrayList<>());
+    private BlockingQueue<MoveEvent> moveEvents = new ArrayBlockingQueue<>(100);
     private Position position;
+    private AtomicReference<Movement> horizontalMovement = new AtomicReference<>();
+    private AtomicReference<Movement> verticalMovement = new AtomicReference<>();
+    private AtomicReference<PosDiff> remainingDiff = new AtomicReference<>();
+    private VerticalMoveFeedback verticalMoveFeedback;
+    private HorizontalMoveFeedback horizontalMoveFeedback;
+    public Supplier<Long> delaySupplier;
 
-    private int diffHorizontal = 0;
-    private int diffVertical = 0;
-
-    SolarPanelMover(Position position) {
-        this.position = position;
+    public SolarPanelMover(BiConsumer<String, Boolean> commandExecutor, Supplier<AbsolutePosition> currentPositionSupplier, VerticalMoveFeedback verticalMoveFeedback, HorizontalMoveFeedback horizontalMoveFeedback,Supplier<Long> delaySupplier) {
+        this.commandExecutor = commandExecutor;
+        this.currentPositionSupplier = currentPositionSupplier;
+        this.verticalMoveFeedback = verticalMoveFeedback;
+        this.horizontalMoveFeedback = horizontalMoveFeedback;
+        this.delaySupplier = delaySupplier;
     }
+
+
+    @Override
+    public synchronized void moveTo(Position position) {
+        this.position = position;
+        stop();
+        try {
+            Thread.sleep(delaySupplier.get() * 1000);
+        } catch (InterruptedException e) {
+            LOGGER.log(Level.FINE, "Interrupt occurred ", e);
+        }
+        PosDiff diff = calculateDifference();
+        int absHorizontal = abs(diff.hor);
+        LOGGER.fine("Posun o [hor=" + diff.hor + ", vert=" + diff.vert + "]");
+        if (absHorizontal > 0) {
+            Movement horMovement = getHorMovement(diff);
+            horizontalMovement.set(horMovement);
+            setState(horMovement.shutdownFirst, false);
+            setState(horMovement, true);
+        }
+        int absVertical = abs(diff.vert);
+        if (absVertical > 0) {
+            Movement vertMovement = getVertMovement(diff);
+            verticalMovement.set(vertMovement);
+            setState(vertMovement.shutdownFirst, false);
+            setState(vertMovement, true);
+        }
+    }
+
+    public void stop() {
+        if (remainingDiff.get() != null) {
+            if (horizontalMovement.get() != null)
+                setState(horizontalMovement.get(), false);
+            if (verticalMovement.get() != null)
+                setState(verticalMovement.get(), false);
+            waitForEnd.acquireUninterruptibly();
+        }
+    }
+
 
     @Override
     public void run() {
-        position.invoke(new PositionProcessor() {
+        verticalMoveFeedback.addRealTimeTicker(state -> {
+            if (state) moveEvents.add(new MoveEvent(verticalMovement.get(), EventType.TICK));
+        });
+        verticalMoveFeedback.addSubscriber(state -> {
+            if (!state) moveEvents.add(new MoveEvent(verticalMovement.get(), EventType.STOP));
+        });
+        horizontalMoveFeedback.addRealTimeTicker(state -> {
+            if (state) moveEvents.add(new MoveEvent(horizontalMovement.get(), EventType.TICK));
+        });
+        horizontalMoveFeedback.addSubscriber(state -> {
+            if (!state) moveEvents.add(new MoveEvent(horizontalMovement.get(), EventType.STOP));
+        });
+        try {
+            MoveEvent e;
+            Optional<AbsolutePosition> position = Optional.empty();
+            while ((e = moveEvents.take()) != null) {
+                AbsolutePosition currentPosition = position.orElseGet(currentPositionSupplier);
+                position =Optional.of(currentPosition);
+                switch (e.eventType) {
+                    case TICK:
+                        switch (e.movement) {
+                            case WEST:
+                            case EAST:
+                                currentPosition.setHorizontal(currentPosition.getHorizontal() + e.movement.tick);
+                                break;
+                            case NORTH:
+                            case SOUTH:
+                                currentPosition.setVertical(currentPosition.getVertical() + e.movement.tick);
+                                break;
+                        }
+                        break;
+                    case STOP:
+                        switch (e.movement) {
+                            case WEST:
+                            case EAST:
+                                horizontalMovement.set(null);
+                                break;
+                            case NORTH:
+                            case SOUTH:
+                                verticalMovement.set(null);
+                                break;
+                        }
+                        break;
+                }
+                fireUpdate(currentPosition);
+                if (verticalMovement.get()==null && horizontalMovement.get() ==null){
+                    if (waitForEnd.hasQueuedThreads()) waitForEnd.release();
+                }
+            }
+        } catch (InterruptedException e) {
+            LOGGER.log(Level.FINE,"Solar panel preruseny", e  );
+        }
+    }
+
+    private PosDiff calculateDifference() {
+        PosDiff diff = position.invoke(new PositionProcessor<PosDiff>() {
             @Override
-            public void process(AbsolutePosition absPos) {
+            public PosDiff process(AbsolutePosition absPos) {
                 AbsolutePosition currentPosition = currentPositionSupplier.get();
-                diffHorizontal = absPos.getHorizontal() - currentPosition.getHorizontal();
-                diffVertical = absPos.getVertical() - currentPosition.getVertical();
+                LOGGER.log(Level.FINE, "Natáčanie kolektorov na hor=" + absPos.getHorizontal() + ", vert=" + absPos.getVertical());
+                return new PosDiff()
+                        .setHor(absPos.getHorizontal() - currentPosition.getHorizontal())
+                        .setVert(absPos.getVertical() - currentPosition.getVertical());
             }
 
             @Override
-            public void process(DeltaPosition deltaPos) {
-                diffHorizontal = deltaPos.getDeltaHorizontalTicks();
-                diffVertical = deltaPos.getDeltaVerticalTicks();
+            public PosDiff process(DeltaPosition deltaPos) {
+                LOGGER.log(Level.FINE, "Natáčanie kolektorov o hor=" + deltaPos.getDeltaHorizontalTicks() + ", vert=" + deltaPos.getDeltaVerticalTicks());
+                return new PosDiff()
+                        .setHor(deltaPos.getDeltaHorizontalTicks())
+                        .setVert(deltaPos.getDeltaVerticalTicks());
             }
         });
-        int absHorizontal = abs(diffHorizontal);
-        LOGGER.fine("Posun o [hor="+diffHorizontal+", vert="+diffVertical+"]");
-        if (absHorizontal > 0) {
-            boolean movingWest = diffHorizontal < 0;
-            setState(WEST_PIN_REF_CD, movingWest);
-            setState(EAST_PIN_REF_CD, !movingWest);
-            LOGGER.fine("Pridavam kontrolu horizontalneho posunu");
-            addHorizontal(currentPositionSupplier.get(), absHorizontal, movingWest);
-        }
-        int absVertical = abs(diffVertical);
-        if (absVertical > 0) {
-            boolean movingNorth = diffVertical < 0;
-            setState(NORTH_PIN_REF_CD, movingNorth);
-            setState(SOUTH_PIN_REF_CD, !movingNorth);
-            LOGGER.fine("Pridavam kontrolu vertikalneho posunu");
-            addVertical(currentPositionSupplier.get(), absVertical, movingNorth);
-        }
+        return diff;
     }
 
-    private void addVertical(AbsolutePosition currentPosition, int absVertical, boolean movingNorth) {
-        addWatch(absVertical, ticks -> {
-            if (movingNorth) {
-                currentPosition.setVertical(currentPosition.getVertical() - ticks);
-                setState(NORTH_PIN_REF_CD, false);
-            } else {
-                currentPosition.setVertical(currentPosition.getVertical() + ticks);
-                setState(SOUTH_PIN_REF_CD, false);
-            }
-            fireUpdate(currentPosition);
-        }, VerticalMoveFeedback.getInstance()::addRealTimeTicker, VerticalMoveFeedback.getInstance()::addSubscriber,
-                VerticalMoveFeedback::getMoving);
+    private Movement getVertMovement(PosDiff diff) {
+        if (diff.vert < 0) return Movement.NORTH;
+        return Movement.SOUTH;
     }
 
-    private void addHorizontal(AbsolutePosition currentPosition, int absHorizontal, boolean movingWest) {
-        addWatch(absHorizontal, ticks -> {
-            if (movingWest) {
-                currentPosition.setHorizontal(currentPosition.getHorizontal() - ticks);
-                setState(WEST_PIN_REF_CD, false);
-            } else {
-                currentPosition.setHorizontal(currentPosition.getHorizontal() + ticks);
-                setState(EAST_PIN_REF_CD, false);
-            }
-            fireUpdate(currentPosition);
-        }, HorizontalMoveFeedback.getInstance()::addRealTimeTicker, HorizontalMoveFeedback.getInstance()::addSubscriber,
-                HorizontalMoveFeedback::getMoving);
+    private Movement getHorMovement(PosDiff diff) {
+        if (diff.hor < 0) return Movement.WEST;
+        return Movement.EAST;
     }
 
-   void addWatch(int ticks, Consumer<Integer> onceFinished, Function<Consumer<Boolean>, RemovableGpioPinListenerDigital> addRealTimeTicker, Consumer<BiConsumer<Supplier<Boolean>,Boolean>> addMoveListener, Supplier<Boolean> isMoving) {
-        new CountDownWatcher(ticks).start(onceFinished, addRealTimeTicker, addMoveListener,isMoving);
-    }
 
-    void setState(String pinRefCd, boolean state) {
+    void setState(Movement movement, boolean state) {
         if (state)
-            LOGGER.log(Level.INFO, "Natáčam na " + translationMap.get(pinRefCd) + ".");
+            LOGGER.log(Level.INFO, "Natáčam na " + movement.name + ".");
         else
-            LOGGER.log(Level.INFO, "Zastavujem otáčanie na " + translationMap.get(pinRefCd) + ".");
-        commandExecutor.accept(pinRefCd, state);
+            LOGGER.log(Level.INFO, "Zastavujem otáčanie na " + movement.name + ".");
+        commandExecutor.accept(movement.pinRefCd, state);
     }
 
     private void fireUpdate(AbsolutePosition currentPosition) {
@@ -120,16 +186,64 @@ public class SolarPanelMover implements Runnable {
             listener.onUpdate(currentPosition);
     }
 
-    public static void addListener(PositionChangeListener listener) {
+    public void addListener(PositionChangeListener listener) {
         listeners.add(listener);
     }
 
-    public static void setCurrentPositionSupplier(Supplier<AbsolutePosition> currentPositionSupplier) {
-        SolarPanelMover.currentPositionSupplier = currentPositionSupplier;
+
+    private static class PosDiff {
+        int hor;
+        int vert;
+
+        public PosDiff setHor(int hor) {
+            this.hor = hor;
+            return this;
+        }
+
+        public PosDiff setVert(int vert) {
+            this.vert = vert;
+            return this;
+        }
     }
 
-    public static void setCommandExecutor(BiConsumer<String, Boolean> commandExecutor) {
-        SolarPanelMover.commandExecutor = commandExecutor;
+
+    private enum Movement {
+        SOUTH(SOUTH_PIN_REF_CD, 1, "Juh"),
+        NORTH(NORTH_PIN_REF_CD, -1, "Sever"),
+        WEST(WEST_PIN_REF_CD, -1, "Západ"),
+        EAST(EAST_PIN_REF_CD, 1, "Východ");
+
+        private final String pinRefCd;
+        private int tick;
+        private final String name;
+        private Movement shutdownFirst;
+
+        static {
+            SOUTH.shutdownFirst = NORTH;
+            NORTH.shutdownFirst = SOUTH;
+            WEST.shutdownFirst = EAST;
+            EAST.shutdownFirst = WEST;
+        }
+
+        Movement(String pinRefCd, int tick, String name) {
+            this.pinRefCd = pinRefCd;
+            this.tick = tick;
+            this.name = name;
+        }
     }
 
+    private static enum EventType {
+        TICK,
+        STOP;
+    }
+
+    private static class MoveEvent {
+        private Movement movement;
+        private EventType eventType;
+
+        private MoveEvent(Movement movement, EventType eventType) {
+            this.movement = movement;
+            this.eventType = eventType;
+        }
+    }
 }

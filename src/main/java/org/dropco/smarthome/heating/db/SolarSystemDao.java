@@ -83,17 +83,19 @@ public class SolarSystemDao implements Dao {
             SolarPanelStepRecord current = toRecord(tuple, schedule);
             if (isApplicable(calendar, current)) schedule.getRemainingSteps().add(current);
             else {
-                current.getPosition().invoke(new PositionProcessor() {
+                current.getPosition().invoke(new PositionProcessor<Void>() {
                     @Override
-                    public void process(AbsolutePosition absPos) {
+                    public Void process(AbsolutePosition absPos) {
                         schedule.setCurrentNormalPosition(absPos);
+                        return null;
                     }
 
                     @Override
-                    public void process(DeltaPosition deltaPos) {
+                    public Void process(DeltaPosition deltaPos) {
                         AbsolutePosition currentNormalPosition = schedule.getCurrentNormalPosition();
                         currentNormalPosition.setVertical(currentNormalPosition.getVertical() + deltaPos.getDeltaVerticalTicks());
                         currentNormalPosition.setHorizontal(currentNormalPosition.getHorizontal() + deltaPos.getDeltaHorizontalTicks());
+                        return null;
                     }
                 });
             }

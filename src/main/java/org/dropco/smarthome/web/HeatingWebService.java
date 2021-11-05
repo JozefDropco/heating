@@ -6,14 +6,14 @@ import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import org.dropco.smarthome.database.Db;
-import org.dropco.smarthome.heating.FireplaceCircularPump;
+import org.dropco.smarthome.heating.pump.FireplaceCircularPump;
 import org.dropco.smarthome.heating.db.HeatingDao;
 import org.dropco.smarthome.heating.dto.SolarHeatingSchedule;
 import org.dropco.smarthome.heating.heater.Boiler;
-import org.dropco.smarthome.heating.heater.HeaterCircularPump;
+import org.dropco.smarthome.heating.pump.HeaterCircularPump;
 import org.dropco.smarthome.heating.heater.Flame;
-import org.dropco.smarthome.heating.solar.BoilerBlocker;
-import org.dropco.smarthome.heating.solar.SolarCircularPump;
+import org.dropco.smarthome.heating.heater.BoilerBlocker;
+import org.dropco.smarthome.heating.pump.SolarCircularPump;
 import org.dropco.smarthome.heating.solar.ThreeWayValve;
 
 import javax.ws.rs.*;

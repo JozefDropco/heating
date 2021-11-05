@@ -4,6 +4,7 @@ import com.google.common.collect.Lists;
 import com.pi4j.io.gpio.GpioPinDigitalInput;
 import com.pi4j.io.gpio.PinState;
 import com.pi4j.io.gpio.event.GpioPinDigitalStateChangeEvent;
+import com.pi4j.io.gpio.event.GpioPinListenerDigital;
 import org.dropco.smarthome.gpioextension.PulseInputGpioListener;
 import org.dropco.smarthome.gpioextension.RemovableGpioPinListenerDigital;
 
@@ -17,47 +18,28 @@ import java.util.function.Supplier;
 public class VerticalMoveFeedback {
     private static final AtomicBoolean moving = new AtomicBoolean(false);
     private static final PinState LOGICAL_HIGH_STATE = PinState.LOW;
-    private GpioPinDigitalInput input;
-    private final List<BiConsumer<Supplier<Boolean>,Boolean>> movingSubscribers = Collections.synchronizedList(Lists.newArrayList());
-    private static final VerticalMoveFeedback instance = new VerticalMoveFeedback();
+    private final List<Consumer<Boolean>> movingSubscribers = Collections.synchronizedList(Lists.newArrayList());
+    private final List<Consumer<Boolean>> realTimeSubcribers = Collections.synchronizedList(Lists.newArrayList());
 
-    public void start() {
+    public void start(GpioPinDigitalInput input) {
         input.addListener(new PulseInputGpioListener(LOGICAL_HIGH_STATE, 3000, input) {
             @Override
             public void handleStateChange(boolean state) {
                 if (state) {
                     if (moving.compareAndSet(false, state)) {
-                        Lists.newArrayList(movingSubscribers).forEach(sub -> sub.accept(()-> movingSubscribers.remove(sub),state));
+                        Lists.newArrayList(movingSubscribers).forEach(sub -> sub.accept(state));
                     }
                 } else {
                     if (moving.compareAndSet(true, state)) {
-                        Lists.newArrayList(movingSubscribers).forEach(sub -> sub.accept(()-> movingSubscribers.remove(sub),state));
+                        Lists.newArrayList(movingSubscribers).forEach(sub -> sub.accept(state));
                     }
                 }
             }
         });
+        input.addListener((GpioPinListenerDigital) event -> Lists.newArrayList(realTimeSubcribers).forEach(sub -> sub.accept(event.getState() == LOGICAL_HIGH_STATE)));
+
     }
 
-    /***
-     * Gets the instance
-     * @return
-     */
-    public static VerticalMoveFeedback getInstance() {
-        return instance;
-    }
-
-    public VerticalMoveFeedback setInput(GpioPinDigitalInput input) {
-        this.input = input;
-        return this;
-    }
-
-    /***
-     * Gets the input
-     * @return
-     */
-    public GpioPinDigitalInput getInput() {
-        return input;
-    }
 
     /***
      * Gets the moving
@@ -68,18 +50,10 @@ public class VerticalMoveFeedback {
     }
 
 
-    public void addSubscriber(BiConsumer<Supplier<Boolean>,Boolean> consumer) {
+    public void addSubscriber(Consumer<Boolean> consumer) {
         movingSubscribers.add(consumer);
     }
 
-    public RemovableGpioPinListenerDigital addRealTimeTicker(Consumer<Boolean> consumer) {
-        RemovableGpioPinListenerDigital listener = new RemovableGpioPinListenerDigital(input) {
-            @Override
-            public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent event) {
-                consumer.accept(event.getState() == LOGICAL_HIGH_STATE);
-            }
-        };
-        input.addListener(listener);
-        return listener;
-    }
+    public void addRealTimeTicker(Consumer<Boolean> consumer) {
+        realTimeSubcribers.add(consumer);    }
 }

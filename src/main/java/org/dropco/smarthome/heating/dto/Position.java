@@ -1,5 +1,5 @@
 package org.dropco.smarthome.heating.dto;
 
 public interface Position {
-    void invoke(PositionProcessor processor);
+    <T> T invoke(PositionProcessor<T> processor);
 }

@@ -1,17 +1,7 @@
-package org.dropco.smarthome.heating.solar;
+package org.dropco.smarthome.heating.pump;
 
-import org.dropco.smarthome.database.SettingsDao;
-import org.dropco.smarthome.heating.solar.BoilerBlocker;
-import org.dropco.smarthome.heating.solar.SolarCircularPump;
-import org.dropco.smarthome.heating.solar.ThreeWayValve;
 import org.junit.Ignore;
-import org.junit.Test;
 
-import java.util.Calendar;
-import java.util.Date;
-import java.util.function.BiConsumer;
-
-import static org.mockito.Mockito.*;
 //TODO:FIX
 @Ignore
 public class BoilerBlockerTest {

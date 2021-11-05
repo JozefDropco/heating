@@ -1,157 +1,209 @@
 package org.dropco.smarthome.heating.solar.move;
 
 import com.google.common.collect.Lists;
-import org.dropco.smarthome.gpioextension.RemovableGpioPinListenerDigital;
+import org.dropco.smarthome.MainTest;
+import org.dropco.smarthome.TickerPin;
 import org.dropco.smarthome.heating.dto.AbsolutePosition;
 import org.dropco.smarthome.heating.solar.SolarSystemRefCode;
 import org.junit.Assert;
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class SolarPanelMoverTest {
 
+
+    @BeforeClass
+    public static void initOnce() throws NoSuchFieldException, IllegalAccessException {
+        MainTest.simulate();
+    }
+
+    @Before
+    public void beforeTest() {
+        }
+
     @Test
-    public void moveToSouth() {
+    public void moveToSouth() throws InterruptedException {
+        TickerPin verticalTickPin = new TickerPin(100, 5);
+        TickerPin horizontalTickPin = new TickerPin(100, 5);
+
+        VerticalMoveFeedback verticalMoveFeedback = new VerticalMoveFeedback();
+        verticalMoveFeedback.start(verticalTickPin);
+        HorizontalMoveFeedback horizontalMoveFeedback = new HorizontalMoveFeedback();
+        horizontalMoveFeedback.start(horizontalTickPin);
+
         AbsolutePosition currentPosition = position(0, 0);
-        Set<String> result = new HashSet<>();
-        SolarPanelMover.setCommandExecutor((cmdRefCd, value) -> {
+        List<String> result = Lists.newArrayList();
+        SolarPanelMover mover = new SolarPanelMover((cmdRefCd, value) -> {
             result.add(cmdRefCd + value);
-        });
-
-        SolarPanelManager.delaySupplier=()->1l;
-        SolarPanelMover.setCurrentPositionSupplier(()->currentPosition);
-        List<Integer> sleepTimes = Lists.newArrayList();
-        new SolarPanelMover(new AbsolutePosition(0,5)){
-
+        }, () -> currentPosition, verticalMoveFeedback, horizontalMoveFeedback, () -> 1l);
+        AtomicReference<AbsolutePosition> updatedPosition = new AtomicReference<>();
+        mover.addListener(new PositionChangeListener() {
             @Override
-            void addWatch(int ticks, Consumer<Integer> onceFinished, Function<Consumer<Boolean>, RemovableGpioPinListenerDigital> addRealTimeTicker, Consumer<BiConsumer<Supplier<Boolean>, Boolean>> addMoveListener, Supplier<Boolean> isMoving) {
-                sleepTimes.add(ticks);
-                onceFinished.accept(ticks);
+            public void onUpdate(AbsolutePosition position) {
+                updatedPosition.set(position);
             }
-        }.run();
-        Assert.assertTrue(sleepTimes.contains(5));
-        Assert.assertTrue(result.remove(SolarSystemRefCode.SOUTH_PIN_REF_CD + false));
+        });
+        ExecutorService pool = Executors.newFixedThreadPool(1);
+        pool.submit(mover);
+        mover.moveTo(position(0, 5));
+        verticalTickPin.startTicking();
+        pool.awaitTermination(2, TimeUnit.SECONDS);
+        Assert.assertEquals("We shouldnt move", 0, updatedPosition.get().getHorizontal());
+        Assert.assertEquals("We should move 5 ticks to south", 5, updatedPosition.get().getVertical());
         Assert.assertTrue(result.remove(SolarSystemRefCode.NORTH_PIN_REF_CD + false));
-        Assert.assertTrue(result.remove(SolarSystemRefCode.WEST_PIN_REF_CD + false));
-        Assert.assertTrue(result.remove(SolarSystemRefCode.EAST_PIN_REF_CD + false));
         Assert.assertTrue(result.remove(SolarSystemRefCode.SOUTH_PIN_REF_CD + true));
         Assert.assertTrue(result.isEmpty());
     }
 
+    @Test
+    public void moveToNorth() throws InterruptedException {
+        TickerPin verticalTickPin = new TickerPin(100, 5);
+        TickerPin horizontalTickPin = new TickerPin(100, 5);
 
-    @Test
-    public void moveWest() {
-        AbsolutePosition currentPosition = position(5, 0);
-        Set<String> result = new HashSet<>();
-        SolarPanelMover.setCommandExecutor((cmdRefCd, value) -> {
-            result.add(cmdRefCd + value);
-        });
-        SolarPanelMover.setCurrentPositionSupplier(()->currentPosition);
-        List<Integer> sleepTimes = Lists.newArrayList();
-        new SolarPanelMover(new AbsolutePosition(0,0)){
-            @Override
-            void addWatch(int ticks, Consumer<Integer> onceFinished, Function<Consumer<Boolean>, RemovableGpioPinListenerDigital> addRealTimeTicker, Consumer<BiConsumer<Supplier<Boolean>, Boolean>> addMoveListener, Supplier<Boolean> isMoving) {
-                sleepTimes.add(ticks);
-                onceFinished.accept(ticks);
-            }
-        }.run();
-        Assert.assertTrue(sleepTimes.contains(5));
-        Assert.assertTrue(result.remove(SolarSystemRefCode.SOUTH_PIN_REF_CD + false));
-        Assert.assertTrue(result.remove(SolarSystemRefCode.NORTH_PIN_REF_CD + false));
-        Assert.assertTrue(result.remove(SolarSystemRefCode.WEST_PIN_REF_CD + false));
-        Assert.assertTrue(result.remove(SolarSystemRefCode.EAST_PIN_REF_CD + false));
-        Assert.assertTrue(result.remove(SolarSystemRefCode.WEST_PIN_REF_CD + true));
-        Assert.assertTrue(result.isEmpty());
-    }
-    @Test
-    public void moveToNorth() {
+        VerticalMoveFeedback verticalMoveFeedback = new VerticalMoveFeedback();
+        verticalMoveFeedback.start(verticalTickPin);
+        HorizontalMoveFeedback horizontalMoveFeedback = new HorizontalMoveFeedback();
+        horizontalMoveFeedback.start(horizontalTickPin);
+
         AbsolutePosition currentPosition = position(0, 5);
-        Set<String> result = new HashSet<>();
-        SolarPanelMover.setCommandExecutor((cmdRefCd, value) -> {
+        List<String> result = Lists.newArrayList();
+        SolarPanelMover mover = new SolarPanelMover((cmdRefCd, value) -> {
             result.add(cmdRefCd + value);
-        });
-
-        SolarPanelManager.delaySupplier=()->1l;
-        SolarPanelMover.setCurrentPositionSupplier(()->currentPosition);
-        List<Integer> sleepTimes = Lists.newArrayList();
-        new SolarPanelMover(new AbsolutePosition(0, 0)){
+        }, () -> currentPosition, verticalMoveFeedback, horizontalMoveFeedback, () -> 1l);
+        AtomicReference<AbsolutePosition> updatedPosition = new AtomicReference<>();
+        mover.addListener(new PositionChangeListener() {
             @Override
-            void addWatch(int ticks, Consumer<Integer> onceFinished, Function<Consumer<Boolean>, RemovableGpioPinListenerDigital> addRealTimeTicker, Consumer<BiConsumer<Supplier<Boolean>, Boolean>> addMoveListener, Supplier<Boolean> isMoving) {
-                sleepTimes.add(ticks);
-                onceFinished.accept(ticks);
+            public void onUpdate(AbsolutePosition position) {
+                updatedPosition.set(position);
             }
-        }.run();
-        Assert.assertTrue(sleepTimes.contains(5));
+        });
+        ExecutorService pool = Executors.newFixedThreadPool(1);
+        pool.submit(mover);
+        mover.moveTo(position(0, 0));
+        verticalTickPin.startTicking();
+        pool.awaitTermination(2, TimeUnit.SECONDS);
+        Assert.assertEquals("We shouldnt move", 0, updatedPosition.get().getHorizontal());
+        Assert.assertEquals("We should move 5 ticks to north", 0, updatedPosition.get().getVertical());
         Assert.assertTrue(result.remove(SolarSystemRefCode.SOUTH_PIN_REF_CD + false));
-        Assert.assertTrue(result.remove(SolarSystemRefCode.NORTH_PIN_REF_CD + false));
-        Assert.assertTrue(result.remove(SolarSystemRefCode.WEST_PIN_REF_CD + false));
-        Assert.assertTrue(result.remove(SolarSystemRefCode.EAST_PIN_REF_CD + false));
         Assert.assertTrue(result.remove(SolarSystemRefCode.NORTH_PIN_REF_CD + true));
         Assert.assertTrue(result.isEmpty());
     }
 
 
+
     @Test
-    public void moveEast() {
-        AbsolutePosition currentPosition = position(0, 0);
-        Set<String> result = new HashSet<>();
-        SolarPanelMover.setCommandExecutor((cmdRefCd, value) -> {
+    public void moveToWest() throws InterruptedException {
+        TickerPin verticalTickPin = new TickerPin(100, 5);
+        TickerPin horizontalTickPin = new TickerPin(100, 5);
+
+        VerticalMoveFeedback verticalMoveFeedback = new VerticalMoveFeedback();
+        verticalMoveFeedback.start(verticalTickPin);
+        HorizontalMoveFeedback horizontalMoveFeedback = new HorizontalMoveFeedback();
+        horizontalMoveFeedback.start(horizontalTickPin);
+
+        AbsolutePosition currentPosition = position(5, 0);
+        List<String> result = Lists.newArrayList();
+        SolarPanelMover mover = new SolarPanelMover((cmdRefCd, value) -> {
             result.add(cmdRefCd + value);
-        });
-        SolarPanelMover.setCurrentPositionSupplier(()->currentPosition);
-        List<Integer> sleepTimes = Lists.newArrayList();
-        new SolarPanelMover(new AbsolutePosition(5,0)){
+        }, () -> currentPosition, verticalMoveFeedback, horizontalMoveFeedback, () -> 1l);
+        AtomicReference<AbsolutePosition> updatedPosition = new AtomicReference<>();
+        mover.addListener(new PositionChangeListener() {
             @Override
-            void addWatch(int ticks, Consumer<Integer> onceFinished, Function<Consumer<Boolean>, RemovableGpioPinListenerDigital> addRealTimeTicker, Consumer<BiConsumer<Supplier<Boolean>, Boolean>> addMoveListener, Supplier<Boolean> isMoving) {
-                sleepTimes.add(ticks);
-                onceFinished.accept(ticks);
+            public void onUpdate(AbsolutePosition position) {
+                updatedPosition.set(position);
             }
-        }.run();
-        Assert.assertTrue(sleepTimes.contains(5));
-        Assert.assertTrue(result.remove(SolarSystemRefCode.SOUTH_PIN_REF_CD + false));
-        Assert.assertTrue(result.remove(SolarSystemRefCode.NORTH_PIN_REF_CD + false));
-        Assert.assertTrue(result.remove(SolarSystemRefCode.WEST_PIN_REF_CD + false));
+        });
+        ExecutorService pool = Executors.newFixedThreadPool(1);
+        pool.submit(mover);
+        mover.moveTo(position(0, 0));
+        horizontalTickPin.startTicking();
+        pool.awaitTermination(2, TimeUnit.SECONDS);
+        Assert.assertEquals("We shouldnt move", 0, updatedPosition.get().getVertical());
+        Assert.assertEquals("We should move 5 ticks to west", 0, updatedPosition.get().getHorizontal());
         Assert.assertTrue(result.remove(SolarSystemRefCode.EAST_PIN_REF_CD + false));
+        Assert.assertTrue(result.remove(SolarSystemRefCode.WEST_PIN_REF_CD + true));
+        Assert.assertTrue(result.isEmpty());
+    }
+
+
+    @Test
+    public void moveToEast() throws InterruptedException {
+        TickerPin verticalTickPin = new TickerPin(100, 5);
+        TickerPin horizontalTickPin = new TickerPin(100, 5);
+
+        VerticalMoveFeedback verticalMoveFeedback = new VerticalMoveFeedback();
+        verticalMoveFeedback.start(verticalTickPin);
+        HorizontalMoveFeedback horizontalMoveFeedback = new HorizontalMoveFeedback();
+        horizontalMoveFeedback.start(horizontalTickPin);
+
+        AbsolutePosition currentPosition = position(0, 0);
+        List<String> result = Lists.newArrayList();
+        SolarPanelMover mover = new SolarPanelMover((cmdRefCd, value) -> {
+            result.add(cmdRefCd + value);
+        }, () -> currentPosition, verticalMoveFeedback, horizontalMoveFeedback, () -> 1l);
+        AtomicReference<AbsolutePosition> updatedPosition = new AtomicReference<>();
+        mover.addListener(new PositionChangeListener() {
+            @Override
+            public void onUpdate(AbsolutePosition position) {
+                updatedPosition.set(position);
+            }
+        });
+        ExecutorService pool = Executors.newFixedThreadPool(1);
+        pool.submit(mover);
+        mover.moveTo(position(5, 0));
+        horizontalTickPin.startTicking();
+        pool.awaitTermination(2, TimeUnit.SECONDS);
+        Assert.assertEquals("We shouldnt move", 0, updatedPosition.get().getVertical());
+        Assert.assertEquals("We should move 5 ticks to east", 5, updatedPosition.get().getHorizontal());
+        Assert.assertTrue(result.remove(SolarSystemRefCode.WEST_PIN_REF_CD + false));
         Assert.assertTrue(result.remove(SolarSystemRefCode.EAST_PIN_REF_CD + true));
         Assert.assertTrue(result.isEmpty());
     }
 
+
+
     @Test
-    public void moveSouthEast() {
+    public void lessTicksThanExpected() throws InterruptedException {
+        TickerPin verticalTickPin = new TickerPin(100, 5);
+        TickerPin horizontalTickPin = new TickerPin(100, 3);
+
+        VerticalMoveFeedback verticalMoveFeedback = new VerticalMoveFeedback();
+        verticalMoveFeedback.start(verticalTickPin);
+        HorizontalMoveFeedback horizontalMoveFeedback = new HorizontalMoveFeedback();
+        horizontalMoveFeedback.start(horizontalTickPin);
+
         AbsolutePosition currentPosition = position(0, 0);
-        Set<String> result = new HashSet<>();
-        SolarPanelMover.setCommandExecutor((cmdRefCd, value) -> {
+        List<String> result = Lists.newArrayList();
+        SolarPanelMover mover = new SolarPanelMover((cmdRefCd, value) -> {
             result.add(cmdRefCd + value);
-        });
-        SolarPanelMover.setCurrentPositionSupplier(()->currentPosition);
-        List<Integer> sleepTimes = Lists.newArrayList();
-        new SolarPanelMover(new AbsolutePosition(280,135)){
+        }, () -> currentPosition, verticalMoveFeedback, horizontalMoveFeedback, () -> 1l);
+        AtomicReference<AbsolutePosition> updatedPosition = new AtomicReference<>();
+        mover.addListener(new PositionChangeListener() {
             @Override
-            void addWatch(int ticks, Consumer<Integer> onceFinished, Function<Consumer<Boolean>, RemovableGpioPinListenerDigital> addRealTimeTicker, Consumer<BiConsumer<Supplier<Boolean>, Boolean>> addMoveListener, Supplier<Boolean> isMoving) {
-                sleepTimes.add(ticks);
-                onceFinished.accept(ticks);
+            public void onUpdate(AbsolutePosition position) {
+                updatedPosition.set(position);
             }
-        }.run();
-        Assert.assertTrue(sleepTimes.contains(135));
-        Assert.assertTrue(sleepTimes.contains(280));
-        Assert.assertTrue(result.remove(SolarSystemRefCode.SOUTH_PIN_REF_CD + false));
-        Assert.assertTrue(result.remove(SolarSystemRefCode.NORTH_PIN_REF_CD + false));
+        });
+        ExecutorService pool = Executors.newFixedThreadPool(1);
+        pool.submit(mover);
+        mover.moveTo(position(5, 0));
+        horizontalTickPin.startTicking();
+        pool.awaitTermination(2, TimeUnit.SECONDS);
+        Assert.assertEquals("We shouldnt move", 0, updatedPosition.get().getVertical());
+        Assert.assertEquals("We should move 5 ticks to east", 3, updatedPosition.get().getHorizontal());
         Assert.assertTrue(result.remove(SolarSystemRefCode.WEST_PIN_REF_CD + false));
-        Assert.assertTrue(result.remove(SolarSystemRefCode.EAST_PIN_REF_CD + false));
         Assert.assertTrue(result.remove(SolarSystemRefCode.EAST_PIN_REF_CD + true));
-        Assert.assertTrue(result.remove(SolarSystemRefCode.SOUTH_PIN_REF_CD + true));
         Assert.assertTrue(result.isEmpty());
     }
-
     private AbsolutePosition position(int horizontalPositionInSeconds, int verticalPositionInSeconds) {
-        AbsolutePosition panelPosition = new AbsolutePosition(horizontalPositionInSeconds,verticalPositionInSeconds);
+        AbsolutePosition panelPosition = new AbsolutePosition(horizontalPositionInSeconds, verticalPositionInSeconds);
         return panelPosition;
     }
 }

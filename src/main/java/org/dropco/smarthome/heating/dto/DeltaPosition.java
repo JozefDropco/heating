@@ -40,7 +40,7 @@ public class DeltaPosition implements Position {
     }
 
     @Override
-    public void invoke(PositionProcessor processor) {
-        processor.process(this);
+    public <T> T invoke(PositionProcessor<T> processor) {
+        return processor.process(this);
     }
 }

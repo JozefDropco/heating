@@ -1,4 +1,4 @@
-package org.dropco.smarthome.heating.solar;
+package org.dropco.smarthome.heating.pump;
 
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AtomicDouble;
@@ -7,6 +7,7 @@ import org.dropco.smarthome.ServiceMode;
 import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.heating.db.HeatingDao;
+import org.dropco.smarthome.heating.solar.ThreeWayValve;
 import org.dropco.smarthome.temp.TempService;
 
 import java.util.Collections;
@@ -39,8 +40,8 @@ public class SolarCircularPump implements Runnable {
 
     public SolarCircularPump(BiConsumer<String, Boolean> commandExecutor) {
         Db.acceptDao(new SettingsDao(), dao -> {
-            T1_MEASURE_PLACE = dao.getString("SOLAR_CIRCULAR_PUMP_T1_MEASURE_PLACE");
-            T2_MEASURE_PLACE = dao.getString("SOLAR_CIRCULAR_PUMP_T2_MEASURE_PLACE");
+            T1_MEASURE_PLACE = dao.getString("T1_MEASURE_PLACE");
+            T2_MEASURE_PLACE = dao.getString("T2_MEASURE_PLACE");
         });
         this.commandExecutor = commandExecutor;
         ServiceMode.addSubsriber(mode -> {
@@ -68,11 +69,11 @@ public class SolarCircularPump implements Runnable {
             LOGGER.fine(T2_MEASURE_PLACE + " teplota je " + value);
             update.release();
         });
-        SolarTemperatureWatch.addSubscriber(value -> {
-            overheated.set(value);
-            LOGGER.fine("Solárny panel je " + (value ? "prehriaty" : "späť v normále"));
-            update.release();
-        });
+//        SolarTemperatureWatch.addSubscriber(value -> {
+//            overheated.set(value);
+//            LOGGER.fine("Solárny panel je " + (value ? "prehriaty" : "späť v normále"));
+//            update.release();
+//        });
         ThreeWayValve.addSubscriber(value -> {
             update.release();
         });

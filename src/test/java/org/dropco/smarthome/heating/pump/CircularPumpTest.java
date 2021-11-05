@@ -1,7 +1,5 @@
-package org.dropco.smarthome.heating.solar;
+package org.dropco.smarthome.heating.pump;
 
-import org.dropco.smarthome.database.SettingsDao;
-import org.dropco.smarthome.heating.solar.SolarCircularPump;
 import org.dropco.smarthome.temp.TempService;
 import org.junit.Before;
 import org.junit.Test;

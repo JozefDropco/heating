@@ -1,4 +1,4 @@
-package org.dropco.smarthome.heating;
+package org.dropco.smarthome.heating.pump;
 
 import com.google.common.collect.Lists;
 import com.pi4j.io.gpio.GpioPinDigitalInput;

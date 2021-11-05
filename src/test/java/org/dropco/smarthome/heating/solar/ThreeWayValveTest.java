@@ -30,7 +30,7 @@ public class ThreeWayValveTest {
 //        doAnswer(mock -> 10.0d).when(valve).getStartThreshold();
 //        doAnswer(mock -> 5.0d).when(valve).getStopThreshold();
 //        doAnswer(mock -> "Ke").when(valve);
-//        doAnswer(mock -> (mock.getArgument(0).equals(ThreeWayValve.THREE_WAY_VALVE_T31_MEASURE_PLACE)) ? "D1" : "D2").when(valve).getDeviceId(any());
+//        doAnswer(mock -> (mock.getArgument(0).equals(ThreeWayValve.T31_MEASURE_PLACE)) ? "D1" : "D2").when(valve).getDeviceId(any());
 //        doAnswer(mock->false).when(valve).isWeekend(anyInt());
 //
 //        TempService.setTemperature("D1",10.0);
@@ -50,7 +50,7 @@ public class ThreeWayValveTest {
 //        doAnswer(mock -> 10.0d).when(valve).getStartThreshold();
 //        doAnswer(mock -> 5.0d).when(valve).getStopThreshold();
 //        doAnswer(mock -> "Ke").when(valve);
-//        doAnswer(mock -> (mock.getArgument(0).equals(ThreeWayValve.THREE_WAY_VALVE_T31_MEASURE_PLACE)) ? "D1" : "D2").when(valve).getDeviceId(any());
+//        doAnswer(mock -> (mock.getArgument(0).equals(ThreeWayValve.T31_MEASURE_PLACE)) ? "D1" : "D2").when(valve).getDeviceId(any());
 //        doAnswer(mock->false).when(valve).isWeekend(anyInt());
 //        TempService.setTemperature("D1",70.0);
 //        TempService.setTemperature("D2",65.0);
@@ -70,7 +70,7 @@ public class ThreeWayValveTest {
 //        doAnswer(mock -> 10.0d).when(valve).getStartThreshold();
 //        doAnswer(mock -> 5.0d).when(valve).getStopThreshold();
 //        doAnswer(mock -> "Ke").when(valve);
-//        doAnswer(mock -> (mock.getArgument(0).equals(ThreeWayValve.THREE_WAY_VALVE_T31_MEASURE_PLACE)) ? "D1" : "D2").when(valve).getDeviceId(any());
+//        doAnswer(mock -> (mock.getArgument(0).equals(ThreeWayValve.T31_MEASURE_PLACE)) ? "D1" : "D2").when(valve).getDeviceId(any());
 //        doAnswer(mock->false).when(valve).isWeekend(anyInt());
 //        TempService.setTemperature("D1",77.0);
 //        TempService.setTemperature("D2",65.0);
@@ -89,7 +89,7 @@ public class ThreeWayValveTest {
 //        doAnswer(mock -> 10.0d).when(valve).getStartThreshold();
 //        doAnswer(mock -> 5.0d).when(valve).getStopThreshold();
 //        doAnswer(mock -> "Ke").when(valve);
-//        doAnswer(mock -> (mock.getArgument(0).equals(ThreeWayValve.THREE_WAY_VALVE_T31_MEASURE_PLACE)) ? "D1" : "D2").when(valve).getDeviceId(any());
+//        doAnswer(mock -> (mock.getArgument(0).equals(ThreeWayValve.T31_MEASURE_PLACE)) ? "D1" : "D2").when(valve).getDeviceId(any());
 //        doAnswer(mock->false).when(valve).isWeekend(anyInt());
 //        TempService.setTemperature("D1",77.0);
 //        TempService.setTemperature("D2",65.0);

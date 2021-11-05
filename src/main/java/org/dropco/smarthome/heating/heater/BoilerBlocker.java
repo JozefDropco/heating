@@ -1,6 +1,9 @@
-package org.dropco.smarthome.heating.solar;
+package org.dropco.smarthome.heating.heater;
 
 import org.dropco.smarthome.ServiceMode;
+import org.dropco.smarthome.heating.pump.SolarCircularPump;
+import org.dropco.smarthome.heating.solar.HeatingConfiguration;
+import org.dropco.smarthome.heating.solar.ThreeWayValve;
 
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -19,7 +22,7 @@ public class BoilerBlocker implements Runnable {
         this.commandExecutor = commandExecutor;
         SolarCircularPump.addSubscriber((state) -> update.release());
         ThreeWayValve.addSubscriber((state) -> update.release());
-        SolarHeatingCurrentSetup.addSubscriber(subs -> update.release());
+        HeatingConfiguration.addSubscriber(subs -> update.release());
     }
 
     @Override
@@ -30,7 +33,7 @@ public class BoilerBlocker implements Runnable {
                     LOGGER.fine("Ohrev nádoby na vodu pomocou soláru, blokujem kotol");
                     commandExecutor.accept(BOILER_BLOCK_PIN, true);
                 } else {
-                    boolean boilerBlock = SolarHeatingCurrentSetup.get().getBoilerBlock();
+                    boolean boilerBlock = HeatingConfiguration.getCurrent().getBoilerBlock();
                     if (state.compareAndSet(!boilerBlock, boilerBlock)) {
                         LOGGER.fine("Ohrev nádoby na vodu " + ((boilerBlock) ? "zablokované" : "povolené"));
                         commandExecutor.accept(BOILER_BLOCK_PIN, boilerBlock);

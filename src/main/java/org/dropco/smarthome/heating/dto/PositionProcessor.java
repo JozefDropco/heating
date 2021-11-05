@@ -1,6 +1,6 @@
 package org.dropco.smarthome.heating.dto;
 
-public interface PositionProcessor {
-    void process(AbsolutePosition absPos);
-    void process(DeltaPosition deltaPos);
+public interface PositionProcessor<T> {
+    T process(AbsolutePosition absPos);
+    T process(DeltaPosition deltaPos);
 }

@@ -7,8 +7,11 @@ import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.dto.NamedPort;
 import org.dropco.smarthome.heating.db.SolarSystemDao;
 import org.dropco.smarthome.heating.heater.Boiler;
+import org.dropco.smarthome.heating.heater.BoilerBlocker;
 import org.dropco.smarthome.heating.heater.Flame;
-import org.dropco.smarthome.heating.heater.HeaterCircularPump;
+import org.dropco.smarthome.heating.pump.FireplaceCircularPump;
+import org.dropco.smarthome.heating.pump.HeaterCircularPump;
+import org.dropco.smarthome.heating.pump.SolarCircularPump;
 import org.dropco.smarthome.heating.solar.*;
 import org.dropco.smarthome.heating.solar.move.*;
 import org.dropco.smarthome.stats.StatsCollector;
@@ -17,24 +20,33 @@ import java.util.Calendar;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
-import static org.dropco.smarthome.heating.heater.HeaterCircularPump.HEATER_CIRCULAR_REF_CD;
-import static org.dropco.smarthome.heating.solar.BoilerBlocker.BOILER_BLOCK_PIN;
-import static org.dropco.smarthome.heating.solar.SolarCircularPump.CIRCULAR_PUMP_PORT;
+import static org.dropco.smarthome.heating.heater.BoilerBlocker.BOILER_BLOCK_PIN;
+import static org.dropco.smarthome.heating.pump.HeaterCircularPump.HEATER_CIRCULAR_REF_CD;
+import static org.dropco.smarthome.heating.pump.SolarCircularPump.CIRCULAR_PUMP_PORT;
 import static org.dropco.smarthome.heating.solar.ThreeWayValve.THREE_WAY_PORT;
 
 public class HeatingMain {
-
+    public static final VerticalMoveFeedback VERTICAL_MOVE_FEEDBACK = new VerticalMoveFeedback();
+    public static final HorizontalMoveFeedback HORIZONTAL_MOVE_FEEDBACK = new HorizontalMoveFeedback();
+    final static SolarPanelMover mover = new SolarPanelMover((key, value) -> Main.getOutput(key).setState(value),
+            () -> Db.applyDao(new SolarSystemDao(), SolarSystemDao::getLastKnownPosition),VERTICAL_MOVE_FEEDBACK,HORIZONTAL_MOVE_FEEDBACK,
+            () -> Db.applyDao(new SolarSystemDao(), SolarSystemDao::getDelay));
     public static final String STRONG_WIND_PIN_REF_CD = "STRONG_WIND_PIN";
     public static final String DAY_LIGHT_PIN_REF_CD = "DAY_LIGHT_PIN";
     protected static final String LIGHT_THRESHOLD = "LIGHT_THRESHOLD";
     protected static final String SOLAR_OVERHEATED = "SOLAR_OVERHEATED";
     private static final String HEATER_BLINK_STOP = "HEATER_BLINK_STOP";
+    private static final String NORTH_SOUTH_MOVE_INDICATOR = "NORTH_SOUTH_MOVE_INDICATOR";
+    private static final String EAST_WEST_MOVE_INDICATOR = "EAST_WEST_MOVE_INDICATOR";
 
     public static void start(SettingsDao settingsDao) {
         BiConsumer<String, Boolean> commandExecutor = (key, value) -> {
             Main.getOutput(key).setState(value);
         };
-        SolarHeatingCurrentSetup.start();
+        VERTICAL_MOVE_FEEDBACK.start(Main.getInput(NORTH_SOUTH_MOVE_INDICATOR));
+        HORIZONTAL_MOVE_FEEDBACK.start(Main.getInput(EAST_WEST_MOVE_INDICATOR));
+        HeatingConfiguration.start();
+        new Thread(mover).start();
         new Thread(new SolarCircularPump(commandExecutor)).start();
         new Thread(new ThreeWayValve(commandExecutor)).start();
         new Thread(new BoilerBlocker(commandExecutor)).start();
@@ -47,25 +59,19 @@ public class HeatingMain {
         addToStats();
 
         ServiceMode.addSubsriber(state -> {
-            if (state) SolarPanelManager.stop();
+            if (state) mover.stop();
         });
-        DayLight.setInstance(Main.getInput(DAY_LIGHT_PIN_REF_CD), () -> Db.applyDao(new SettingsDao(), dao-> (int)dao.getLong(LIGHT_THRESHOLD)));
+        DayLight.setInstance(Main.getInput(DAY_LIGHT_PIN_REF_CD), () -> Db.applyDao(new SettingsDao(), dao -> (int) dao.getLong(LIGHT_THRESHOLD)));
         connectDayLight(settingsDao);
-        SolarPanelManager.delaySupplier = () -> Db.applyDao(new SolarSystemDao(), SolarSystemDao::getDelay);
-        SolarPanelMover.setCommandExecutor((key, value) -> Main.getOutput(key).setState(value));
-        SolarPanelMover.setCurrentPositionSupplier(() -> Db.applyDao(new SolarSystemDao(), SolarSystemDao::getLastKnownPosition));
-        SolarPanelMover.addListener(panel -> Db.acceptDao(new SolarSystemDao(), dao -> dao.updateLastKnownPosition(panel)));
-        SafetySolarPanel safetySolarPanel = new SafetySolarPanel(position -> Db.acceptDao(new SolarSystemDao(), dao->dao.saveNormalPosition(position)), () -> Db.applyDao(new SolarSystemDao(), dao->dao.getStrongWindPosition()),
-                () -> Db.applyDao(new SolarSystemDao(), SolarSystemDao::getLastKnownPosition),
-                () -> Db.applyDao(new SolarSystemDao(), SolarSystemDao::getOverheatedPosition));
-        StrongWind.connect(Main.getInput(STRONG_WIND_PIN_REF_CD), safetySolarPanel);
-        new SolarTemperatureWatch(() ->  Db.applyDao(new SettingsDao(),dao->dao.getDouble(SOLAR_OVERHEATED))).attach(safetySolarPanel);
+        mover.addListener(panel -> Db.acceptDao(new SolarSystemDao(), dao -> dao.updateLastKnownPosition(panel)));
+//        SafetySolarPanel safetySolarPanel = new SafetySolarPanel(mover, position -> Db.acceptDao(new SolarSystemDao(), dao -> dao.saveNormalPosition(position)), () -> Db.applyDao(new SolarSystemDao(), dao -> dao.getStrongWindPosition()),
+//                () -> Db.applyDao(new SolarSystemDao(), SolarSystemDao::getLastKnownPosition),
+//                () -> Db.applyDao(new SolarSystemDao(), SolarSystemDao::getOverheatedPosition));
+//        StrongWind.connect(Main.getInput(STRONG_WIND_PIN_REF_CD));
+//        new SolarTemperatureWatch(() -> Db.applyDao(new SettingsDao(), dao -> dao.getDouble(SOLAR_OVERHEATED))).attach(safetySolarPanel);
         SolarSystemScheduler solarSystemScheduler = new SolarSystemScheduler();
-        solarSystemScheduler.moveToLastPosition(safetySolarPanel);
-        solarSystemScheduler.schedule(safetySolarPanel);
-        DayLight.inst().subscribe(enoughLight -> {
-            if (enoughLight) safetySolarPanel.backToNormal();
-        });
+//        solarSystemScheduler.moveToLastPosition(safetySolarPanel);
+//        solarSystemScheduler.schedule(safetySolarPanel);
 
     }
 
@@ -81,12 +87,12 @@ public class HeatingMain {
     }
 
     private static void configureServiceMode() {
-        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.EAST_PIN_REF_CD, "Kolektory - Východ"), key -> Main.getOutput( key));
-        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.WEST_PIN_REF_CD, "Kolektory - Západ"), key -> Main.getOutput( key));
+        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.EAST_PIN_REF_CD, "Kolektory - Východ"), key -> Main.getOutput(key));
+        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.WEST_PIN_REF_CD, "Kolektory - Západ"), key -> Main.getOutput(key));
         ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.NORTH_PIN_REF_CD, "Kolektory - Sever"), key -> Main.getOutput(key));
         ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.SOUTH_PIN_REF_CD, "Kolektory - Juh"), key -> Main.getOutput(key));
         ServiceMode.addInput(new NamedPort(STRONG_WIND_PIN_REF_CD, "Silný vietor"), () -> Main.getInput(STRONG_WIND_PIN_REF_CD).isHigh());
-        ServiceMode.addInput(new NamedPort("STRONG_WIND_LIMIT", "Silný vietor - limit splnený"), () -> StrongWind.isWindy());
+//        ServiceMode.addInput(new NamedPort("STRONG_WIND_LIMIT", "Silný vietor - limit splnený"), () -> StrongWind.isWindy());
         ServiceMode.addInput(new NamedPort(DAY_LIGHT_PIN_REF_CD, "Jas"), () -> DayLight.inst().getCurrentState());
         ServiceMode.addInput(new NamedPort("DAY_LIGHT_LIMIT", "Jas - limit splnený"), () -> DayLight.inst().enoughLight());
         ServiceMode.getExclusions().put(SolarSystemRefCode.EAST_PIN_REF_CD, SolarSystemRefCode.WEST_PIN_REF_CD);
@@ -105,12 +111,12 @@ public class HeatingMain {
     private static void addToStats() {
         StatsCollector.getInstance().collect("Kolektory - Sever", Main.getOutput(SolarSystemRefCode.NORTH_PIN_REF_CD));
         StatsCollector.getInstance().collect("Kolektory - Juh", Main.getOutput(SolarSystemRefCode.SOUTH_PIN_REF_CD));
-        StatsCollector.getInstance().collect("Kolektory - Východ", Main.getOutput ( SolarSystemRefCode.EAST_PIN_REF_CD));
+        StatsCollector.getInstance().collect("Kolektory - Východ", Main.getOutput(SolarSystemRefCode.EAST_PIN_REF_CD));
         StatsCollector.getInstance().collect("Kolektory - Západ", Main.getOutput(SolarSystemRefCode.WEST_PIN_REF_CD));
-        StatsCollector.getInstance().collect("S-J indikator", true, VerticalMoveFeedback.getInstance()::addRealTimeTicker);
-        StatsCollector.getInstance().collect("V-Z indikator", true, HorizontalMoveFeedback.getInstance()::addRealTimeTicker);
+        StatsCollector.getInstance().collect("S-J indikator", true, VERTICAL_MOVE_FEEDBACK::addRealTimeTicker);
+        StatsCollector.getInstance().collect("V-Z indikator", true, HORIZONTAL_MOVE_FEEDBACK::addRealTimeTicker);
 
-        StatsCollector.getInstance().collect("Kolektory - obehové čerpadlo",Main.getOutput(CIRCULAR_PUMP_PORT));
+        StatsCollector.getInstance().collect("Kolektory - obehové čerpadlo", Main.getOutput(CIRCULAR_PUMP_PORT));
         StatsCollector.getInstance().collect("3-cestný ventil - Bypass", !ThreeWayValve.getState() && SolarCircularPump.getState(), addToStats -> {
             ThreeWayValve.addSubscriber(valveOpened -> {
                 //valveShould be closed and pump should be running to add this to Stats otherwise we shouldnt count it to stats

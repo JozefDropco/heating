@@ -55,8 +55,8 @@ public class SolarWebService {
             pos.y = lastKnownPosition.getVertical();
             src.pos = pos;
             src.dayLight = DayLight.inst().enoughLight();
-            src.windy = StrongWind.isWindy();
-            src.overHeated = SolarTemperatureWatch.isOverHeated();
+//            src.windy = StrongWind.isWindy();
+//            src.overHeated = SolarTemperatureWatch.isOverHeated();
             return dao.getForMonth(Calendar.getInstance());
         });
         List<SolarPanelStepRecord> todayRecords = forMonth.getRemainingSteps();
@@ -102,19 +102,21 @@ public class SolarWebService {
 
     private SolarDTO toSolarDTO(SolarPanelStepRecord rec) {
         SolarDTO solarDTO = new SolarDTO();
-        rec.getPosition().invoke(new PositionProcessor() {
+        rec.getPosition().invoke(new PositionProcessor<Void>() {
             @Override
-            public void process(AbsolutePosition absPos) {
+            public Void process(AbsolutePosition absPos) {
                 solarDTO.moveType = "Absolútna";
                 solarDTO.hor = absPos.getHorizontal();
                 solarDTO.vert = absPos.getVertical();
+                return null;
             }
 
             @Override
-            public void process(DeltaPosition deltaPos) {
+            public Void process(DeltaPosition deltaPos) {
                 solarDTO.moveType = "Relatívna";
                 solarDTO.hor = deltaPos.getDeltaHorizontalTicks();
                 solarDTO.vert = deltaPos.getDeltaVerticalTicks();
+                return null;
             }
         });
         solarDTO.hour = rec.getHour();

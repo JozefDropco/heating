@@ -18,8 +18,8 @@ import java.util.logging.Logger;
 
 public class ThreeWayValve implements Runnable {
     public static final String THREE_WAY_PORT = "THREE_WAY_PORT";
-    static String THREE_WAY_VALVE_T31_MEASURE_PLACE;
-    static String THREE_WAY_VALVE_T2_MEASURE_PLACE;
+    static String T31_MEASURE_PLACE;
+    static String T2_MEASURE_PLACE;
     static AtomicBoolean state = new AtomicBoolean(false);
     AtomicDouble tempT31 = new AtomicDouble(0);
     AtomicDouble tempT2 = new AtomicDouble(0);
@@ -30,8 +30,8 @@ public class ThreeWayValve implements Runnable {
 
     public ThreeWayValve(BiConsumer<String, Boolean> commandExecutor) {
         Db.acceptDao(new SettingsDao(), dao -> {
-            THREE_WAY_VALVE_T31_MEASURE_PLACE = dao.getString("THREE_WAY_VALVE_T31_MEASURE_PLACE");
-            THREE_WAY_VALVE_T2_MEASURE_PLACE = dao.getString("THREE_WAY_VALVE_T2_MEASURE_PLACE");
+            T31_MEASURE_PLACE = dao.getString("T31_MEASURE_PLACE");
+            T2_MEASURE_PLACE = dao.getString("T2_MEASURE_PLACE");
         });
         this.commandExecutor = commandExecutor;
         ServiceMode.addSubsriber(mode -> {
@@ -46,27 +46,27 @@ public class ThreeWayValve implements Runnable {
 
     @Override
     public void run() {
-        TempService.subscribe(getDeviceId(THREE_WAY_VALVE_T31_MEASURE_PLACE), value -> {
+        TempService.subscribe(getDeviceId(T31_MEASURE_PLACE), value -> {
             tempT31.set(value);
-            LOGGER.fine(THREE_WAY_VALVE_T31_MEASURE_PLACE + " teplota je " + value);
+            LOGGER.fine(T31_MEASURE_PLACE + " teplota je " + value);
             update.release();
         });
-        TempService.subscribe(getDeviceId(THREE_WAY_VALVE_T2_MEASURE_PLACE), value -> {
+        TempService.subscribe(getDeviceId(T2_MEASURE_PLACE), value -> {
             tempT2.set(value);
-            LOGGER.fine(THREE_WAY_VALVE_T2_MEASURE_PLACE + " teplota je " + value);
+            LOGGER.fine(T2_MEASURE_PLACE + " teplota je " + value);
             update.release();
         });
-        tempT31.set(TempService.getTemperature(getDeviceId(THREE_WAY_VALVE_T31_MEASURE_PLACE)));
-        tempT2.set(TempService.getTemperature(getDeviceId(THREE_WAY_VALVE_T2_MEASURE_PLACE)));
+        tempT31.set(TempService.getTemperature(getDeviceId(T31_MEASURE_PLACE)));
+        tempT2.set(TempService.getTemperature(getDeviceId(T2_MEASURE_PLACE)));
 
         while (true) {
 
             double difference = tempT31.get() - tempT2.get();
             LOGGER.fine("Rozdiel teplôt pre 3-cestný ventil je " + difference);
-            if (difference >= SolarHeatingCurrentSetup.get().getThreeWayValveStartDiff() && state.compareAndSet(false, true)) {
+            if (difference >= HeatingConfiguration.getCurrent().getThreeWayValveStartDiff() && state.compareAndSet(false, true)) {
                 if (!ServiceMode.isServiceMode()) raiseChange(true);
             }
-            if (difference <= SolarHeatingCurrentSetup.get().getThreeWayValveStopDiff() && state.compareAndSet(true, false)) {
+            if (difference <= HeatingConfiguration.getCurrent().getThreeWayValveStopDiff() && state.compareAndSet(true, false)) {
                 if (!ServiceMode.isServiceMode()) raiseChange(false);
             }
             update.acquireUninterruptibly();

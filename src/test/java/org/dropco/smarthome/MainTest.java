@@ -3,7 +3,8 @@ package org.dropco.smarthome;
 import com.pi4j.io.gpio.*;
 import com.pi4j.io.gpio.event.PinListener;
 import com.pi4j.io.gpio.impl.GpioControllerImpl;
-import org.dropco.smarthome.gpioextension.ExtendedGpioProvider;
+import org.dropco.smarthome.heating.solar.move.HorizontalMoveFeedback;
+import org.dropco.smarthome.heating.solar.move.VerticalMoveFeedback;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -13,6 +14,10 @@ public class MainTest {
 
     @Before
     public void init() throws NoSuchFieldException, IllegalAccessException {
+        simulate();
+    }
+
+    public static void simulate() throws NoSuchFieldException, IllegalAccessException {
         Field instance = GpioFactory.class.getDeclaredField("controller");
         instance.setAccessible(true);
         instance.set(null,new GpioControllerImpl(new GpioProvider() {
@@ -239,7 +244,6 @@ public class MainTest {
                 return false;
             }
         });
-        ExtendedGpioProvider.simulate();
     }
 
     @Test
