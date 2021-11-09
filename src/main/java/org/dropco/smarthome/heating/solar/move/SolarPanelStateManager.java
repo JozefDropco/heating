@@ -71,6 +71,9 @@ public class SolarPanelStateManager {
                     break;
                 case DAY_LIGHT_REACHED:
                     nextTick();
+                    break;
+                case PARKING_POSTION:
+                    mover.moveTo("PARKING_POSITION",new AbsolutePosition(WEST,NORTH));
             }
 
         }
@@ -93,19 +96,23 @@ public class SolarPanelStateManager {
     }
 
     public void nextTick() {
-        if (!(currentEvents.contains(Event.PANEL_OVERHEATED) || currentEvents.contains(Event.WATER_OVERHEATED))) {
-            calculatePosition().ifPresent(step -> mover.moveTo(step.getHour() + ":" + step.getMinute(), step.getPosition()));
-        } else {
-            overheated();
+        if (!currentEvents.contains(Event.PARKING_POSTION)) {
+            if (!(currentEvents.contains(Event.PANEL_OVERHEATED) || currentEvents.contains(Event.WATER_OVERHEATED))) {
+                calculatePosition().ifPresent(step -> mover.moveTo(step.getHour() + ":" + step.getMinute(), step.getPosition()));
+            } else {
+                overheated();
+            }
         }
     }
 
     private void overheated() {
-        AbsolutePosition current = currentPosition.get();
-        if (TimeUtil.isAfternoon(getCurrentTime(), afternoonTime)) {
-            mover.moveTo("overheated_afternoon", new AbsolutePosition(EAST, (currentEvents.contains(Event.STRONG_WIND) ? current.getVertical() : SOUTH)));
-        } else {
-            mover.moveTo("overheated_morning", new AbsolutePosition(WEST, (currentEvents.contains(Event.STRONG_WIND) ? current.getVertical() : SOUTH)));
+        if (!currentEvents.contains(Event.PARKING_POSTION)) {
+            AbsolutePosition current = currentPosition.get();
+            if (TimeUtil.isAfternoon(getCurrentTime(), afternoonTime)) {
+                mover.moveTo("overheated_afternoon", new AbsolutePosition(EAST, (currentEvents.contains(Event.STRONG_WIND) ? current.getVertical() : SOUTH)));
+            } else {
+                mover.moveTo("overheated_morning", new AbsolutePosition(WEST, (currentEvents.contains(Event.STRONG_WIND) ? current.getVertical() : SOUTH)));
+            }
         }
     }
 
@@ -205,12 +212,17 @@ public class SolarPanelStateManager {
         recentSolarScheduleUpdater.accept(SolarSerializer.getGson().toJson(todaysSchedule));
     }
 
+    public boolean has(Event event) {
+        return currentEvents.contains(event);
+    }
+
 
     public enum Event {
         STRONG_WIND,
         WATER_OVERHEATED,
         PANEL_OVERHEATED,
-        DAY_LIGHT_REACHED;
+        DAY_LIGHT_REACHED,
+        PARKING_POSTION;
     }
 
     public static class Record{

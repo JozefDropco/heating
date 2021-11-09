@@ -43,6 +43,7 @@ public class HeatingMain {
     public static final String CURRENT_EVENTS = "SOLAR_CURRENT_EVENTS";
     public static final String TODAYS_SCHEDULE = "SOLAR_TODAYS_SCHEDULE";
     public static final String AFTERNOON_TIME = "SOLAR_AFTERNOON_TIME";
+    public static SolarPanelStateManager panelStateManager;
 
     public static void start(SettingsDao settingsDao) {
         BiConsumer<String, Boolean> commandExecutor = (key, value) -> {
@@ -70,7 +71,7 @@ public class HeatingMain {
         connectDayLight(settingsDao);
         mover.addListener(panel -> Db.acceptDao(new SolarSystemDao(), dao -> dao.updateLastKnownPosition(panel)));
 
-        SolarPanelStateManager manager = new SolarPanelStateManager(settingsDao.getString(AFTERNOON_TIME),
+        panelStateManager = new SolarPanelStateManager(settingsDao.getString(AFTERNOON_TIME),
                 (int) settingsDao.getLong("SOUTH"), (int) settingsDao.getLong("NORTH"), (int) settingsDao.getLong("WEST"), (int) settingsDao.getLong("EAST"),
                 () -> Db.applyDao(new SolarSystemDao(), sdao -> sdao.getLastKnownPosition()), mover,
                 () -> Db.applyDao(new SettingsDao(), sdao -> sdao.getString(TODAYS_SCHEDULE)),
@@ -79,7 +80,7 @@ public class HeatingMain {
                 () -> Db.applyDao(new SettingsDao(), sdao -> sdao.getString(CURRENT_EVENTS)),
                 (json) -> Db.acceptDao(new SettingsDao(), sdao -> sdao.setString(CURRENT_EVENTS, json))
         );
-        new SolarPanel(manager).start();
+        new SolarPanel(panelStateManager).start();
     }
 
     private static void addFireplace() {

@@ -6,16 +6,15 @@ import com.google.gson.Gson;
 import org.dropco.smarthome.ServiceMode;
 import org.dropco.smarthome.TimeUtil;
 import org.dropco.smarthome.database.Db;
+import org.dropco.smarthome.heating.HeatingMain;
 import org.dropco.smarthome.heating.db.SolarSystemDao;
 import org.dropco.smarthome.heating.solar.*;
 import org.dropco.smarthome.heating.solar.dto.*;
 import org.dropco.smarthome.heating.solar.move.HorizontalMoveFeedback;
+import org.dropco.smarthome.heating.solar.move.SolarPanelStateManager;
 import org.dropco.smarthome.heating.solar.move.VerticalMoveFeedback;
 
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.Produces;
-import javax.ws.rs.QueryParam;
+import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.text.ParseException;
@@ -36,7 +35,20 @@ public class SolarWebService {
         SolarSchedule schedule = Db.applyDao(new SolarSystemDao(), dao -> dao.getTodaysSchedule(cal));
         return Response.ok(new Gson().toJson(toScheduleDTO(schedule))).build();
     }
-
+    @GET
+    @Path("/parkingPosition")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response parkingPositionGet() throws ParseException {
+        boolean inParkingPosition = HeatingMain.panelStateManager.has(SolarPanelStateManager.Event.PARKING_POSTION);
+        return Response.ok(String.valueOf(inParkingPosition)).build();
+    }
+    @POST
+    @Path("/parkingPosition")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response parkingPositionSet() throws ParseException {
+        HeatingMain.panelStateManager.add(SolarPanelStateManager.Event.PARKING_POSTION);
+        return Response.ok().build();
+    }
 
     @GET
     @Path("/currentState")
