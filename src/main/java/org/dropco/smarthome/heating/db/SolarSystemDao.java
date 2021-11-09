@@ -9,7 +9,6 @@ import org.dropco.smarthome.database.Dao;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.database.querydsl.SolarMove;
 import org.dropco.smarthome.dto.LongConstant;
-import org.dropco.smarthome.TimeUtil;
 import org.dropco.smarthome.heating.solar.dto.AbsolutePosition;
 import org.dropco.smarthome.heating.solar.dto.DeltaPosition;
 import org.dropco.smarthome.heating.solar.dto.SolarPanelStep;
@@ -56,8 +55,7 @@ public class SolarSystemDao implements Dao {
     }
 
 
-    public SolarSchedule getTodaysSchedule() {
-        Calendar calendar = Calendar.getInstance();
+    public SolarSchedule getTodaysSchedule(Calendar calendar) {
         int month = calendar.get(Calendar.MONTH) + 1;
         Tuple sTuple = new MySQLQuery<SolarMove>(getConnection()).select(SOLAR_SCHEDULE.all()).from(SOLAR_SCHEDULE).where(SOLAR_SCHEDULE.month.eq(month)).fetchFirst();
         SolarSchedule schedule = new SolarSchedule();
@@ -110,7 +108,7 @@ public class SolarSystemDao implements Dao {
     }
 
     public DeltaPosition getStrongWindPosition() {
-        SolarSchedule month = getTodaysSchedule();
+        SolarSchedule month = getTodaysSchedule(Calendar.getInstance());
         return new DeltaPosition(0,month.getVerticalTickCountForStep() * -2);
     }
 

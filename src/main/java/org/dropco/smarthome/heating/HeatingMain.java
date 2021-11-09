@@ -74,7 +74,7 @@ public class HeatingMain {
                 (int) settingsDao.getLong("SOUTH"), (int) settingsDao.getLong("NORTH"), (int) settingsDao.getLong("WEST"), (int) settingsDao.getLong("EAST"),
                 () -> Db.applyDao(new SolarSystemDao(), sdao -> sdao.getLastKnownPosition()), mover,
                 () -> Db.applyDao(new SettingsDao(), sdao -> sdao.getString(TODAYS_SCHEDULE)),
-                () -> Db.applyDao(new SolarSystemDao(), sdao -> sdao.getTodaysSchedule()),
+                () -> Db.applyDao(new SolarSystemDao(), sdao -> sdao.getTodaysSchedule(Calendar.getInstance())),
                 (json) -> Db.acceptDao(new SettingsDao(), sdao -> sdao.setString(TODAYS_SCHEDULE, json)),
                 () -> Db.applyDao(new SettingsDao(), sdao -> sdao.getString(CURRENT_EVENTS)),
                 (json) -> Db.acceptDao(new SettingsDao(), sdao -> sdao.setString(CURRENT_EVENTS, json))
