@@ -67,6 +67,7 @@ public class SolarPanel {
             }
         });
         ticker();
+        panelStateManager.nextTick();
 
     }
 

@@ -1,5 +1,7 @@
 package org.dropco.smarthome.heating.solar.move;
 
+import com.pi4j.io.gpio.PinState;
+import org.dropco.smarthome.PinManager;
 import org.dropco.smarthome.heating.solar.dto.AbsolutePosition;
 import org.dropco.smarthome.heating.solar.dto.DeltaPosition;
 import org.dropco.smarthome.heating.solar.dto.Position;
@@ -23,7 +25,7 @@ public class SolarPanelMover implements Mover, Runnable {
     private static final Semaphore waitForEnd = new Semaphore(0);
     private static final Logger LOGGER = Logger.getLogger(SolarPanelMover.class.getName());
     private Supplier<AbsolutePosition> currentPositionSupplier;
-    private BiConsumer<String, Boolean> commandExecutor;
+    private PinManager pinManager;
     private List<PositionChangeListener> listeners = Collections.synchronizedList(new ArrayList<>());
     private BlockingQueue<MoveEvent> moveEvents = new ArrayBlockingQueue<>(100);
     private AtomicReference<String> lastMovementRefCd = new AtomicReference<>();
@@ -33,8 +35,8 @@ public class SolarPanelMover implements Mover, Runnable {
     private VerticalMoveFeedback verticalMoveFeedback;
     private HorizontalMoveFeedback horizontalMoveFeedback;
 
-    public SolarPanelMover(BiConsumer<String, Boolean> commandExecutor, Supplier<AbsolutePosition> currentPositionSupplier, VerticalMoveFeedback verticalMoveFeedback, HorizontalMoveFeedback horizontalMoveFeedback) {
-        this.commandExecutor = commandExecutor;
+    public SolarPanelMover(PinManager pinManager, Supplier<AbsolutePosition> currentPositionSupplier, VerticalMoveFeedback verticalMoveFeedback, HorizontalMoveFeedback horizontalMoveFeedback) {
+        this.pinManager = pinManager;
         this.currentPositionSupplier = currentPositionSupplier;
         this.verticalMoveFeedback = verticalMoveFeedback;
         this.horizontalMoveFeedback = horizontalMoveFeedback;
@@ -164,11 +166,14 @@ public class SolarPanelMover implements Mover, Runnable {
 
 
     void setState(Movement movement, boolean state) {
-        if (state)
-            LOGGER.log(Level.INFO, "Natáčam na " + movement.name + ".");
-        else
-            LOGGER.log(Level.INFO, "Zastavujem otáčanie na " + movement.name + ".");
-        commandExecutor.accept(movement.pinRefCd, state);
+        PinState pinState = pinManager.getState(movement.pinRefCd);
+        if (pinState.isHigh() != state) {
+            if (state)
+                LOGGER.log(Level.INFO, "Natáčam na " + movement.name + ".");
+            else
+                LOGGER.log(Level.INFO, "Zastavujem otáčanie na " + movement.name + ".");
+            pinManager.setState(movement.pinRefCd, state);
+        }
     }
 
     private void fireUpdate(AbsolutePosition currentPosition) {

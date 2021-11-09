@@ -70,20 +70,20 @@ public class SolarSystemDao implements Dao {
         sunRise.setMinute(sTuple.get(SOLAR_SCHEDULE.sunRiseMinute));
         sunRise.setPosition(new AbsolutePosition(sTuple.get(SOLAR_SCHEDULE.sunRiseAbsPosHor), sTuple.get(SOLAR_SCHEDULE.sunRiseAbsPosVert)));
         sunRise.setIgnoreDayLight(true);
-        if (TimeUtil.isAfter(calendar, sunRise.getHour(), sunRise.getMinute())) schedule.getSteps().add(sunRise);
+        schedule.getSteps().add(sunRise);
 
         List<Tuple> lst = new MySQLQuery<SolarMove>(getConnection()).select(SOLAR_MOVE.all()).from(SOLAR_MOVE)
                 .where(SOLAR_MOVE.month.eq(month)).orderBy(SOLAR_MOVE.hour.asc(), SOLAR_MOVE.minute.asc()).fetch();
         for (Tuple tuple : lst) {
             SolarPanelStep current = toRecord(tuple, schedule);
-            if (TimeUtil.isAfter(calendar, current.getHour(), current.getMinute())) schedule.getSteps().add(current);
+            schedule.getSteps().add(current);
         }
         SolarPanelStep sunSet = new SolarPanelStep();
         sunSet.setHour(sTuple.get(SOLAR_SCHEDULE.sunSetHour));
         sunSet.setMinute(sTuple.get(SOLAR_SCHEDULE.sunSetMinute));
         sunSet.setPosition(new AbsolutePosition(sTuple.get(SOLAR_SCHEDULE.sunSetAbsPosHor), sTuple.get(SOLAR_SCHEDULE.sunSetAbsPosVert)));
         sunSet.setIgnoreDayLight(true);
-        if (TimeUtil.isAfter(calendar, sunSet.getHour(), sunSet.getMinute())) schedule.getSteps().add(sunSet);
+        schedule.getSteps().add(sunSet);
         return schedule;
     }
 

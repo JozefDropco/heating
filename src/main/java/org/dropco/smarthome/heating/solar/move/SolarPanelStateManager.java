@@ -82,9 +82,11 @@ public class SolarPanelStateManager {
             switch (event) {
                 case STRONG_WIND:
                     mover.moveTo("noWind", new DeltaPosition(0, 0));
+                    break;
                 case PANEL_OVERHEATED:
                 case WATER_OVERHEATED:
                     nextTick();
+                    break;
                 default:
             }
         }
@@ -93,15 +95,17 @@ public class SolarPanelStateManager {
     public void nextTick() {
         if (!(currentEvents.contains(Event.PANEL_OVERHEATED) || currentEvents.contains(Event.WATER_OVERHEATED))) {
             calculatePosition().ifPresent(step -> mover.moveTo(step.getHour() + ":" + step.getMinute(), step.getPosition()));
+        } else {
+            overheated();
         }
     }
 
     private void overheated() {
         AbsolutePosition current = currentPosition.get();
         if (TimeUtil.isAfternoon(getCurrentTime(), afternoonTime)) {
-            mover.moveTo("overheated", new AbsolutePosition(EAST, (currentEvents.contains(Event.STRONG_WIND) ? current.getVertical() : SOUTH)));
+            mover.moveTo("overheated_afternoon", new AbsolutePosition(EAST, (currentEvents.contains(Event.STRONG_WIND) ? current.getVertical() : SOUTH)));
         } else {
-            mover.moveTo("overheated", new AbsolutePosition(WEST, (currentEvents.contains(Event.STRONG_WIND) ? current.getVertical() : SOUTH)));
+            mover.moveTo("overheated_morning", new AbsolutePosition(WEST, (currentEvents.contains(Event.STRONG_WIND) ? current.getVertical() : SOUTH)));
         }
     }
 

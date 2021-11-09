@@ -31,32 +31,34 @@ import static org.dropco.smarthome.heating.solar.ThreeWayValve.THREE_WAY_PORT;
 public class HeatingMain {
     public static final VerticalMoveFeedback VERTICAL_MOVE_FEEDBACK = new VerticalMoveFeedback();
     public static final HorizontalMoveFeedback HORIZONTAL_MOVE_FEEDBACK = new HorizontalMoveFeedback();
-    final static SolarPanelMover mover = new SolarPanelMover((key, value) -> Main.getOutput(key).setState(value),
+    final static SolarPanelMover mover = new SolarPanelMover(Main.pinManager,
             () -> Db.applyDao(new SolarSystemDao(), SolarSystemDao::getLastKnownPosition), VERTICAL_MOVE_FEEDBACK, HORIZONTAL_MOVE_FEEDBACK
     );
     public static final String STRONG_WIND_PIN_REF_CD = "STRONG_WIND_PIN";
     public static final String DAY_LIGHT_PIN_REF_CD = "DAY_LIGHT_PIN";
     protected static final String LIGHT_THRESHOLD = "LIGHT_THRESHOLD";
-    protected static final String SOLAR_OVERHEATED = "SOLAR_OVERHEATED";
     private static final String HEATER_BLINK_STOP = "HEATER_BLINK_STOP";
     private static final String NORTH_SOUTH_MOVE_INDICATOR = "NORTH_SOUTH_MOVE_INDICATOR";
     private static final String EAST_WEST_MOVE_INDICATOR = "EAST_WEST_MOVE_INDICATOR";
+    public static final String CURRENT_EVENTS = "SOLAR_CURRENT_EVENTS";
+    public static final String TODAYS_SCHEDULE = "SOLAR_TODAYS_SCHEDULE";
+    public static final String AFTERNOON_TIME = "SOLAR_AFTERNOON_TIME";
 
     public static void start(SettingsDao settingsDao) {
         BiConsumer<String, Boolean> commandExecutor = (key, value) -> {
-            Main.getOutput(key).setState(value);
+            Main.pinManager.setState(key,value);
         };
-        VERTICAL_MOVE_FEEDBACK.start(Main.getInput(NORTH_SOUTH_MOVE_INDICATOR));
-        HORIZONTAL_MOVE_FEEDBACK.start(Main.getInput(EAST_WEST_MOVE_INDICATOR));
+        VERTICAL_MOVE_FEEDBACK.start( Main.pinManager.getInput(NORTH_SOUTH_MOVE_INDICATOR));
+        HORIZONTAL_MOVE_FEEDBACK.start( Main.pinManager.getInput(EAST_WEST_MOVE_INDICATOR));
         HeatingConfiguration.start();
         new Thread(mover).start();
         new Thread(new SolarCircularPump(commandExecutor)).start();
         new Thread(new ThreeWayValve(commandExecutor)).start();
         new Thread(new BoilerBlocker(commandExecutor)).start();
-        new Flame(Main.getInput(Flame.HEATER_FLAME_REF_CD)).start();
+        new Flame( Main.pinManager.getInput(Flame.HEATER_FLAME_REF_CD)).start();
         long blinkStop = settingsDao.getLong(HEATER_BLINK_STOP);
-        new HeaterCircularPump(Main.getInput(HEATER_CIRCULAR_REF_CD)).start(blinkStop);
-        new Boiler(Main.getInput(Boiler.HEATER_BOILER_FEC_CD)).start(blinkStop);
+        new HeaterCircularPump( Main.pinManager.getInput(HEATER_CIRCULAR_REF_CD)).start(blinkStop);
+        new Boiler( Main.pinManager.getInput(Boiler.HEATER_BOILER_FEC_CD)).start(blinkStop);
         addFireplace();
         configureServiceMode();
         addToStats();
@@ -64,24 +66,24 @@ public class HeatingMain {
         ServiceMode.addSubsriber(state -> {
             if (state) mover.stop();
         });
-        DayLight.setInstance(Main.getInput(DAY_LIGHT_PIN_REF_CD), () -> Db.applyDao(new SettingsDao(), dao -> (int) dao.getLong(LIGHT_THRESHOLD)));
+        DayLight.setInstance( Main.pinManager.getInput(DAY_LIGHT_PIN_REF_CD), () -> Db.applyDao(new SettingsDao(), dao -> (int) dao.getLong(LIGHT_THRESHOLD)));
         connectDayLight(settingsDao);
         mover.addListener(panel -> Db.acceptDao(new SolarSystemDao(), dao -> dao.updateLastKnownPosition(panel)));
 
-        SolarPanelStateManager manager = new SolarPanelStateManager(settingsDao.getString("AFTERNOON_TIME"),
+        SolarPanelStateManager manager = new SolarPanelStateManager(settingsDao.getString(AFTERNOON_TIME),
                 (int) settingsDao.getLong("SOUTH"), (int) settingsDao.getLong("NORTH"), (int) settingsDao.getLong("WEST"), (int) settingsDao.getLong("EAST"),
                 () -> Db.applyDao(new SolarSystemDao(), sdao -> sdao.getLastKnownPosition()), mover,
-                () -> Db.applyDao(new SettingsDao(), sdao -> sdao.getString("TODAYS_SCHEDULE")),
+                () -> Db.applyDao(new SettingsDao(), sdao -> sdao.getString(TODAYS_SCHEDULE)),
                 () -> Db.applyDao(new SolarSystemDao(), sdao -> sdao.getTodaysSchedule()),
-                (json) -> Db.acceptDao(new SettingsDao(), sdao -> sdao.setString("TODAYS_SCHEDULE", json)),
-                () -> Db.applyDao(new SettingsDao(), sdao -> sdao.getString("CURRENT_EVENTS")),
-                (json) -> Db.acceptDao(new SettingsDao(), sdao -> sdao.setString("CURRENT_EVENTS", json))
+                (json) -> Db.acceptDao(new SettingsDao(), sdao -> sdao.setString(TODAYS_SCHEDULE, json)),
+                () -> Db.applyDao(new SettingsDao(), sdao -> sdao.getString(CURRENT_EVENTS)),
+                (json) -> Db.acceptDao(new SettingsDao(), sdao -> sdao.setString(CURRENT_EVENTS, json))
         );
         new SolarPanel(manager).start();
     }
 
     private static void addFireplace() {
-        new FireplaceCircularPump(Main.getInput(FireplaceCircularPump.FIREPLACE_CIRCULAR_PUMP_REF_CD)).start();
+        new FireplaceCircularPump( Main.pinManager.getInput(FireplaceCircularPump.FIREPLACE_CIRCULAR_PUMP_REF_CD)).start();
         ServiceMode.addInput(new NamedPort(FireplaceCircularPump.FIREPLACE_CIRCULAR_PUMP_REF_CD, "Krb chod čerpadla"), () -> FireplaceCircularPump.getState());
         StatsCollector.getInstance().collect("Krb chod čerpadla", FireplaceCircularPump.getState(), new Consumer<Consumer<Boolean>>() {
             @Override
@@ -92,11 +94,11 @@ public class HeatingMain {
     }
 
     private static void configureServiceMode() {
-        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.EAST_PIN_REF_CD, "Kolektory - Východ"), key -> Main.getOutput(key));
-        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.WEST_PIN_REF_CD, "Kolektory - Západ"), key -> Main.getOutput(key));
-        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.NORTH_PIN_REF_CD, "Kolektory - Sever"), key -> Main.getOutput(key));
-        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.SOUTH_PIN_REF_CD, "Kolektory - Juh"), key -> Main.getOutput(key));
-        ServiceMode.addInput(new NamedPort(STRONG_WIND_PIN_REF_CD, "Silný vietor"), () -> Main.getInput(STRONG_WIND_PIN_REF_CD).isHigh());
+        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.EAST_PIN_REF_CD, "Kolektory - Východ"), key ->  Main.pinManager.getOutput(key));
+        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.WEST_PIN_REF_CD, "Kolektory - Západ"), key ->  Main.pinManager.getOutput(key));
+        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.NORTH_PIN_REF_CD, "Kolektory - Sever"), key ->  Main.pinManager.getOutput(key));
+        ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.SOUTH_PIN_REF_CD, "Kolektory - Juh"), key ->  Main.pinManager.getOutput(key));
+        ServiceMode.addInput(new NamedPort(STRONG_WIND_PIN_REF_CD, "Silný vietor"), () ->  Main.pinManager.getInput(STRONG_WIND_PIN_REF_CD).isHigh());
 //        ServiceMode.addInput(new NamedPort("STRONG_WIND_LIMIT", "Silný vietor - limit splnený"), () -> StrongWind.isWindy());
         ServiceMode.addInput(new NamedPort(DAY_LIGHT_PIN_REF_CD, "Jas"), () -> DayLight.inst().getCurrentState());
         ServiceMode.addInput(new NamedPort("DAY_LIGHT_LIMIT", "Jas - limit splnený"), () -> DayLight.inst().enoughLight());
@@ -105,23 +107,23 @@ public class HeatingMain {
         ServiceMode.getExclusions().put(SolarSystemRefCode.NORTH_PIN_REF_CD, SolarSystemRefCode.SOUTH_PIN_REF_CD);
         ServiceMode.getExclusions().put(SolarSystemRefCode.SOUTH_PIN_REF_CD, SolarSystemRefCode.NORTH_PIN_REF_CD);
         ServiceMode.addInput(new NamedPort(HEATER_CIRCULAR_REF_CD, "Kúrenie chod čerpadla"), () -> HeaterCircularPump.getState());
-        ServiceMode.addOutput(new NamedPort(CIRCULAR_PUMP_PORT, "Kolektory - obehové čerpadlo"), key -> Main.getOutput(key));
-        ServiceMode.addOutput(new NamedPort(THREE_WAY_PORT, "3-cestný ventil"), key -> Main.getOutput(key));
-        ServiceMode.addOutput(new NamedPort(BOILER_BLOCK_PIN, "Blokovanie ohrevu TA3"), key -> Main.getOutput(key));
+        ServiceMode.addOutput(new NamedPort(CIRCULAR_PUMP_PORT, "Kolektory - obehové čerpadlo"), key ->  Main.pinManager.getOutput(key));
+        ServiceMode.addOutput(new NamedPort(THREE_WAY_PORT, "3-cestný ventil"), key ->  Main.pinManager.getOutput(key));
+        ServiceMode.addOutput(new NamedPort(BOILER_BLOCK_PIN, "Blokovanie ohrevu TA3"), key ->  Main.pinManager.getOutput(key));
         ServiceMode.addInput(new NamedPort(Flame.HEATER_FLAME_REF_CD, "Horák plynového kotla"), () -> Flame.getState());
         ServiceMode.addInput(new NamedPort(Boiler.HEATER_BOILER_FEC_CD, "Ohrev TA3 plynovým kotlom"), () -> Boiler.getState());
 
     }
 
     private static void addToStats() {
-        StatsCollector.getInstance().collect("Kolektory - Sever", Main.getOutput(SolarSystemRefCode.NORTH_PIN_REF_CD));
-        StatsCollector.getInstance().collect("Kolektory - Juh", Main.getOutput(SolarSystemRefCode.SOUTH_PIN_REF_CD));
-        StatsCollector.getInstance().collect("Kolektory - Východ", Main.getOutput(SolarSystemRefCode.EAST_PIN_REF_CD));
-        StatsCollector.getInstance().collect("Kolektory - Západ", Main.getOutput(SolarSystemRefCode.WEST_PIN_REF_CD));
+        StatsCollector.getInstance().collect("Kolektory - Sever",  Main.pinManager.getOutput(SolarSystemRefCode.NORTH_PIN_REF_CD));
+        StatsCollector.getInstance().collect("Kolektory - Juh",  Main.pinManager.getOutput(SolarSystemRefCode.SOUTH_PIN_REF_CD));
+        StatsCollector.getInstance().collect("Kolektory - Východ",  Main.pinManager.getOutput(SolarSystemRefCode.EAST_PIN_REF_CD));
+        StatsCollector.getInstance().collect("Kolektory - Západ",  Main.pinManager.getOutput(SolarSystemRefCode.WEST_PIN_REF_CD));
         StatsCollector.getInstance().collect("S-J indikator", true, VERTICAL_MOVE_FEEDBACK::addRealTimeTicker);
         StatsCollector.getInstance().collect("V-Z indikator", true, HORIZONTAL_MOVE_FEEDBACK::addRealTimeTicker);
 
-        StatsCollector.getInstance().collect("Kolektory - obehové čerpadlo", Main.getOutput(CIRCULAR_PUMP_PORT));
+        StatsCollector.getInstance().collect("Kolektory - obehové čerpadlo",  Main.pinManager.getOutput(CIRCULAR_PUMP_PORT));
         StatsCollector.getInstance().collect("3-cestný ventil - Bypass", !ThreeWayValve.getState() && SolarCircularPump.getState(), addToStats -> {
             ThreeWayValve.addSubscriber(valveOpened -> {
                 //valveShould be closed and pump should be running to add this to Stats otherwise we shouldnt count it to stats
@@ -145,7 +147,7 @@ public class HeatingMain {
             });
 
         });
-        StatsCollector.getInstance().collect("Blokovanie ohrevu TA3", Main.getOutput(BOILER_BLOCK_PIN));
+        StatsCollector.getInstance().collect("Blokovanie ohrevu TA3",  Main.pinManager.getOutput(BOILER_BLOCK_PIN));
         StatsCollector.getInstance().collect("Horák plynového kotla", Flame.getState(), countStats -> Flame.addSubscriber(countStats));
         StatsCollector.getInstance().collect("Kúrenie chod čerpadla", HeaterCircularPump.getState(), countStats -> HeaterCircularPump.addSubscriber(countStats));
         StatsCollector.getInstance().collect("Ohrev TA3 plynovým kotlom", Boiler.getState(), countStats -> Boiler.addSubscriber(countStats));
