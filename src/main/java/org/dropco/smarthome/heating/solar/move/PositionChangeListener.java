@@ -1,6 +1,6 @@
 package org.dropco.smarthome.heating.solar.move;
 
-import org.dropco.smarthome.heating.dto.AbsolutePosition;
+import org.dropco.smarthome.heating.solar.dto.AbsolutePosition;
 
 public interface PositionChangeListener {
 

@@ -3,7 +3,7 @@ package org.dropco.smarthome.heating.solar.move;
 import com.google.common.collect.Lists;
 import org.dropco.smarthome.MainTest;
 import org.dropco.smarthome.TickerPin;
-import org.dropco.smarthome.heating.dto.AbsolutePosition;
+import org.dropco.smarthome.heating.solar.dto.AbsolutePosition;
 import org.dropco.smarthome.heating.solar.SolarSystemRefCode;
 import org.junit.Assert;
 import org.junit.Before;
@@ -42,7 +42,7 @@ public class SolarPanelMoverTest {
         List<String> result = Lists.newArrayList();
         SolarPanelMover mover = new SolarPanelMover((cmdRefCd, value) -> {
             result.add(cmdRefCd + value);
-        }, () -> currentPosition, verticalMoveFeedback, horizontalMoveFeedback, () -> 1l);
+        }, () -> currentPosition, verticalMoveFeedback, horizontalMoveFeedback);
         AtomicReference<AbsolutePosition> updatedPosition = new AtomicReference<>();
         mover.addListener(new PositionChangeListener() {
             @Override
@@ -52,7 +52,7 @@ public class SolarPanelMoverTest {
         });
         ExecutorService pool = Executors.newFixedThreadPool(1);
         pool.submit(mover);
-        mover.moveTo(position(0, 5));
+        mover.moveTo("1", position(0, 5));
         verticalTickPin.startTicking();
         pool.awaitTermination(2, TimeUnit.SECONDS);
         Assert.assertEquals("We shouldnt move", 0, updatedPosition.get().getHorizontal());
@@ -76,7 +76,7 @@ public class SolarPanelMoverTest {
         List<String> result = Lists.newArrayList();
         SolarPanelMover mover = new SolarPanelMover((cmdRefCd, value) -> {
             result.add(cmdRefCd + value);
-        }, () -> currentPosition, verticalMoveFeedback, horizontalMoveFeedback, () -> 1l);
+        }, () -> currentPosition, verticalMoveFeedback, horizontalMoveFeedback);
         AtomicReference<AbsolutePosition> updatedPosition = new AtomicReference<>();
         mover.addListener(new PositionChangeListener() {
             @Override
@@ -86,7 +86,7 @@ public class SolarPanelMoverTest {
         });
         ExecutorService pool = Executors.newFixedThreadPool(1);
         pool.submit(mover);
-        mover.moveTo(position(0, 0));
+        mover.moveTo("1", position(0, 0));
         verticalTickPin.startTicking();
         pool.awaitTermination(2, TimeUnit.SECONDS);
         Assert.assertEquals("We shouldnt move", 0, updatedPosition.get().getHorizontal());
@@ -112,7 +112,7 @@ public class SolarPanelMoverTest {
         List<String> result = Lists.newArrayList();
         SolarPanelMover mover = new SolarPanelMover((cmdRefCd, value) -> {
             result.add(cmdRefCd + value);
-        }, () -> currentPosition, verticalMoveFeedback, horizontalMoveFeedback, () -> 1l);
+        }, () -> currentPosition, verticalMoveFeedback, horizontalMoveFeedback);
         AtomicReference<AbsolutePosition> updatedPosition = new AtomicReference<>();
         mover.addListener(new PositionChangeListener() {
             @Override
@@ -122,7 +122,7 @@ public class SolarPanelMoverTest {
         });
         ExecutorService pool = Executors.newFixedThreadPool(1);
         pool.submit(mover);
-        mover.moveTo(position(0, 0));
+        mover.moveTo("1", position(0, 0));
         horizontalTickPin.startTicking();
         pool.awaitTermination(2, TimeUnit.SECONDS);
         Assert.assertEquals("We shouldnt move", 0, updatedPosition.get().getVertical());
@@ -147,7 +147,7 @@ public class SolarPanelMoverTest {
         List<String> result = Lists.newArrayList();
         SolarPanelMover mover = new SolarPanelMover((cmdRefCd, value) -> {
             result.add(cmdRefCd + value);
-        }, () -> currentPosition, verticalMoveFeedback, horizontalMoveFeedback, () -> 1l);
+        }, () -> currentPosition, verticalMoveFeedback, horizontalMoveFeedback);
         AtomicReference<AbsolutePosition> updatedPosition = new AtomicReference<>();
         mover.addListener(new PositionChangeListener() {
             @Override
@@ -157,7 +157,7 @@ public class SolarPanelMoverTest {
         });
         ExecutorService pool = Executors.newFixedThreadPool(1);
         pool.submit(mover);
-        mover.moveTo(position(5, 0));
+        mover.moveTo("1", position(5, 0));
         horizontalTickPin.startTicking();
         pool.awaitTermination(2, TimeUnit.SECONDS);
         Assert.assertEquals("We shouldnt move", 0, updatedPosition.get().getVertical());
@@ -183,7 +183,7 @@ public class SolarPanelMoverTest {
         List<String> result = Lists.newArrayList();
         SolarPanelMover mover = new SolarPanelMover((cmdRefCd, value) -> {
             result.add(cmdRefCd + value);
-        }, () -> currentPosition, verticalMoveFeedback, horizontalMoveFeedback, () -> 1l);
+        }, () -> currentPosition, verticalMoveFeedback, horizontalMoveFeedback);
         AtomicReference<AbsolutePosition> updatedPosition = new AtomicReference<>();
         mover.addListener(new PositionChangeListener() {
             @Override
@@ -193,7 +193,7 @@ public class SolarPanelMoverTest {
         });
         ExecutorService pool = Executors.newFixedThreadPool(1);
         pool.submit(mover);
-        mover.moveTo(position(5, 0));
+        mover.moveTo("1", position(5, 0));
         horizontalTickPin.startTicking();
         pool.awaitTermination(2, TimeUnit.SECONDS);
         Assert.assertEquals("We shouldnt move", 0, updatedPosition.get().getVertical());

@@ -12,7 +12,10 @@ import org.dropco.smarthome.heating.heater.Flame;
 import org.dropco.smarthome.heating.pump.FireplaceCircularPump;
 import org.dropco.smarthome.heating.pump.HeaterCircularPump;
 import org.dropco.smarthome.heating.pump.SolarCircularPump;
-import org.dropco.smarthome.heating.solar.*;
+import org.dropco.smarthome.heating.solar.DayLight;
+import org.dropco.smarthome.heating.solar.HeatingConfiguration;
+import org.dropco.smarthome.heating.solar.SolarSystemRefCode;
+import org.dropco.smarthome.heating.solar.ThreeWayValve;
 import org.dropco.smarthome.heating.solar.move.*;
 import org.dropco.smarthome.stats.StatsCollector;
 
@@ -29,8 +32,8 @@ public class HeatingMain {
     public static final VerticalMoveFeedback VERTICAL_MOVE_FEEDBACK = new VerticalMoveFeedback();
     public static final HorizontalMoveFeedback HORIZONTAL_MOVE_FEEDBACK = new HorizontalMoveFeedback();
     final static SolarPanelMover mover = new SolarPanelMover((key, value) -> Main.getOutput(key).setState(value),
-            () -> Db.applyDao(new SolarSystemDao(), SolarSystemDao::getLastKnownPosition),VERTICAL_MOVE_FEEDBACK,HORIZONTAL_MOVE_FEEDBACK,
-            () -> Db.applyDao(new SolarSystemDao(), SolarSystemDao::getDelay));
+            () -> Db.applyDao(new SolarSystemDao(), SolarSystemDao::getLastKnownPosition), VERTICAL_MOVE_FEEDBACK, HORIZONTAL_MOVE_FEEDBACK
+    );
     public static final String STRONG_WIND_PIN_REF_CD = "STRONG_WIND_PIN";
     public static final String DAY_LIGHT_PIN_REF_CD = "DAY_LIGHT_PIN";
     protected static final String LIGHT_THRESHOLD = "LIGHT_THRESHOLD";
@@ -64,15 +67,17 @@ public class HeatingMain {
         DayLight.setInstance(Main.getInput(DAY_LIGHT_PIN_REF_CD), () -> Db.applyDao(new SettingsDao(), dao -> (int) dao.getLong(LIGHT_THRESHOLD)));
         connectDayLight(settingsDao);
         mover.addListener(panel -> Db.acceptDao(new SolarSystemDao(), dao -> dao.updateLastKnownPosition(panel)));
-//        SafetySolarPanel safetySolarPanel = new SafetySolarPanel(mover, position -> Db.acceptDao(new SolarSystemDao(), dao -> dao.saveNormalPosition(position)), () -> Db.applyDao(new SolarSystemDao(), dao -> dao.getStrongWindPosition()),
-//                () -> Db.applyDao(new SolarSystemDao(), SolarSystemDao::getLastKnownPosition),
-//                () -> Db.applyDao(new SolarSystemDao(), SolarSystemDao::getOverheatedPosition));
-//        StrongWind.connect(Main.getInput(STRONG_WIND_PIN_REF_CD));
-//        new SolarTemperatureWatch(() -> Db.applyDao(new SettingsDao(), dao -> dao.getDouble(SOLAR_OVERHEATED))).attach(safetySolarPanel);
-        SolarSystemScheduler solarSystemScheduler = new SolarSystemScheduler();
-//        solarSystemScheduler.moveToLastPosition(safetySolarPanel);
-//        solarSystemScheduler.schedule(safetySolarPanel);
 
+        SolarPanelStateManager manager = new SolarPanelStateManager(settingsDao.getString("AFTERNOON_TIME"),
+                (int) settingsDao.getLong("SOUTH"), (int) settingsDao.getLong("NORTH"), (int) settingsDao.getLong("WEST"), (int) settingsDao.getLong("EAST"),
+                () -> Db.applyDao(new SolarSystemDao(), sdao -> sdao.getLastKnownPosition()), mover,
+                () -> Db.applyDao(new SettingsDao(), sdao -> sdao.getString("TODAYS_SCHEDULE")),
+                () -> Db.applyDao(new SolarSystemDao(), sdao -> sdao.getTodaysSchedule()),
+                (json) -> Db.acceptDao(new SettingsDao(), sdao -> sdao.setString("TODAYS_SCHEDULE", json)),
+                () -> Db.applyDao(new SettingsDao(), sdao -> sdao.getString("CURRENT_EVENTS")),
+                (json) -> Db.acceptDao(new SettingsDao(), sdao -> sdao.setString("CURRENT_EVENTS", json))
+        );
+        new SolarPanel(manager).start();
     }
 
     private static void addFireplace() {

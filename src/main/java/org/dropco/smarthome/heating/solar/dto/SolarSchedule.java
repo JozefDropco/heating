@@ -1,15 +1,27 @@
-package org.dropco.smarthome.heating.dto;
+package org.dropco.smarthome.heating.solar.dto;
 
+import java.util.Date;
 import java.util.List;
 
 public class SolarSchedule {
+    private Date asOfDate = new Date();
     private int month;
     private int horizontalTickCountForStep;
     private int verticalTickCountForStep;
-    private SolarPanelStepRecord sunRise;
-    private SolarPanelStepRecord sunSet;
-    private List<SolarPanelStepRecord> remainingSteps;
-    private AbsolutePosition currentNormalPosition;
+    private List<SolarPanelStep> steps;
+
+    /***
+     * Gets the asOfDate
+     * @return
+     */
+    public Date getAsOfDate() {
+        return asOfDate;
+    }
+
+    public SolarSchedule setAsOfDate(Date asOfDate) {
+        this.asOfDate = asOfDate;
+        return this;
+    }
 
     /***
      * Gets the month
@@ -48,52 +60,18 @@ public class SolarSchedule {
     }
 
     /***
-     * Gets the sunRise
-     * @return
-     */
-    public SolarPanelStepRecord getSunRise() {
-        return sunRise;
-    }
-
-    public void setSunRise(SolarPanelStepRecord sunRise) {
-        this.sunRise = sunRise;
-    }
-
-    /***
-     * Gets the sunSet
-     * @return
-     */
-    public SolarPanelStepRecord getSunSet() {
-        return sunSet;
-    }
-
-    public void setSunSet(SolarPanelStepRecord sunSet) {
-        this.sunSet = sunSet;
-    }
-
-    /***
      * Gets the steps
      * @return
      */
-    public List<SolarPanelStepRecord> getRemainingSteps() {
-        return remainingSteps;
+    public List<SolarPanelStep> getSteps() {
+        return steps;
     }
 
-    public void setRemainingSteps(List<SolarPanelStepRecord> remainingSteps) {
-        this.remainingSteps = remainingSteps;
+    public void setSteps(List<SolarPanelStep> steps) {
+        this.steps = steps;
     }
 
-    /***
-     * Gets the currentNormalPosition
-     * @return
-     */
-    public AbsolutePosition getCurrentNormalPosition() {
-        return currentNormalPosition;
-    }
 
-    public void setCurrentNormalPosition(AbsolutePosition currentNormalPosition) {
-        this.currentNormalPosition = currentNormalPosition;
-    }
 
     @Override
     public String toString() {
@@ -101,9 +79,7 @@ public class SolarSchedule {
         sb.append("month=").append(month);
         sb.append(", horizontalTickCountForStep=").append(horizontalTickCountForStep);
         sb.append(", verticalTickCountForStep=").append(verticalTickCountForStep);
-        sb.append(", sunRise=").append(sunRise);
-        sb.append(", sunSet=").append(sunSet);
-        sb.append(", remainingSteps=").append(remainingSteps);
+        sb.append(", remainingSteps=").append(steps);
         sb.append('}');
         return sb.toString();
     }

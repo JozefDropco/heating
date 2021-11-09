@@ -1,13 +1,12 @@
 package org.dropco.smarthome.web;
 
-import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
 import org.dropco.smarthome.ServiceMode;
 import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.heating.db.SolarSystemDao;
-import org.dropco.smarthome.heating.dto.*;
 import org.dropco.smarthome.heating.solar.*;
+import org.dropco.smarthome.heating.solar.dto.*;
 import org.dropco.smarthome.heating.solar.move.HorizontalMoveFeedback;
 import org.dropco.smarthome.heating.solar.move.VerticalMoveFeedback;
 
@@ -19,7 +18,6 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 import java.util.logging.Logger;
 
@@ -30,16 +28,9 @@ public class SolarWebService {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getTimetable(@QueryParam("month") String month) throws ParseException {
-        Calendar instance = Calendar.getInstance();
-        instance.set(Calendar.DAY_OF_MONTH, 1);
-        instance.set(Calendar.MONTH, Integer.parseInt(month) - 1);
-        instance.set(Calendar.HOUR_OF_DAY, 0);
-        instance.set(Calendar.MINUTE, 0);
-        instance.set(Calendar.SECOND, 0);
-        instance.set(Calendar.MILLISECOND, 0);
-        SolarSchedule schedule = Db.applyDao(new SolarSystemDao(), dao -> dao.getForMonth(instance));
-
-        return Response.ok(new Gson().toJson(toScheduleDTO(schedule))).build();
+        SolarSchedule schedule = Db.applyDao(new SolarSystemDao(), dao -> dao.getTodaysSchedule());
+        return Response.ok().build();
+//        return Response.ok(new Gson().toJson(toScheduleDTO(schedule))).build();
     }
 
 
@@ -55,11 +46,9 @@ public class SolarWebService {
             pos.y = lastKnownPosition.getVertical();
             src.pos = pos;
             src.dayLight = DayLight.inst().enoughLight();
-//            src.windy = StrongWind.isWindy();
-//            src.overHeated = SolarTemperatureWatch.isOverHeated();
-            return dao.getForMonth(Calendar.getInstance());
+            return dao.getTodaysSchedule();
         });
-        List<SolarPanelStepRecord> todayRecords = forMonth.getRemainingSteps();
+        List<SolarPanelStep> todayRecords = forMonth.getSteps();
 
         src.remainingPositions = Lists.transform(todayRecords, this::toSolarDTO);
         if (ServiceMode.getPort(SolarSystemRefCode.NORTH_PIN_REF_CD).isHigh() && VerticalMoveFeedback.getMoving()) {
@@ -77,30 +66,30 @@ public class SolarWebService {
         return Response.ok(new Gson().toJson(src)).build();
     }
 
-    private Schedule toScheduleDTO(SolarSchedule schedule) {
-        Schedule s = new Schedule();
-        s.horizontalStep = schedule.getHorizontalTickCountForStep();
-        s.verticalStep = schedule.getVerticalTickCountForStep();
+//    private Schedule toScheduleDTO(SolarSchedule schedule) {
+//        Schedule s = new Schedule();
+//        s.horizontalStep = schedule.getHorizontalTickCountForStep();
+//        s.verticalStep = schedule.getVerticalTickCountForStep();
+//
+//        s.sunRiseHour = schedule.getSunRise().getHour();
+//        s.sunRiseMinute = schedule.getSunRise().getMinute();
+//        s.sunRiseAbsVer = ((AbsolutePosition) schedule.getSunRise().getPosition()).getVertical();
+//        s.sunRiseAbsHor = ((AbsolutePosition) schedule.getSunRise().getPosition()).getHorizontal();
+//
+//        s.sunSetHour = schedule.getSunSet().getHour();
+//        s.sunSetMinute = schedule.getSunSet().getMinute();
+//        s.sunSetAbsVer = ((AbsolutePosition) schedule.getSunSet().getPosition()).getVertical();
+//        s.sunSetAbsHor = ((AbsolutePosition) schedule.getSunSet().getPosition()).getHorizontal();
+//        for (SolarPanelStep r : Iterables.limit(Iterables.skip(schedule.getSteps(), 1), schedule.getSteps().size() - 2)) {
+//            SolarDTO dto = toSolarDTO(r);
+//            dto.vert = dto.vert / s.verticalStep;
+//            dto.hor = dto.hor / s.horizontalStep;
+//            s.positions.add(dto);
+//        }
+//        return s;
+//    }
 
-        s.sunRiseHour = schedule.getSunRise().getHour();
-        s.sunRiseMinute = schedule.getSunRise().getMinute();
-        s.sunRiseAbsVer = ((AbsolutePosition) schedule.getSunRise().getPosition()).getVertical();
-        s.sunRiseAbsHor = ((AbsolutePosition) schedule.getSunRise().getPosition()).getHorizontal();
-
-        s.sunSetHour = schedule.getSunSet().getHour();
-        s.sunSetMinute = schedule.getSunSet().getMinute();
-        s.sunSetAbsVer = ((AbsolutePosition) schedule.getSunSet().getPosition()).getVertical();
-        s.sunSetAbsHor = ((AbsolutePosition) schedule.getSunSet().getPosition()).getHorizontal();
-        for (SolarPanelStepRecord r : Iterables.limit(Iterables.skip(schedule.getRemainingSteps(), 1), schedule.getRemainingSteps().size() - 2)) {
-            SolarDTO dto = toSolarDTO(r);
-            dto.vert = dto.vert / s.verticalStep;
-            dto.hor = dto.hor / s.horizontalStep;
-            s.positions.add(dto);
-        }
-        return s;
-    }
-
-    private SolarDTO toSolarDTO(SolarPanelStepRecord rec) {
+    private SolarDTO toSolarDTO(SolarPanelStep rec) {
         SolarDTO solarDTO = new SolarDTO();
         rec.getPosition().invoke(new PositionProcessor<Void>() {
             @Override

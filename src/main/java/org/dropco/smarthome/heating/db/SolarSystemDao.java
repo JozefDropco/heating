@@ -9,12 +9,15 @@ import org.dropco.smarthome.database.Dao;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.database.querydsl.SolarMove;
 import org.dropco.smarthome.dto.LongConstant;
-import org.dropco.smarthome.heating.dto.*;
+import org.dropco.smarthome.TimeUtil;
+import org.dropco.smarthome.heating.solar.dto.AbsolutePosition;
+import org.dropco.smarthome.heating.solar.dto.DeltaPosition;
+import org.dropco.smarthome.heating.solar.dto.SolarPanelStep;
+import org.dropco.smarthome.heating.solar.dto.SolarSchedule;
 import org.dropco.smarthome.heating.solar.SolarSystemRefCode;
 
 import java.sql.Connection;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 
 import static org.dropco.smarthome.database.querydsl.SolarMove.SOLAR_MOVE;
@@ -53,69 +56,40 @@ public class SolarSystemDao implements Dao {
     }
 
 
-    public SolarSchedule getForMonth(Calendar calendar) {
+    public SolarSchedule getTodaysSchedule() {
+        Calendar calendar = Calendar.getInstance();
         int month = calendar.get(Calendar.MONTH) + 1;
         Tuple sTuple = new MySQLQuery<SolarMove>(getConnection()).select(SOLAR_SCHEDULE.all()).from(SOLAR_SCHEDULE).where(SOLAR_SCHEDULE.month.eq(month)).fetchFirst();
         SolarSchedule schedule = new SolarSchedule();
         schedule.setMonth(month);
         schedule.setHorizontalTickCountForStep(sTuple.get(SOLAR_SCHEDULE.horizontalStep));
         schedule.setVerticalTickCountForStep(sTuple.get(SOLAR_SCHEDULE.verticalStep));
-
-        SolarPanelStepRecord sunRise = new SolarPanelStepRecord();
+        schedule.setSteps(Lists.newArrayList());
+        SolarPanelStep sunRise = new SolarPanelStep();
         sunRise.setHour(sTuple.get(SOLAR_SCHEDULE.sunRiseHour));
         sunRise.setMinute(sTuple.get(SOLAR_SCHEDULE.sunRiseMinute));
-        schedule.setCurrentNormalPosition(new AbsolutePosition(sTuple.get(SOLAR_SCHEDULE.sunRiseAbsPosHor), sTuple.get(SOLAR_SCHEDULE.sunRiseAbsPosVert)));
         sunRise.setPosition(new AbsolutePosition(sTuple.get(SOLAR_SCHEDULE.sunRiseAbsPosHor), sTuple.get(SOLAR_SCHEDULE.sunRiseAbsPosVert)));
         sunRise.setIgnoreDayLight(true);
-        schedule.setSunRise(sunRise);
+        if (TimeUtil.isAfter(calendar, sunRise.getHour(), sunRise.getMinute())) schedule.getSteps().add(sunRise);
 
-        SolarPanelStepRecord sunSet = new SolarPanelStepRecord();
+        List<Tuple> lst = new MySQLQuery<SolarMove>(getConnection()).select(SOLAR_MOVE.all()).from(SOLAR_MOVE)
+                .where(SOLAR_MOVE.month.eq(month)).orderBy(SOLAR_MOVE.hour.asc(), SOLAR_MOVE.minute.asc()).fetch();
+        for (Tuple tuple : lst) {
+            SolarPanelStep current = toRecord(tuple, schedule);
+            if (TimeUtil.isAfter(calendar, current.getHour(), current.getMinute())) schedule.getSteps().add(current);
+        }
+        SolarPanelStep sunSet = new SolarPanelStep();
         sunSet.setHour(sTuple.get(SOLAR_SCHEDULE.sunSetHour));
         sunSet.setMinute(sTuple.get(SOLAR_SCHEDULE.sunSetMinute));
         sunSet.setPosition(new AbsolutePosition(sTuple.get(SOLAR_SCHEDULE.sunSetAbsPosHor), sTuple.get(SOLAR_SCHEDULE.sunSetAbsPosVert)));
         sunSet.setIgnoreDayLight(true);
-        schedule.setSunSet(sunSet);
-        schedule.setRemainingSteps(Lists.newArrayList());
-        List<Tuple> lst = new MySQLQuery<SolarMove>(getConnection()).select(SOLAR_MOVE.all()).from(SOLAR_MOVE)
-                .where(SOLAR_MOVE.month.eq(month)).orderBy(SOLAR_MOVE.hour.asc(), SOLAR_MOVE.minute.asc()).fetch();
-        if (isApplicable(calendar, sunRise)) schedule.getRemainingSteps().add(sunRise);
-        for (Tuple tuple : lst) {
-            SolarPanelStepRecord current = toRecord(tuple, schedule);
-            if (isApplicable(calendar, current)) schedule.getRemainingSteps().add(current);
-            else {
-                current.getPosition().invoke(new PositionProcessor<Void>() {
-                    @Override
-                    public Void process(AbsolutePosition absPos) {
-                        schedule.setCurrentNormalPosition(absPos);
-                        return null;
-                    }
-
-                    @Override
-                    public Void process(DeltaPosition deltaPos) {
-                        AbsolutePosition currentNormalPosition = schedule.getCurrentNormalPosition();
-                        currentNormalPosition.setVertical(currentNormalPosition.getVertical() + deltaPos.getDeltaVerticalTicks());
-                        currentNormalPosition.setHorizontal(currentNormalPosition.getHorizontal() + deltaPos.getDeltaHorizontalTicks());
-                        return null;
-                    }
-                });
-            }
-        }
-        if (isApplicable(calendar, sunSet)) schedule.getRemainingSteps().add(sunSet);
-        else schedule.setCurrentNormalPosition((AbsolutePosition) sunSet.getPosition());
+        if (TimeUtil.isAfter(calendar, sunSet.getHour(), sunSet.getMinute())) schedule.getSteps().add(sunSet);
         return schedule;
     }
 
-    private boolean isApplicable(Calendar calendar, SolarPanelStepRecord record) {
-        int currentHour = calendar.get(Calendar.HOUR_OF_DAY);
-        if (currentHour < record.getHour()) return true;
-        if (currentHour == record.getHour() && calendar.get(Calendar.MINUTE) <= record.getMinute()) return true;
-        return false;
 
-    }
-
-
-    private SolarPanelStepRecord toRecord(Tuple tuple, SolarSchedule schedule) {
-        SolarPanelStepRecord record = new SolarPanelStepRecord();
+    private SolarPanelStep toRecord(Tuple tuple, SolarSchedule schedule) {
+        SolarPanelStep record = new SolarPanelStep();
         record.setHour(tuple.get(SOLAR_MOVE.hour));
         record.setMinute(tuple.get(SOLAR_MOVE.minute));
         record.setPosition(new DeltaPosition(tuple.get(SOLAR_MOVE.horizontalSteps) * schedule.getHorizontalTickCountForStep(), tuple.get(SOLAR_MOVE.verticalSteps) * schedule.getVerticalTickCountForStep()));
@@ -136,36 +110,9 @@ public class SolarSystemDao implements Dao {
     }
 
     public DeltaPosition getStrongWindPosition() {
-        SolarSchedule month = getForMonth(Calendar.getInstance());
-        return new DeltaPosition(month.getHorizontalTickCountForStep() * -2, 0);
+        SolarSchedule month = getTodaysSchedule();
+        return new DeltaPosition(0,month.getVerticalTickCountForStep() * -2);
     }
 
-    public AbsolutePosition getOverheatedPosition() {
-        SolarPanelStepRecord sunRise = getForMonth(Calendar.getInstance()).getSunRise();
-        return (AbsolutePosition) sunRise.getPosition();
-    }
 
-    public void saveNormalPosition(AbsolutePosition position) {
-        settingsDao.updateLongConstant(NORMAL_HORIZONTAL.setValue((long) position.getHorizontal()));
-        settingsDao.updateLongConstant(NORMAL_VERTICAL.setValue((long) position.getVertical()));
-
-    }
-
-    public AbsolutePosition getNormalPosition() {
-        LongConstant horPos = settingsDao.getLongConst(NORMAL_HORIZONTAL.getRefCd()).get();
-        LongConstant verPos = settingsDao.getLongConst(NORMAL_VERTICAL.getRefCd()).get();
-        if (itToday(horPos.getLastModification())) {
-            return new AbsolutePosition(horPos.getValue().intValue(), verPos.getValue().intValue());
-        } else {
-            return getForMonth(Calendar.getInstance()).getCurrentNormalPosition();
-        }
-    }
-
-    boolean itToday(Date date) {
-        Calendar cal1 = Calendar.getInstance();
-        Calendar cal2 = Calendar.getInstance();
-        cal2.setTime(date);
-        return cal1.get(Calendar.DAY_OF_YEAR) == cal2.get(Calendar.DAY_OF_YEAR) &&
-                cal1.get(Calendar.YEAR) == cal2.get(Calendar.YEAR);
-    }
 }

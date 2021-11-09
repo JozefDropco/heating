@@ -1,14 +1,11 @@
 package org.dropco.smarthome.heating.solar.move;
 
-import org.dropco.smarthome.heating.dto.AbsolutePosition;
-import org.dropco.smarthome.heating.dto.DeltaPosition;
-import org.dropco.smarthome.heating.dto.Position;
-import org.dropco.smarthome.heating.dto.PositionProcessor;
+import org.dropco.smarthome.heating.solar.dto.AbsolutePosition;
+import org.dropco.smarthome.heating.solar.dto.DeltaPosition;
+import org.dropco.smarthome.heating.solar.dto.Position;
+import org.dropco.smarthome.heating.solar.dto.PositionProcessor;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Semaphore;
@@ -21,7 +18,7 @@ import java.util.logging.Logger;
 import static java.lang.Math.abs;
 import static org.dropco.smarthome.heating.solar.SolarSystemRefCode.*;
 
-public class SolarPanelMover implements Mover {
+public class SolarPanelMover implements Mover, Runnable {
 
     private static final Semaphore waitForEnd = new Semaphore(0);
     private static final Logger LOGGER = Logger.getLogger(SolarPanelMover.class.getName());
@@ -29,33 +26,28 @@ public class SolarPanelMover implements Mover {
     private BiConsumer<String, Boolean> commandExecutor;
     private List<PositionChangeListener> listeners = Collections.synchronizedList(new ArrayList<>());
     private BlockingQueue<MoveEvent> moveEvents = new ArrayBlockingQueue<>(100);
-    private Position position;
+    private AtomicReference<String> lastMovementRefCd = new AtomicReference<>();
     private AtomicReference<Movement> horizontalMovement = new AtomicReference<>();
     private AtomicReference<Movement> verticalMovement = new AtomicReference<>();
     private AtomicReference<PosDiff> remainingDiff = new AtomicReference<>();
     private VerticalMoveFeedback verticalMoveFeedback;
     private HorizontalMoveFeedback horizontalMoveFeedback;
-    public Supplier<Long> delaySupplier;
 
-    public SolarPanelMover(BiConsumer<String, Boolean> commandExecutor, Supplier<AbsolutePosition> currentPositionSupplier, VerticalMoveFeedback verticalMoveFeedback, HorizontalMoveFeedback horizontalMoveFeedback,Supplier<Long> delaySupplier) {
+    public SolarPanelMover(BiConsumer<String, Boolean> commandExecutor, Supplier<AbsolutePosition> currentPositionSupplier, VerticalMoveFeedback verticalMoveFeedback, HorizontalMoveFeedback horizontalMoveFeedback) {
         this.commandExecutor = commandExecutor;
         this.currentPositionSupplier = currentPositionSupplier;
         this.verticalMoveFeedback = verticalMoveFeedback;
         this.horizontalMoveFeedback = horizontalMoveFeedback;
-        this.delaySupplier = delaySupplier;
     }
 
 
     @Override
-    public synchronized void moveTo(Position position) {
-        this.position = position;
+    public synchronized void moveTo(String movementRefCd, Position position) {
+        if (Objects.equals(lastMovementRefCd.get(),movementRefCd)) return;
+        lastMovementRefCd.set(movementRefCd);
+        PosDiff diff = calculateDifference(position, currentPositionSupplier.get());
+        if (diff.vert==0 && diff.hor==0) return;
         stop();
-        try {
-            Thread.sleep(delaySupplier.get() * 1000);
-        } catch (InterruptedException e) {
-            LOGGER.log(Level.FINE, "Interrupt occurred ", e);
-        }
-        PosDiff diff = calculateDifference();
         int absHorizontal = abs(diff.hor);
         LOGGER.fine("Posun o [hor=" + diff.hor + ", vert=" + diff.vert + "]");
         if (absHorizontal > 0) {
@@ -84,7 +76,6 @@ public class SolarPanelMover implements Mover {
     }
 
 
-    @Override
     public void run() {
         verticalMoveFeedback.addRealTimeTicker(state -> {
             if (state) moveEvents.add(new MoveEvent(verticalMovement.get(), EventType.TICK));
@@ -140,15 +131,14 @@ public class SolarPanelMover implements Mover {
         }
     }
 
-    private PosDiff calculateDifference() {
+    private PosDiff calculateDifference(Position position, final AbsolutePosition previousPosition) {
         PosDiff diff = position.invoke(new PositionProcessor<PosDiff>() {
             @Override
             public PosDiff process(AbsolutePosition absPos) {
-                AbsolutePosition currentPosition = currentPositionSupplier.get();
                 LOGGER.log(Level.FINE, "Natáčanie kolektorov na hor=" + absPos.getHorizontal() + ", vert=" + absPos.getVertical());
                 return new PosDiff()
-                        .setHor(absPos.getHorizontal() - currentPosition.getHorizontal())
-                        .setVert(absPos.getVertical() - currentPosition.getVertical());
+                        .setHor(absPos.getHorizontal() - previousPosition.getHorizontal())
+                        .setVert(absPos.getVertical() - previousPosition.getVertical());
             }
 
             @Override

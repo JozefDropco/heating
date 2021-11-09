@@ -3,12 +3,12 @@ package org.dropco.smarthome;
 import com.pi4j.io.gpio.*;
 import com.pi4j.io.gpio.event.PinListener;
 import com.pi4j.io.gpio.impl.GpioControllerImpl;
-import org.dropco.smarthome.heating.solar.move.HorizontalMoveFeedback;
-import org.dropco.smarthome.heating.solar.move.VerticalMoveFeedback;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class MainTest {
 
@@ -248,6 +248,7 @@ public class MainTest {
 
     @Test
     public void run() throws Exception {
+        Logger.getGlobal().setLevel(Level.FINE);
         Main.main(new String[]{"--heating","--solar"});
     }
 }

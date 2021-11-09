@@ -1,9 +1,9 @@
 package org.dropco.smarthome.heating.solar.move;
 
-import org.dropco.smarthome.heating.dto.Position;
+import org.dropco.smarthome.heating.solar.dto.Position;
 
-public interface Mover extends Runnable {
+public interface Mover {
 
-    void moveTo(Position position);
+    void moveTo(String movementRefCd, Position position);
     void stop();
 }
