@@ -1,8 +1,6 @@
 package org.dropco.smarthome;
 
 
-import org.dropco.smarthome.heating.solar.DayLight;
-
 import java.util.Calendar;
 import java.util.Date;
 
@@ -44,5 +42,14 @@ public class TimeUtil {
         current.set(Calendar.MILLISECOND, 0);
         Date future = current.getTime();
         return future.getTime() - currentDate.getTime();
+    }
+
+    public static boolean isToday(Date asOfDate) {
+        Calendar instance = Calendar.getInstance();
+        Calendar asOf = Calendar.getInstance();
+        asOf.setTime(asOfDate);
+        if (instance.get(Calendar.YEAR) != asOf.get(Calendar.YEAR)) return false;
+        if (instance.get(Calendar.DAY_OF_YEAR) != asOf.get(Calendar.DAY_OF_YEAR)) return false;
+        return true;
     }
 }

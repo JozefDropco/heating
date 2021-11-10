@@ -50,6 +50,10 @@ public class SolarPanelStateManager {
             updateSchedule();
         } else {
             todaysSchedule = SolarSerializer.getGson().fromJson(json, SolarSchedule.class);
+            if (!TimeUtil.isToday(todaysSchedule.getAsOfDate())){
+                todaysSchedule = solarScheduleSupplier.get();
+                updateSchedule();
+            }
         }
         String serializedEvents = currentEventsSupplier.get();
         if (serializedEvents != null) {
@@ -86,6 +90,7 @@ public class SolarPanelStateManager {
                 case STRONG_WIND:
                     mover.moveTo("noWind", new DeltaPosition(0, 0));
                     break;
+                case PARKING_POSTION:
                 case PANEL_OVERHEATED:
                 case WATER_OVERHEATED:
                     nextTick();

@@ -12,7 +12,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -45,25 +44,34 @@ public class SolarPanelMover implements Mover, Runnable {
 
     @Override
     public synchronized void moveTo(String movementRefCd, Position position) {
-        if (Objects.equals(lastMovementRefCd.get(),movementRefCd)) return;
+        if (Objects.equals(lastMovementRefCd.get(), movementRefCd)) return;
         lastMovementRefCd.set(movementRefCd);
         PosDiff diff = calculateDifference(position, currentPositionSupplier.get());
-        if (diff.vert==0 && diff.hor==0) return;
+        if (diff.getHor() == 0 && diff.getVert() == 0) return;
         stop();
-        int absHorizontal = abs(diff.hor);
-        LOGGER.fine("Posun o [hor=" + diff.hor + ", vert=" + diff.vert + "]");
+        remainingDiff.set(diff);
+        int absHorizontal = abs(diff.getHor());
+        LOGGER.fine("Posun o [hor=" + diff.getHor() + ", vert=" + diff.getVert() + "]");
         if (absHorizontal > 0) {
             Movement horMovement = getHorMovement(diff);
             horizontalMovement.set(horMovement);
-            setState(horMovement.shutdownFirst, false);
             setState(horMovement, true);
         }
-        int absVertical = abs(diff.vert);
+        int absVertical = abs(diff.getVert());
         if (absVertical > 0) {
             Movement vertMovement = getVertMovement(diff);
             verticalMovement.set(vertMovement);
-            setState(vertMovement.shutdownFirst, false);
             setState(vertMovement, true);
+        }
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        PosDiff posDiff = remainingDiff.get();
+        if (posDiff != null) {
+            if ((posDiff.getHor() > 0 && !HorizontalMoveFeedback.getMoving()) || (posDiff.getVert() > 0 && !VerticalMoveFeedback.getMoving()))
+                stop();
         }
     }
 
@@ -80,58 +88,38 @@ public class SolarPanelMover implements Mover, Runnable {
 
     public void run() {
         verticalMoveFeedback.addRealTimeTicker(state -> {
-            if (state) moveEvents.add(new MoveEvent(verticalMovement.get(), EventType.TICK));
+            Movement movement = verticalMovement.get();
+            if (state && movement != null) {
+                AbsolutePosition currentPosition = currentPositionSupplier.get();
+                currentPosition.setVertical(currentPosition.getVertical() + movement.tick);
+                if (remainingDiff.get().decVert(movement.tick))
+                    setState(movement, false);
+                fireUpdate(currentPosition);
+            }
         });
         verticalMoveFeedback.addSubscriber(state -> {
-            if (!state) moveEvents.add(new MoveEvent(verticalMovement.get(), EventType.STOP));
+            if (!state) verticalMovement.set(null);
+            if (verticalMovement.get() == null && horizontalMovement.get() == null) {
+                if (waitForEnd.hasQueuedThreads()) waitForEnd.release();
+            }
         });
         horizontalMoveFeedback.addRealTimeTicker(state -> {
-            if (state) moveEvents.add(new MoveEvent(horizontalMovement.get(), EventType.TICK));
+            Movement movement = horizontalMovement.get();
+            if (state && movement != null) {
+                AbsolutePosition currentPosition = currentPositionSupplier.get();
+                currentPosition.setHorizontal(currentPosition.getHorizontal() + movement.tick);
+                if (remainingDiff.get().decHor(movement.tick))
+                    setState(movement, false);
+                fireUpdate(currentPosition);
+            }
         });
         horizontalMoveFeedback.addSubscriber(state -> {
-            if (!state) moveEvents.add(new MoveEvent(horizontalMovement.get(), EventType.STOP));
-        });
-        try {
-            MoveEvent e;
-            Optional<AbsolutePosition> position = Optional.empty();
-            while ((e = moveEvents.take()) != null) {
-                AbsolutePosition currentPosition = position.orElseGet(currentPositionSupplier);
-                position =Optional.of(currentPosition);
-                switch (e.eventType) {
-                    case TICK:
-                        switch (e.movement) {
-                            case WEST:
-                            case EAST:
-                                currentPosition.setHorizontal(currentPosition.getHorizontal() + e.movement.tick);
-                                break;
-                            case NORTH:
-                            case SOUTH:
-                                currentPosition.setVertical(currentPosition.getVertical() + e.movement.tick);
-                                break;
-                        }
-                        break;
-                    case STOP:
-                        switch (e.movement) {
-                            case WEST:
-                            case EAST:
-                                horizontalMovement.set(null);
-                                break;
-                            case NORTH:
-                            case SOUTH:
-                                verticalMovement.set(null);
-                                break;
-                        }
-                        break;
-                }
-                fireUpdate(currentPosition);
-                if (verticalMovement.get()==null && horizontalMovement.get() ==null){
-                    if (waitForEnd.hasQueuedThreads()) waitForEnd.release();
-                }
+            if (!state) horizontalMovement.set(null);
+            if (verticalMovement.get() == null && horizontalMovement.get() == null) {
+                if (waitForEnd.hasQueuedThreads()) waitForEnd.release();
             }
-        } catch (InterruptedException e) {
-            LOGGER.log(Level.FINE,"Solar panel preruseny", e  );
-        }
-    }
+        });
+           }
 
     private PosDiff calculateDifference(Position position, final AbsolutePosition previousPosition) {
         PosDiff diff = position.invoke(new PositionProcessor<PosDiff>() {
@@ -155,12 +143,12 @@ public class SolarPanelMover implements Mover, Runnable {
     }
 
     private Movement getVertMovement(PosDiff diff) {
-        if (diff.vert < 0) return Movement.NORTH;
+        if (diff.getVert() < 0) return Movement.NORTH;
         return Movement.SOUTH;
     }
 
     private Movement getHorMovement(PosDiff diff) {
-        if (diff.hor < 0) return Movement.WEST;
+        if (diff.getHor() < 0) return Movement.WEST;
         return Movement.EAST;
     }
 
@@ -186,23 +174,7 @@ public class SolarPanelMover implements Mover, Runnable {
     }
 
 
-    private static class PosDiff {
-        int hor;
-        int vert;
-
-        public PosDiff setHor(int hor) {
-            this.hor = hor;
-            return this;
-        }
-
-        public PosDiff setVert(int vert) {
-            this.vert = vert;
-            return this;
-        }
-    }
-
-
-    private enum Movement {
+    public enum Movement {
         SOUTH(SOUTH_PIN_REF_CD, 1, "Juh"),
         NORTH(NORTH_PIN_REF_CD, -1, "Sever"),
         WEST(WEST_PIN_REF_CD, -1, "Západ"),
@@ -211,14 +183,7 @@ public class SolarPanelMover implements Mover, Runnable {
         private final String pinRefCd;
         private int tick;
         private final String name;
-        private Movement shutdownFirst;
 
-        static {
-            SOUTH.shutdownFirst = NORTH;
-            NORTH.shutdownFirst = SOUTH;
-            WEST.shutdownFirst = EAST;
-            EAST.shutdownFirst = WEST;
-        }
 
         Movement(String pinRefCd, int tick, String name) {
             this.pinRefCd = pinRefCd;
@@ -227,7 +192,7 @@ public class SolarPanelMover implements Mover, Runnable {
         }
     }
 
-    private static enum EventType {
+    private enum EventType {
         TICK,
         STOP;
     }

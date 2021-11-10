@@ -7,39 +7,68 @@ import com.pi4j.io.gpio.event.GpioPinListener;
 import com.pi4j.io.gpio.event.GpioPinListenerDigital;
 import com.pi4j.io.gpio.trigger.GpioTrigger;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class TickerPin implements GpioPinDigitalInput {
     private List<GpioPinListenerDigital> listeners = Lists.newArrayList();
     private int sleepMiliseconds;
     private int tickCount;
+    private AtomicBoolean executed = new AtomicBoolean();
+    private ReentrantLock lock = new ReentrantLock();
+    private Condition waitForResume = lock.newCondition();
+    private AtomicBoolean stopped = new AtomicBoolean();
 
     public TickerPin(int sleepMiliseconds, int tickCount) {
         this.sleepMiliseconds = sleepMiliseconds;
         this.tickCount = tickCount;
     }
 
-    public void startTicking(){
-        Executors.defaultThreadFactory().newThread(new Runnable() {
-            @Override
-            public void run() {
-                while(tickCount>0){
-                    tickCount--;
-                    listeners.forEach(gpioPinListener -> gpioPinListener.handleGpioPinDigitalStateChangeEvent(new GpioPinDigitalStateChangeEvent(TickerPin.this, TickerPin.this, PinState.HIGH)));
-                    try {
-                        Thread.sleep(sleepMiliseconds);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                    listeners.forEach(gpioPinListener -> gpioPinListener.handleGpioPinDigitalStateChangeEvent(new GpioPinDigitalStateChangeEvent(TickerPin.this, TickerPin.this, PinState.LOW)));
+    public void startTicking() {
+        if (executed.compareAndSet(false, true))
+            Executors.defaultThreadFactory().newThread(new Runnable() {
+                @Override
+                public void run() {
+                    while (tickCount > 0) {
+                        if (stopped.get()) {
+                            lock.lock();
+                            try{
+                                waitForResume.awaitUninterruptibly();
+                            }finally {
+                                lock.unlock();
+                            }
+                        }
+                        tickCount--;
+                        listeners.forEach(gpioPinListener -> gpioPinListener.handleGpioPinDigitalStateChangeEvent(new GpioPinDigitalStateChangeEvent(TickerPin.this, TickerPin.this, PinState.HIGH)));
+                        try {
+                            Thread.sleep(sleepMiliseconds);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        listeners.forEach(gpioPinListener -> gpioPinListener.handleGpioPinDigitalStateChangeEvent(new GpioPinDigitalStateChangeEvent(TickerPin.this, TickerPin.this, PinState.LOW)));
 
+                    }
                 }
+            }).start();
+        else {
+            lock.lock();
+            try{
+                stopped.set(false);
+                waitForResume.signal();
+            } finally {
+                lock.unlock();
             }
-        }).start();
+        }
+    }
+
+    public void stopTicking() {
+        stopped.set(true);
     }
 
     @Override
@@ -234,8 +263,8 @@ public class TickerPin implements GpioPinDigitalInput {
 
     @Override
     public void addListener(GpioPinListener... gpioPinListeners) {
-        for (GpioPinListener listener: gpioPinListeners)
-        listeners.add((GpioPinListenerDigital) listener);
+        for (GpioPinListener listener : gpioPinListeners)
+            listeners.add((GpioPinListenerDigital) listener);
     }
 
     @Override
