@@ -7,7 +7,10 @@ import org.dropco.smarthome.heating.solar.dto.DeltaPosition;
 import org.dropco.smarthome.heating.solar.dto.Position;
 import org.dropco.smarthome.heating.solar.dto.PositionProcessor;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Semaphore;
@@ -19,7 +22,7 @@ import java.util.logging.Logger;
 import static java.lang.Math.abs;
 import static org.dropco.smarthome.heating.solar.SolarSystemRefCode.*;
 
-public class SolarPanelMover implements Mover, Runnable {
+public class SolarPanelMover implements Mover {
 
     private static final Semaphore waitForEnd = new Semaphore(0);
     private static final Logger LOGGER = Logger.getLogger(SolarPanelMover.class.getName());
@@ -86,7 +89,7 @@ public class SolarPanelMover implements Mover, Runnable {
     }
 
 
-    public void run() {
+    public void connect() {
         verticalMoveFeedback.addRealTimeTicker(state -> {
             Movement movement = verticalMovement.get();
             if (state && movement != null) {
@@ -119,7 +122,7 @@ public class SolarPanelMover implements Mover, Runnable {
                 if (waitForEnd.hasQueuedThreads()) waitForEnd.release();
             }
         });
-           }
+    }
 
     private PosDiff calculateDifference(Position position, final AbsolutePosition previousPosition) {
         PosDiff diff = position.invoke(new PositionProcessor<PosDiff>() {

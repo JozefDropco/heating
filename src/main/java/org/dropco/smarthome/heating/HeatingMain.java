@@ -52,7 +52,7 @@ public class HeatingMain {
         VERTICAL_MOVE_FEEDBACK.start( Main.pinManager.getInput(NORTH_SOUTH_MOVE_INDICATOR));
         HORIZONTAL_MOVE_FEEDBACK.start( Main.pinManager.getInput(EAST_WEST_MOVE_INDICATOR));
         HeatingConfiguration.start();
-        new Thread(mover).start();
+        mover.connect();
         new Thread(new SolarCircularPump(commandExecutor)).start();
         new Thread(new ThreeWayValve(commandExecutor)).start();
         new Thread(new BoilerBlocker(commandExecutor)).start();
@@ -121,8 +121,8 @@ public class HeatingMain {
         StatsCollector.getInstance().collect("Kolektory - Juh",  Main.pinManager.getOutput(SolarSystemRefCode.SOUTH_PIN_REF_CD));
         StatsCollector.getInstance().collect("Kolektory - Východ",  Main.pinManager.getOutput(SolarSystemRefCode.EAST_PIN_REF_CD));
         StatsCollector.getInstance().collect("Kolektory - Západ",  Main.pinManager.getOutput(SolarSystemRefCode.WEST_PIN_REF_CD));
-        StatsCollector.getInstance().collect("S-J indikator", true, VERTICAL_MOVE_FEEDBACK::addRealTimeTicker);
-        StatsCollector.getInstance().collect("V-Z indikator", true, HORIZONTAL_MOVE_FEEDBACK::addRealTimeTicker);
+        StatsCollector.getInstance().collect("S-J indikator", VERTICAL_MOVE_FEEDBACK.getMoving(), VERTICAL_MOVE_FEEDBACK::addSubscriber);
+        StatsCollector.getInstance().collect("V-Z indikator", HORIZONTAL_MOVE_FEEDBACK.getMoving(), HORIZONTAL_MOVE_FEEDBACK::addSubscriber);
 
         StatsCollector.getInstance().collect("Kolektory - obehové čerpadlo",  Main.pinManager.getOutput(CIRCULAR_PUMP_PORT));
         StatsCollector.getInstance().collect("3-cestný ventil - Bypass", !ThreeWayValve.getState() && SolarCircularPump.getState(), addToStats -> {

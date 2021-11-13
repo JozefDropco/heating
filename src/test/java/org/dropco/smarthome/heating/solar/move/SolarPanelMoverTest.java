@@ -47,11 +47,9 @@ public class SolarPanelMoverTest {
                 updatedPosition.set(position);
             }
         });
-        ExecutorService pool = Executors.newFixedThreadPool(1);
-        pool.submit(mover);
+        mover.connect();
         verticalTickPin.startTicking();
         mover.moveTo("1", position(0, 5));
-        pool.awaitTermination(5, TimeUnit.SECONDS);
         Assert.assertEquals("We shouldnt move", 0, updatedPosition.get().getHorizontal());
         Assert.assertEquals("We should move 5 ticks to south", 5, updatedPosition.get().getVertical());
         Assert.assertTrue(mockedPinManager.getState(SolarSystemRefCode.SOUTH_PIN_REF_CD).isLow());
@@ -78,11 +76,9 @@ public class SolarPanelMoverTest {
                 updatedPosition.set(position);
             }
         });
-        ExecutorService pool = Executors.newFixedThreadPool(1);
-        pool.submit(mover);
+        mover.connect();
         verticalTickPin.startTicking();
         mover.moveTo("1", position(0, 0));
-        pool.awaitTermination(5, TimeUnit.SECONDS);
         Assert.assertEquals("We shouldnt move", 0, updatedPosition.get().getHorizontal());
         Assert.assertEquals("We should move 5 ticks to north", 0, updatedPosition.get().getVertical());
         Assert.assertTrue(mockedPinManager.getState(SolarSystemRefCode.NORTH_PIN_REF_CD).isLow());
@@ -111,11 +107,9 @@ public class SolarPanelMoverTest {
                 updatedPosition.set(position);
             }
         });
-        ExecutorService pool = Executors.newFixedThreadPool(1);
-        pool.submit(mover);
+        mover.connect();
         horizontalTickPin.startTicking();
         mover.moveTo("1", position(0, 0));
-        pool.awaitTermination(5, TimeUnit.SECONDS);
         Assert.assertEquals("We shouldnt move", 0, updatedPosition.get().getVertical());
         Assert.assertEquals("We should move 5 ticks to west", 0, updatedPosition.get().getHorizontal());
         Assert.assertTrue(mockedPinManager.getState(SolarSystemRefCode.WEST_PIN_REF_CD).isLow());
@@ -143,11 +137,9 @@ public class SolarPanelMoverTest {
                 updatedPosition.set(position);
             }
         });
-        ExecutorService pool = Executors.newFixedThreadPool(1);
-        pool.submit(mover);
+        mover.connect();
         horizontalTickPin.startTicking();
         mover.moveTo("1", position(5, 0));
-        pool.awaitTermination(5, TimeUnit.SECONDS);
         Assert.assertEquals("We shouldnt move", 0, updatedPosition.get().getVertical());
         Assert.assertEquals("We should move 5 ticks to east", 5, updatedPosition.get().getHorizontal());
         Assert.assertTrue(mockedPinManager.getState(SolarSystemRefCode.EAST_PIN_REF_CD).isLow());
@@ -206,11 +198,9 @@ public class SolarPanelMoverTest {
                 currentPosition.set(position);
             }
         });
-        ExecutorService pool = Executors.newFixedThreadPool(1);
-        pool.submit(mover);
+        mover.connect();
         mover.moveTo("1", position(5, 0));
         mover.moveTo("2",position(5,5));
-        pool.awaitTermination(10, TimeUnit.SECONDS);
         Assert.assertEquals("We shouldnt move", 5, currentPosition.get().getVertical());
         Assert.assertEquals("We should move 5 ticks to east", 5, currentPosition.get().getHorizontal());
         Assert.assertTrue(mockedPinManager.getState(SolarSystemRefCode.EAST_PIN_REF_CD).isLow());
@@ -237,11 +227,9 @@ public class SolarPanelMoverTest {
                 updatedPosition.set(position);
             }
         });
-        ExecutorService pool = Executors.newFixedThreadPool(1);
-        pool.submit(mover);
+        mover.connect();
         horizontalTickPin.startTicking();
         mover.moveTo("1", position(5, 0));
-        pool.awaitTermination(5, TimeUnit.SECONDS);
         Assert.assertEquals("We shouldnt move", 0, updatedPosition.get().getVertical());
         Assert.assertEquals("We should move 3 ticks to east", 3, updatedPosition.get().getHorizontal());
         Assert.assertTrue(mockedPinManager.getState(SolarSystemRefCode.EAST_PIN_REF_CD).isLow());
