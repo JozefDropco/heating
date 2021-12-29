@@ -55,10 +55,15 @@ public class SolarPanel {
                 panelStateManager.remove(SolarPanelStateManager.Event.WATER_OVERHEATED);
             }
         });
-        TimerService.scheduleForNextDay("Solar denny reset", () -> {
-            panelStateManager.dailyReset();
-            ticker();
-        });
+        Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+                panelStateManager.dailyReset();
+                SolarPanel.this.ticker();
+                TimerService.scheduleForNextDay("Solar denny reset", this);
+            }
+        };
+        TimerService.scheduleForNextDay("Solar denny reset", runnable);
         StrongWind.addSubscriber((state) -> {
             if (state) {
                 panelStateManager.add(SolarPanelStateManager.Event.STRONG_WIND);
