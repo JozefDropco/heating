@@ -60,6 +60,7 @@ public class SolarPanel {
             public void run() {
                 panelStateManager.dailyReset();
                 SolarPanel.this.ticker();
+                DayLight.inst().clear();
                 TimerService.scheduleForNextDay("Solar denny reset", this);
             }
         };
