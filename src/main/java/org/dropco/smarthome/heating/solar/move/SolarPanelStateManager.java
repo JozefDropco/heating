@@ -2,6 +2,7 @@ package org.dropco.smarthome.heating.solar.move;
 
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
+import org.dropco.smarthome.ServiceMode;
 import org.dropco.smarthome.TimeUtil;
 import org.dropco.smarthome.heating.solar.SolarSerializer;
 import org.dropco.smarthome.heating.solar.dto.*;
@@ -50,7 +51,7 @@ public class SolarPanelStateManager {
             updateSchedule();
         } else {
             todaysSchedule = SolarSerializer.getGson().fromJson(json, SolarSchedule.class);
-            if (!TimeUtil.isToday(todaysSchedule.getAsOfDate())){
+            if (!TimeUtil.isToday(todaysSchedule.getAsOfDate())) {
                 todaysSchedule = solarScheduleSupplier.get();
                 updateSchedule();
             }
@@ -77,7 +78,8 @@ public class SolarPanelStateManager {
                     nextTick();
                     break;
                 case PARKING_POSTION:
-                    mover.moveTo("PARKING_POSITION",new AbsolutePosition(WEST,NORTH));
+                    if (!ServiceMode.isServiceMode())
+                        mover.moveTo("PARKING_POSITION", new AbsolutePosition(WEST, NORTH));
             }
 
         }
@@ -88,7 +90,8 @@ public class SolarPanelStateManager {
             updateEvents();
             switch (event) {
                 case STRONG_WIND:
-                    mover.moveTo("noWind", new DeltaPosition(0, 0));
+                    if (!ServiceMode.isServiceMode())
+                        mover.moveTo("noWind", new DeltaPosition(0, 0));
                     break;
                 case PARKING_POSTION:
                 case PANEL_OVERHEATED:
@@ -103,7 +106,8 @@ public class SolarPanelStateManager {
     public void nextTick() {
         if (!currentEvents.contains(Event.PARKING_POSTION)) {
             if (!(currentEvents.contains(Event.PANEL_OVERHEATED) || currentEvents.contains(Event.WATER_OVERHEATED))) {
-                calculatePosition().ifPresent(step -> mover.moveTo(step.getHour() + ":" + step.getMinute(), step.getPosition()));
+                if (!ServiceMode.isServiceMode())
+                    calculatePosition().ifPresent(step -> mover.moveTo(step.getHour() + ":" + step.getMinute(), step.getPosition()));
             } else {
                 overheated();
             }
@@ -111,8 +115,10 @@ public class SolarPanelStateManager {
     }
 
     private void overheated() {
-        if (!currentEvents.contains(Event.PARKING_POSTION)) {
+        if (!ServiceMode.isServiceMode())
+            if (!currentEvents.contains(Event.PARKING_POSTION)) {
             AbsolutePosition current = currentPosition.get();
+
             if (TimeUtil.isAfternoon(getCurrentTime(), afternoonTime)) {
                 mover.moveTo("overheated_afternoon", new AbsolutePosition(EAST, (currentEvents.contains(Event.STRONG_WIND) ? current.getVertical() : SOUTH)));
             } else {
@@ -139,7 +145,8 @@ public class SolarPanelStateManager {
             step.getPosition().invoke(updateFirstTwoRecords);
         });
         updateSchedule();
-        mover.moveTo("strongWind", new DeltaPosition(0, -2 * todaysSchedule.getVerticalTickCountForStep()));
+        if (!ServiceMode.isServiceMode())
+            mover.moveTo("strongWind", new DeltaPosition(0, -2 * todaysSchedule.getVerticalTickCountForStep()));
     }
 
     protected Calendar getCurrentTime() {
@@ -230,7 +237,7 @@ public class SolarPanelStateManager {
         PARKING_POSTION;
     }
 
-    public static class Record{
+    public static class Record {
         private Position position;
         private Integer nextMoveHour;
         private Integer nextMoveMinute;

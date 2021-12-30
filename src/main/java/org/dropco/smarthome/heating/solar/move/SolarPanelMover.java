@@ -2,6 +2,7 @@ package org.dropco.smarthome.heating.solar.move;
 
 import com.pi4j.io.gpio.PinState;
 import org.dropco.smarthome.PinManager;
+import org.dropco.smarthome.ServiceMode;
 import org.dropco.smarthome.heating.solar.dto.AbsolutePosition;
 import org.dropco.smarthome.heating.solar.dto.DeltaPosition;
 import org.dropco.smarthome.heating.solar.dto.Position;
@@ -29,7 +30,6 @@ public class SolarPanelMover implements Mover {
     private Supplier<AbsolutePosition> currentPositionSupplier;
     private PinManager pinManager;
     private List<PositionChangeListener> listeners = Collections.synchronizedList(new ArrayList<>());
-    private BlockingQueue<MoveEvent> moveEvents = new ArrayBlockingQueue<>(100);
     private AtomicReference<String> lastMovementRefCd = new AtomicReference<>();
     private AtomicReference<Movement> horizontalMovement = new AtomicReference<>();
     private AtomicReference<Movement> verticalMovement = new AtomicReference<>();
@@ -47,6 +47,7 @@ public class SolarPanelMover implements Mover {
 
     @Override
     public synchronized void moveTo(String movementRefCd, Position position) {
+        if (ServiceMode.isServiceMode()) return;
         if (Objects.equals(lastMovementRefCd.get(), movementRefCd)) return;
         lastMovementRefCd.set(movementRefCd);
         PosDiff diff = calculateDifference(position, currentPositionSupplier.get());
@@ -195,18 +196,5 @@ public class SolarPanelMover implements Mover {
         }
     }
 
-    private enum EventType {
-        TICK,
-        STOP;
-    }
 
-    private static class MoveEvent {
-        private Movement movement;
-        private EventType eventType;
-
-        private MoveEvent(Movement movement, EventType eventType) {
-            this.movement = movement;
-            this.eventType = eventType;
-        }
-    }
 }
