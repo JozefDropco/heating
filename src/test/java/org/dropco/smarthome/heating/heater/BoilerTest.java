@@ -19,7 +19,7 @@ public class BoilerTest {
     @Test
     public void test() throws InterruptedException {
         Boiler b = new Boiler(MOCKED_PIN);
-        b.start(3000);
+        b.start();
         System.out.println(Boiler.getState() + "mockED PIN:"+MOCKED_PIN.getState());
         Thread.sleep(1000);
         MOCKED_PIN.flipState();

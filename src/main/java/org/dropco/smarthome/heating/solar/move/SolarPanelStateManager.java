@@ -216,6 +216,7 @@ public class SolarPanelStateManager {
 
     public void dailyReset() {
         currentEvents.clear();
+        updateEvents();
         todaysSchedule = solarScheduleSupplier.get();
         updateSchedule();
     }

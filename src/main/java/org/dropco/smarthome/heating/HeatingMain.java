@@ -37,7 +37,6 @@ public class HeatingMain {
     public static final String STRONG_WIND_PIN_REF_CD = "STRONG_WIND_PIN";
     public static final String DAY_LIGHT_PIN_REF_CD = "DAY_LIGHT_PIN";
     protected static final String LIGHT_THRESHOLD = "LIGHT_THRESHOLD";
-    private static final String HEATER_BLINK_STOP = "HEATER_BLINK_STOP";
     private static final String NORTH_SOUTH_MOVE_INDICATOR = "NORTH_SOUTH_MOVE_INDICATOR";
     private static final String EAST_WEST_MOVE_INDICATOR = "EAST_WEST_MOVE_INDICATOR";
     public static final String CURRENT_EVENTS = "SOLAR_CURRENT_EVENTS";
@@ -57,9 +56,8 @@ public class HeatingMain {
         new Thread(new ThreeWayValve(commandExecutor)).start();
         new Thread(new BoilerBlocker(commandExecutor)).start();
         new Flame(Main.pinManager.getInput(Flame.HEATER_FLAME_REF_CD)).start();
-        long blinkStop = settingsDao.getLong(HEATER_BLINK_STOP);
-        new HeaterCircularPump(Main.pinManager.getInput(HEATER_CIRCULAR_REF_CD)).start(blinkStop);
-        new Boiler(Main.pinManager.getInput(Boiler.HEATER_BOILER_FEC_CD)).start(blinkStop);
+        new HeaterCircularPump(Main.pinManager.getInput(HEATER_CIRCULAR_REF_CD)).start();
+        new Boiler(Main.pinManager.getInput(Boiler.HEATER_BOILER_FEC_CD)).start();
         addFireplace();
         configureServiceMode();
         addToStats();
