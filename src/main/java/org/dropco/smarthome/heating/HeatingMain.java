@@ -65,9 +65,9 @@ public class HeatingMain {
         ServiceMode.addSubsriber(state -> {
             if (state) mover.stop();
         });
-        DayLight.setInstance( Main.pinManager.getInput(DAY_LIGHT_PIN_REF_CD), () -> Db.applyDao(new SettingsDao(), dao -> (int) dao.getLong(LIGHT_THRESHOLD)));
+        DayLight.setInstance(Main.pinManager.getInput(DAY_LIGHT_PIN_REF_CD), () -> Db.applyDao(new SettingsDao(), dao -> (int) dao.getLong(LIGHT_THRESHOLD)));
         connectDayLight(settingsDao);
-        mover.addListener(panel -> Db.acceptDao(new SolarSystemDao(), dao -> dao.updateLastKnownPosition(panel)));
+        mover.addListener(new DelayedPositionChangeListener(30, panel -> Db.acceptDao(new SolarSystemDao(), dao -> dao.updateLastKnownPosition(panel))));
 
         panelStateManager = new SolarPanelStateManager(settingsDao.getString(AFTERNOON_TIME),
                 (int) settingsDao.getLong("SOUTH"), (int) settingsDao.getLong("NORTH"), (int) settingsDao.getLong("WEST"), (int) settingsDao.getLong("EAST"),

@@ -29,6 +29,7 @@ public class Flame {
 
     public void start() {
         input.setPullResistance(PinPullResistance.PULL_UP);
+        input.setDebounce(2000);
         state.set(input.getState() == PinState.LOW);
         input.addListener((GpioPinListenerDigital) event -> {
             if (event.getState() == PinState.LOW) {

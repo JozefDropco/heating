@@ -32,6 +32,7 @@ public class Boiler {
 
     public void start() {
         input.setPullResistance(PinPullResistance.PULL_UP);
+        input.setDebounce(2000);
         state.set(input.getState()==PinState.LOW);
         input.addListener(new GpioPinListenerDigital() {
             @Override

@@ -8,7 +8,8 @@ import org.dropco.smarthome.TimeUtil;
 import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.heating.HeatingMain;
 import org.dropco.smarthome.heating.db.SolarSystemDao;
-import org.dropco.smarthome.heating.solar.*;
+import org.dropco.smarthome.heating.solar.DayLight;
+import org.dropco.smarthome.heating.solar.SolarSystemRefCode;
 import org.dropco.smarthome.heating.solar.dto.*;
 import org.dropco.smarthome.heating.solar.move.HorizontalMoveFeedback;
 import org.dropco.smarthome.heating.solar.move.SolarPanelStateManager;
@@ -31,10 +32,11 @@ public class SolarWebService {
     @Produces(MediaType.APPLICATION_JSON)
     public Response getTimetable(@QueryParam("month") String month) throws ParseException {
         Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.MONTH,Integer.parseInt(month));
+        cal.set(Calendar.MONTH, Integer.parseInt(month));
         SolarSchedule schedule = Db.applyDao(new SolarSystemDao(), dao -> dao.getTodaysSchedule(cal));
         return Response.ok(new Gson().toJson(toScheduleDTO(schedule))).build();
     }
+
     @GET
     @Path("/parkingPosition")
     @Produces(MediaType.APPLICATION_JSON)
@@ -42,11 +44,15 @@ public class SolarWebService {
         boolean inParkingPosition = HeatingMain.panelStateManager.has(SolarPanelStateManager.Event.PARKING_POSTION);
         return Response.ok(String.valueOf(inParkingPosition)).build();
     }
+
     @POST
     @Path("/parkingPosition")
     @Produces(MediaType.APPLICATION_JSON)
     public Response parkingPositionSet() throws ParseException {
-        HeatingMain.panelStateManager.add(SolarPanelStateManager.Event.PARKING_POSTION);
+        if (HeatingMain.panelStateManager.has(SolarPanelStateManager.Event.PARKING_POSTION))
+            HeatingMain.panelStateManager.remove(SolarPanelStateManager.Event.PARKING_POSTION);
+        else
+            HeatingMain.panelStateManager.add(SolarPanelStateManager.Event.PARKING_POSTION);
         return Response.ok().build();
     }
 
@@ -64,7 +70,7 @@ public class SolarWebService {
             src.dayLight = DayLight.inst().enoughLight();
             return dao.getTodaysSchedule(Calendar.getInstance());
         });
-        List<SolarPanelStep> todayRecords = Lists.newArrayList(Iterables.filter(forMonth.getSteps(),step-> TimeUtil.isAfter(Calendar.getInstance(),step.getHour(),step.getMinute())));
+        List<SolarPanelStep> todayRecords = Lists.newArrayList(Iterables.filter(forMonth.getSteps(), step -> TimeUtil.isAfter(Calendar.getInstance(), step.getHour(), step.getMinute())));
 
         src.remainingPositions = Lists.transform(todayRecords, this::toSolarDTO);
         if (ServiceMode.getPort(SolarSystemRefCode.NORTH_PIN_REF_CD).isHigh() && VerticalMoveFeedback.getMoving()) {

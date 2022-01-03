@@ -12,10 +12,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -25,7 +24,6 @@ import static org.dropco.smarthome.heating.solar.SolarSystemRefCode.*;
 
 public class SolarPanelMover implements Mover {
 
-    private static final Semaphore waitForEnd = new Semaphore(0);
     private static final Logger LOGGER = Logger.getLogger(SolarPanelMover.class.getName());
     private Supplier<AbsolutePosition> currentPositionSupplier;
     private PinManager pinManager;
@@ -36,6 +34,8 @@ public class SolarPanelMover implements Mover {
     private AtomicReference<PosDiff> remainingDiff = new AtomicReference<>();
     private VerticalMoveFeedback verticalMoveFeedback;
     private HorizontalMoveFeedback horizontalMoveFeedback;
+    private ReentrantLock lock = new ReentrantLock(true);
+    private Condition waitForEnd = lock.newCondition();
 
     public SolarPanelMover(PinManager pinManager, Supplier<AbsolutePosition> currentPositionSupplier, VerticalMoveFeedback verticalMoveFeedback, HorizontalMoveFeedback horizontalMoveFeedback) {
         this.pinManager = pinManager;
@@ -48,79 +48,117 @@ public class SolarPanelMover implements Mover {
     @Override
     public synchronized void moveTo(String movementRefCd, Position position) {
         if (ServiceMode.isServiceMode()) return;
-        if (Objects.equals(lastMovementRefCd.get(), movementRefCd)) return;
-        lastMovementRefCd.set(movementRefCd);
-        PosDiff diff = calculateDifference(position, currentPositionSupplier.get());
-        if (diff.getHor() == 0 && diff.getVert() == 0) return;
-        stop();
-        remainingDiff.set(diff);
-        int absHorizontal = abs(diff.getHor());
-        LOGGER.fine("Posun o [hor=" + diff.getHor() + ", vert=" + diff.getVert() + "]");
-        if (absHorizontal > 0) {
-            Movement horMovement = getHorMovement(diff);
-            horizontalMovement.set(horMovement);
-            setState(horMovement, true);
-        }
-        int absVertical = abs(diff.getVert());
-        if (absVertical > 0) {
-            Movement vertMovement = getVertMovement(diff);
-            verticalMovement.set(vertMovement);
-            setState(vertMovement, true);
+        lock.lock();
+        try {
+            if (Objects.equals(lastMovementRefCd.get(), movementRefCd)) return;
+            lastMovementRefCd.set(movementRefCd);
+            PosDiff diff = calculateDifference(position, currentPositionSupplier.get());
+            if (diff.getHor() == 0 && diff.getVert() == 0) return;
+            stop();
+            remainingDiff.set(diff);
+            int absHorizontal = abs(diff.getHor());
+            LOGGER.fine("Posun o [hor=" + diff.getHor() + ", vert=" + diff.getVert() + "]");
+            if (absHorizontal > 0) {
+                Movement horMovement = getHorMovement(diff);
+                horizontalMovement.set(horMovement);
+                setState(horMovement, true);
+            }
+            int absVertical = abs(diff.getVert());
+            if (absVertical > 0) {
+                Movement vertMovement = getVertMovement(diff);
+                verticalMovement.set(vertMovement);
+                setState(vertMovement, true);
+            }
+        } finally {
+            lock.unlock();
         }
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
-            throw new RuntimeException(e);
+            LOGGER.log(Level.SEVERE, "Spanok preruseny");
         }
-        PosDiff posDiff = remainingDiff.get();
-        if (posDiff != null) {
-            if ((posDiff.getHor() > 0 && !HorizontalMoveFeedback.getMoving()) || (posDiff.getVert() > 0 && !VerticalMoveFeedback.getMoving()))
-                stop();
+        if (!Thread.interrupted()) {
+            lock.lock();
+            try {
+                PosDiff posDiff = remainingDiff.get();
+                if (posDiff != null) {
+                    if ((posDiff.getHor() > 0 && !HorizontalMoveFeedback.getMoving()) || (posDiff.getVert() > 0 && !VerticalMoveFeedback.getMoving()))
+                        stop();
+                }
+            } finally {
+                lock.unlock();
+            }
         }
+
     }
 
     public void stop() {
-        if (remainingDiff.get() != null) {
-            if (horizontalMovement.get() != null)
-                setState(horizontalMovement.get(), false);
-            if (verticalMovement.get() != null)
-                setState(verticalMovement.get(), false);
-            waitForEnd.acquireUninterruptibly();
+        lock.lock();
+        try {
+            if (remainingDiff.get() != null) {
+                if (horizontalMovement.get() != null)
+                    setState(horizontalMovement.get(), false);
+                if (verticalMovement.get() != null)
+                    setState(verticalMovement.get(), false);
+                waitForEnd.awaitUninterruptibly();
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
 
     public void connect() {
         verticalMoveFeedback.addRealTimeTicker(state -> {
-            Movement movement = verticalMovement.get();
-            if (state && movement != null) {
-                AbsolutePosition currentPosition = currentPositionSupplier.get();
-                currentPosition.setVertical(currentPosition.getVertical() + movement.tick);
-                if (remainingDiff.get().decVert(movement.tick))
-                    setState(movement, false);
-                fireUpdate(currentPosition);
+            lock.lock();
+            try {
+                Movement movement = verticalMovement.get();
+                if (state && movement != null) {
+                    AbsolutePosition currentPosition = currentPositionSupplier.get();
+                    currentPosition.setVertical(currentPosition.getVertical() + movement.tick);
+                    if (remainingDiff.get().decVert(movement.tick))
+                        setState(movement, false);
+                    fireUpdate(currentPosition);
+                }
+            } finally {
+                lock.unlock();
             }
         });
         verticalMoveFeedback.addSubscriber(state -> {
-            if (!state) verticalMovement.set(null);
-            if (verticalMovement.get() == null && horizontalMovement.get() == null) {
-                if (waitForEnd.hasQueuedThreads()) waitForEnd.release();
+            lock.lock();
+            try {
+                if (!state) verticalMovement.set(null);
+                if (verticalMovement.get() == null && horizontalMovement.get() == null) {
+                    waitForEnd.signal();
+                }
+            } finally {
+                lock.unlock();
             }
         });
         horizontalMoveFeedback.addRealTimeTicker(state -> {
-            Movement movement = horizontalMovement.get();
-            if (state && movement != null) {
-                AbsolutePosition currentPosition = currentPositionSupplier.get();
-                currentPosition.setHorizontal(currentPosition.getHorizontal() + movement.tick);
-                if (remainingDiff.get().decHor(movement.tick))
-                    setState(movement, false);
-                fireUpdate(currentPosition);
+            lock.lock();
+            try {
+                Movement movement = horizontalMovement.get();
+                if (state && movement != null) {
+                    AbsolutePosition currentPosition = currentPositionSupplier.get();
+                    currentPosition.setHorizontal(currentPosition.getHorizontal() + movement.tick);
+                    if (remainingDiff.get().decHor(movement.tick))
+                        setState(movement, false);
+                    fireUpdate(currentPosition);
+                }
+            } finally {
+                lock.unlock();
             }
         });
         horizontalMoveFeedback.addSubscriber(state -> {
-            if (!state) horizontalMovement.set(null);
-            if (verticalMovement.get() == null && horizontalMovement.get() == null) {
-                if (waitForEnd.hasQueuedThreads()) waitForEnd.release();
+            lock.lock();
+            try {
+                if (!state) horizontalMovement.set(null);
+                if (verticalMovement.get() == null && horizontalMovement.get() == null) {
+                    waitForEnd.signal();
+                }
+            } finally {
+                lock.unlock();
             }
         });
     }
