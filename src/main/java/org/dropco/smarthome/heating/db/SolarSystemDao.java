@@ -67,7 +67,7 @@ public class SolarSystemDao implements Dao {
         sunRise.setHour(sTuple.get(SOLAR_SCHEDULE.sunRiseHour));
         sunRise.setMinute(sTuple.get(SOLAR_SCHEDULE.sunRiseMinute));
         sunRise.setPosition(new AbsolutePosition(sTuple.get(SOLAR_SCHEDULE.sunRiseAbsPosHor), sTuple.get(SOLAR_SCHEDULE.sunRiseAbsPosVert)));
-        sunRise.setIgnoreDayLight(true);
+        sunRise.setIgnoreDayLight(false);
         schedule.getSteps().add(sunRise);
 
         List<Tuple> lst = new MySQLQuery<SolarMove>(getConnection()).select(SOLAR_MOVE.all()).from(SOLAR_MOVE)

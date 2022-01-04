@@ -1,19 +1,14 @@
 package org.dropco.smarthome.heating.solar.move;
 
-import com.google.common.collect.Lists;
 import org.dropco.smarthome.MainTest;
 import org.dropco.smarthome.TickerPin;
-import org.dropco.smarthome.heating.solar.dto.AbsolutePosition;
 import org.dropco.smarthome.heating.solar.SolarSystemRefCode;
+import org.dropco.smarthome.heating.solar.dto.AbsolutePosition;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class SolarPanelMoverTest {
@@ -25,12 +20,12 @@ public class SolarPanelMoverTest {
 
     @Before
     public void beforeTest() {
-        }
+    }
 
     @Test
     public void moveToSouth() throws InterruptedException {
-        TickerPin verticalTickPin = new TickerPin(500, 5);
-        TickerPin horizontalTickPin = new TickerPin(500, 5);
+        TickerPin verticalTickPin = new TickerPin(200, 6);
+        TickerPin horizontalTickPin = new TickerPin(200, 0);
 
         VerticalMoveFeedback verticalMoveFeedback = new VerticalMoveFeedback();
         verticalMoveFeedback.start(verticalTickPin);
@@ -38,7 +33,7 @@ public class SolarPanelMoverTest {
         horizontalMoveFeedback.start(horizontalTickPin);
 
         AbsolutePosition currentPosition = position(0, 0);
-        MockedPinManager mockedPinManager = new MockedPinManager();
+        SolarMockedPinManager mockedPinManager = new SolarMockedPinManager(verticalTickPin, horizontalTickPin);
         SolarPanelMover mover = new SolarPanelMover(mockedPinManager, () -> currentPosition, verticalMoveFeedback, horizontalMoveFeedback);
         AtomicReference<AbsolutePosition> updatedPosition = new AtomicReference<>();
         mover.addListener(new PositionChangeListener() {
@@ -48,12 +43,11 @@ public class SolarPanelMoverTest {
             }
         });
         mover.connect();
-        verticalTickPin.startTicking();
         mover.moveTo("1", position(0, 5));
         Assert.assertEquals("We shouldnt move", 0, updatedPosition.get().getHorizontal());
         Assert.assertEquals("We should move 5 ticks to south", 5, updatedPosition.get().getVertical());
         Assert.assertTrue(mockedPinManager.getState(SolarSystemRefCode.SOUTH_PIN_REF_CD).isLow());
-        Assert.assertTrue(mockedPinManager.wasState(SolarSystemRefCode.SOUTH_PIN_REF_CD,true));
+        Assert.assertTrue(mockedPinManager.wasState(SolarSystemRefCode.SOUTH_PIN_REF_CD, true));
     }
 
     @Test
@@ -67,7 +61,7 @@ public class SolarPanelMoverTest {
         horizontalMoveFeedback.start(horizontalTickPin);
 
         AbsolutePosition currentPosition = position(0, 5);
-        MockedPinManager mockedPinManager = new MockedPinManager();
+        SolarMockedPinManager mockedPinManager = new SolarMockedPinManager(verticalTickPin, horizontalTickPin);
         SolarPanelMover mover = new SolarPanelMover(mockedPinManager, () -> currentPosition, verticalMoveFeedback, horizontalMoveFeedback);
         AtomicReference<AbsolutePosition> updatedPosition = new AtomicReference<>();
         mover.addListener(new PositionChangeListener() {
@@ -77,14 +71,12 @@ public class SolarPanelMoverTest {
             }
         });
         mover.connect();
-        verticalTickPin.startTicking();
         mover.moveTo("1", position(0, 0));
         Assert.assertEquals("We shouldnt move", 0, updatedPosition.get().getHorizontal());
         Assert.assertEquals("We should move 5 ticks to north", 0, updatedPosition.get().getVertical());
         Assert.assertTrue(mockedPinManager.getState(SolarSystemRefCode.NORTH_PIN_REF_CD).isLow());
-        Assert.assertTrue(mockedPinManager.wasState(SolarSystemRefCode.NORTH_PIN_REF_CD,true));
+        Assert.assertTrue(mockedPinManager.wasState(SolarSystemRefCode.NORTH_PIN_REF_CD, true));
     }
-
 
 
     @Test
@@ -98,7 +90,7 @@ public class SolarPanelMoverTest {
         horizontalMoveFeedback.start(horizontalTickPin);
 
         AbsolutePosition currentPosition = position(5, 0);
-        MockedPinManager mockedPinManager = new MockedPinManager();
+        SolarMockedPinManager mockedPinManager = new SolarMockedPinManager(verticalTickPin, horizontalTickPin);
         SolarPanelMover mover = new SolarPanelMover(mockedPinManager, () -> currentPosition, verticalMoveFeedback, horizontalMoveFeedback);
         AtomicReference<AbsolutePosition> updatedPosition = new AtomicReference<>();
         mover.addListener(new PositionChangeListener() {
@@ -108,12 +100,11 @@ public class SolarPanelMoverTest {
             }
         });
         mover.connect();
-        horizontalTickPin.startTicking();
         mover.moveTo("1", position(0, 0));
         Assert.assertEquals("We shouldnt move", 0, updatedPosition.get().getVertical());
         Assert.assertEquals("We should move 5 ticks to west", 0, updatedPosition.get().getHorizontal());
         Assert.assertTrue(mockedPinManager.getState(SolarSystemRefCode.WEST_PIN_REF_CD).isLow());
-        Assert.assertTrue(mockedPinManager.wasState(SolarSystemRefCode.WEST_PIN_REF_CD,true));
+        Assert.assertTrue(mockedPinManager.wasState(SolarSystemRefCode.WEST_PIN_REF_CD, true));
     }
 
 
@@ -128,7 +119,7 @@ public class SolarPanelMoverTest {
         horizontalMoveFeedback.start(horizontalTickPin);
 
         AbsolutePosition currentPosition = position(0, 0);
-        MockedPinManager mockedPinManager = new MockedPinManager();
+        SolarMockedPinManager mockedPinManager = new SolarMockedPinManager(verticalTickPin, horizontalTickPin);
         SolarPanelMover mover = new SolarPanelMover(mockedPinManager, () -> currentPosition, verticalMoveFeedback, horizontalMoveFeedback);
         AtomicReference<AbsolutePosition> updatedPosition = new AtomicReference<>();
         mover.addListener(new PositionChangeListener() {
@@ -138,12 +129,11 @@ public class SolarPanelMoverTest {
             }
         });
         mover.connect();
-        horizontalTickPin.startTicking();
         mover.moveTo("1", position(5, 0));
         Assert.assertEquals("We shouldnt move", 0, updatedPosition.get().getVertical());
         Assert.assertEquals("We should move 5 ticks to east", 5, updatedPosition.get().getHorizontal());
         Assert.assertTrue(mockedPinManager.getState(SolarSystemRefCode.EAST_PIN_REF_CD).isLow());
-        Assert.assertTrue(mockedPinManager.wasState(SolarSystemRefCode.EAST_PIN_REF_CD,true));
+        Assert.assertTrue(mockedPinManager.wasState(SolarSystemRefCode.EAST_PIN_REF_CD, true));
     }
 
     @Test
@@ -158,39 +148,7 @@ public class SolarPanelMoverTest {
 
         AtomicReference<AbsolutePosition> currentPosition = new AtomicReference<>();
         currentPosition.set(position(0, 0));
-        MockedPinManager mockedPinManager = new MockedPinManager(){
-            @Override
-            public void setState(String key, boolean value) {
-                if(value){
-                    switch (key){
-                        case SolarSystemRefCode.EAST_PIN_REF_CD:
-                        case SolarSystemRefCode.WEST_PIN_REF_CD:
-                            horizontalTickPin.startTicking();
-                            break;
-
-                        case SolarSystemRefCode.NORTH_PIN_REF_CD:
-                        case SolarSystemRefCode.SOUTH_PIN_REF_CD:
-                            verticalTickPin.startTicking();
-                            break;
-                        default:
-                    }
-                } else {
-                    switch (key){
-                        case SolarSystemRefCode.EAST_PIN_REF_CD:
-                        case SolarSystemRefCode.WEST_PIN_REF_CD:
-                            horizontalTickPin.stopTicking();
-                            break;
-
-                        case SolarSystemRefCode.NORTH_PIN_REF_CD:
-                        case SolarSystemRefCode.SOUTH_PIN_REF_CD:
-                            verticalTickPin.stopTicking();
-                            break;
-                        default:
-                    }
-                }
-                super.setState(key, value);
-            }
-        };
+        SolarMockedPinManager mockedPinManager = new SolarMockedPinManager(verticalTickPin, horizontalTickPin);
         SolarPanelMover mover = new SolarPanelMover(mockedPinManager, () -> currentPosition.get(), verticalMoveFeedback, horizontalMoveFeedback);
         mover.addListener(new PositionChangeListener() {
             @Override
@@ -200,11 +158,11 @@ public class SolarPanelMoverTest {
         });
         mover.connect();
         mover.moveTo("1", position(5, 0));
-        mover.moveTo("2",position(5,5));
+        mover.moveTo("2", position(5, 5));
         Assert.assertEquals("We shouldnt move", 5, currentPosition.get().getVertical());
         Assert.assertEquals("We should move 5 ticks to east", 5, currentPosition.get().getHorizontal());
         Assert.assertTrue(mockedPinManager.getState(SolarSystemRefCode.EAST_PIN_REF_CD).isLow());
-        Assert.assertTrue(mockedPinManager.wasState(SolarSystemRefCode.EAST_PIN_REF_CD,true));
+        Assert.assertTrue(mockedPinManager.wasState(SolarSystemRefCode.EAST_PIN_REF_CD, true));
     }
 
     @Test
@@ -218,7 +176,7 @@ public class SolarPanelMoverTest {
         horizontalMoveFeedback.start(horizontalTickPin);
 
         AbsolutePosition currentPosition = position(0, 0);
-        MockedPinManager mockedPinManager = new MockedPinManager();
+        SolarMockedPinManager mockedPinManager = new SolarMockedPinManager(verticalTickPin,horizontalTickPin);
         SolarPanelMover mover = new SolarPanelMover(mockedPinManager, () -> currentPosition, verticalMoveFeedback, horizontalMoveFeedback);
         AtomicReference<AbsolutePosition> updatedPosition = new AtomicReference<>();
         mover.addListener(new PositionChangeListener() {
@@ -228,13 +186,13 @@ public class SolarPanelMoverTest {
             }
         });
         mover.connect();
-        horizontalTickPin.startTicking();
         mover.moveTo("1", position(5, 0));
         Assert.assertEquals("We shouldnt move", 0, updatedPosition.get().getVertical());
         Assert.assertEquals("We should move 3 ticks to east", 3, updatedPosition.get().getHorizontal());
         Assert.assertTrue(mockedPinManager.getState(SolarSystemRefCode.EAST_PIN_REF_CD).isLow());
-        Assert.assertTrue(mockedPinManager.wasState(SolarSystemRefCode.EAST_PIN_REF_CD,true));
+        Assert.assertTrue(mockedPinManager.wasState(SolarSystemRefCode.EAST_PIN_REF_CD, true));
     }
+
     private AbsolutePosition position(int horizontalPositionInSeconds, int verticalPositionInSeconds) {
         AbsolutePosition panelPosition = new AbsolutePosition(horizontalPositionInSeconds, verticalPositionInSeconds);
         return panelPosition;
