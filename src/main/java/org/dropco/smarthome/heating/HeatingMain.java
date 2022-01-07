@@ -21,7 +21,6 @@ import org.dropco.smarthome.stats.StatsCollector;
 
 import java.util.Calendar;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
 
 import static org.dropco.smarthome.heating.heater.BoilerBlocker.BOILER_BLOCK_PIN;
 import static org.dropco.smarthome.heating.pump.HeaterCircularPump.HEATER_CIRCULAR_REF_CD;
@@ -32,7 +31,9 @@ public class HeatingMain {
     public static final VerticalMoveFeedback VERTICAL_MOVE_FEEDBACK = new VerticalMoveFeedback();
     public static final HorizontalMoveFeedback HORIZONTAL_MOVE_FEEDBACK = new HorizontalMoveFeedback();
     public static final SolarPanelMover mover = new SolarPanelMover(Main.pinManager,
-            () -> Db.applyDao(new SolarSystemDao(), SolarSystemDao::getLastKnownPosition), VERTICAL_MOVE_FEEDBACK, HORIZONTAL_MOVE_FEEDBACK
+            () -> Db.applyDao(new SolarSystemDao(), SolarSystemDao::getLastKnownPosition),
+            v -> Db.acceptDao(new SolarSystemDao(), SolarSystemDao::flushPosition),
+            VERTICAL_MOVE_FEEDBACK, HORIZONTAL_MOVE_FEEDBACK
     );
     public static final String STRONG_WIND_PIN_REF_CD = "STRONG_WIND_PIN";
     public static final String DAY_LIGHT_PIN_REF_CD = "DAY_LIGHT_PIN";

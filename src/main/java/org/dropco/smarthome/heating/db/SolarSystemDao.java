@@ -72,6 +72,16 @@ public class SolarSystemDao implements Dao {
         }
     }
 
+    public void flushPosition(){
+        lock.lock();
+        try {
+                settingsDao.updateLongConstant(HORIZONTAL.setValue((long) lastPosition.get().getHorizontal()));
+                settingsDao.updateLongConstant(VERTICAL.setValue((long) lastPosition.get().getVertical()));
+        } finally {
+            lock.unlock();
+        }
+    }
+
     public SolarSchedule getTodaysSchedule(Calendar calendar) {
         int month = calendar.get(Calendar.MONTH) + 1;
         Tuple sTuple = new MySQLQuery<SolarMove>(getConnection()).select(SOLAR_SCHEDULE.all()).from(SOLAR_SCHEDULE).where(SOLAR_SCHEDULE.month.eq(month)).fetchFirst();

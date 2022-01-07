@@ -13,6 +13,7 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -26,7 +27,7 @@ public class SolarPanelMover implements Mover {
     private Supplier<AbsolutePosition> currentPositionSupplier;
     private PinManager pinManager;
 
-
+    private Consumer<Void> flushPosition;
     private List<PositionChangeListener> listeners = Collections.synchronizedList(new ArrayList<>());
     private AtomicReference<String> lastMovementRefCd = new AtomicReference<>();
     private AtomicReference<Movement> horizontalMovement = new AtomicReference<>();
@@ -37,9 +38,10 @@ public class SolarPanelMover implements Mover {
     private ReentrantLock lock = new ReentrantLock(true);
     private Condition waitForEnd = lock.newCondition();
 
-    public SolarPanelMover(PinManager pinManager, Supplier<AbsolutePosition> currentPositionSupplier, VerticalMoveFeedback verticalMoveFeedback, HorizontalMoveFeedback horizontalMoveFeedback) {
+    public SolarPanelMover(PinManager pinManager, Supplier<AbsolutePosition> currentPositionSupplier, Consumer<Void> flushPosition, VerticalMoveFeedback verticalMoveFeedback, HorizontalMoveFeedback horizontalMoveFeedback) {
         this.pinManager = pinManager;
         this.currentPositionSupplier = currentPositionSupplier;
+        this.flushPosition = flushPosition;
         this.verticalMoveFeedback = verticalMoveFeedback;
         this.horizontalMoveFeedback = horizontalMoveFeedback;
     }
@@ -69,6 +71,7 @@ public class SolarPanelMover implements Mover {
                     if (movement != null) setState(movement, false);
                     if (horizontalMovement.get() == null) {
                         waitForEnd.signal();
+                        flushPosition.accept(null);
                     }
                 }
 
@@ -98,6 +101,7 @@ public class SolarPanelMover implements Mover {
                     Movement movement = horizontalMovement.getAndSet(null);
                     if (movement != null) setState(movement, false);
                     if (verticalMovement.get() == null) {
+                        flushPosition.accept(null);
                         waitForEnd.signal();
                     }
                 }

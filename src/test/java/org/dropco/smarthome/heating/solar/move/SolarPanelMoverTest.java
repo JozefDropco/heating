@@ -36,7 +36,7 @@ public class SolarPanelMoverTest {
 
         AbsolutePosition currentPosition = position(0, 0);
         SolarMockedPinManager mockedPinManager = new SolarMockedPinManager(verticalTickPin, horizontalTickPin);
-        SolarPanelMover mover = new SolarPanelMover(mockedPinManager, () -> currentPosition, verticalMoveFeedback, horizontalMoveFeedback);
+        SolarPanelMover mover = new SolarPanelMover(mockedPinManager, () -> currentPosition, v->{}, verticalMoveFeedback, horizontalMoveFeedback);
         AtomicReference<AbsolutePosition> updatedPosition = new AtomicReference<>();
         mover.addListener(new PositionChangeListener() {
             @Override
@@ -66,7 +66,7 @@ public class SolarPanelMoverTest {
 
         AbsolutePosition currentPosition = position(0, 5);
         SolarMockedPinManager mockedPinManager = new SolarMockedPinManager(verticalTickPin, horizontalTickPin);
-        SolarPanelMover mover = new SolarPanelMover(mockedPinManager, () -> currentPosition, verticalMoveFeedback, horizontalMoveFeedback);
+        SolarPanelMover mover = new SolarPanelMover(mockedPinManager, () -> currentPosition, v->{}, verticalMoveFeedback, horizontalMoveFeedback);
         AtomicReference<AbsolutePosition> updatedPosition = new AtomicReference<>();
         mover.addListener(new PositionChangeListener() {
             @Override
@@ -96,7 +96,7 @@ public class SolarPanelMoverTest {
 
         AbsolutePosition currentPosition = position(5, 0);
         SolarMockedPinManager mockedPinManager = new SolarMockedPinManager(verticalTickPin, horizontalTickPin);
-        SolarPanelMover mover = new SolarPanelMover(mockedPinManager, () -> currentPosition, verticalMoveFeedback, horizontalMoveFeedback);
+        SolarPanelMover mover = new SolarPanelMover(mockedPinManager, () -> currentPosition, v->{}, verticalMoveFeedback, horizontalMoveFeedback);
         AtomicReference<AbsolutePosition> updatedPosition = new AtomicReference<>();
         mover.addListener(new PositionChangeListener() {
             @Override
@@ -126,7 +126,7 @@ public class SolarPanelMoverTest {
 
         AbsolutePosition currentPosition = position(0, 0);
         SolarMockedPinManager mockedPinManager = new SolarMockedPinManager(verticalTickPin, horizontalTickPin);
-        SolarPanelMover mover = new SolarPanelMover(mockedPinManager, () -> currentPosition, verticalMoveFeedback, horizontalMoveFeedback);
+        SolarPanelMover mover = new SolarPanelMover(mockedPinManager, () -> currentPosition, v->{}, verticalMoveFeedback, horizontalMoveFeedback);
         AtomicReference<AbsolutePosition> updatedPosition = new AtomicReference<>();
         mover.addListener(new PositionChangeListener() {
             @Override
@@ -156,7 +156,7 @@ public class SolarPanelMoverTest {
         AtomicReference<AbsolutePosition> currentPosition = new AtomicReference<>();
         currentPosition.set(position(0, 0));
         SolarMockedPinManager mockedPinManager = new SolarMockedPinManager(verticalTickPin, horizontalTickPin);
-        SolarPanelMover mover = new SolarPanelMover(mockedPinManager, () -> currentPosition.get(), verticalMoveFeedback, horizontalMoveFeedback);
+        SolarPanelMover mover = new SolarPanelMover(mockedPinManager, () -> currentPosition.get(), v->{}, verticalMoveFeedback, horizontalMoveFeedback);
         mover.addListener(new PositionChangeListener() {
             @Override
             public void onUpdate(AbsolutePosition position) {
@@ -186,7 +186,7 @@ public class SolarPanelMoverTest {
 
         AbsolutePosition currentPosition = position(0, 0);
         SolarMockedPinManager mockedPinManager = new SolarMockedPinManager(verticalTickPin, horizontalTickPin);
-        SolarPanelMover mover = new SolarPanelMover(mockedPinManager, () -> currentPosition, verticalMoveFeedback, horizontalMoveFeedback);
+        SolarPanelMover mover = new SolarPanelMover(mockedPinManager, () -> currentPosition, v->{}, verticalMoveFeedback, horizontalMoveFeedback);
         AtomicReference<AbsolutePosition> updatedPosition = new AtomicReference<>();
         mover.addListener(new PositionChangeListener() {
             @Override
