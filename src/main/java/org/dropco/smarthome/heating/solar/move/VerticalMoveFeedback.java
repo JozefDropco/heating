@@ -16,7 +16,7 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 public class VerticalMoveFeedback {
-    private static final AtomicBoolean moving = new AtomicBoolean(false);
+    private final AtomicBoolean moving = new AtomicBoolean(false);
     private static final PinState LOGICAL_HIGH_STATE = PinState.LOW;
     private final List<Consumer<Boolean>> movingSubscribers = Collections.synchronizedList(Lists.newArrayList());
     private final List<Consumer<Boolean>> realTimeSubcribers = Collections.synchronizedList(Lists.newArrayList());
@@ -45,7 +45,7 @@ public class VerticalMoveFeedback {
      * Gets the moving
      * @return
      */
-    public static boolean getMoving() {
+    public boolean getMoving() {
         return moving.get();
     }
 

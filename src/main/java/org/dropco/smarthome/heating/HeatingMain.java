@@ -31,7 +31,7 @@ import static org.dropco.smarthome.heating.solar.ThreeWayValve.THREE_WAY_PORT;
 public class HeatingMain {
     public static final VerticalMoveFeedback VERTICAL_MOVE_FEEDBACK = new VerticalMoveFeedback();
     public static final HorizontalMoveFeedback HORIZONTAL_MOVE_FEEDBACK = new HorizontalMoveFeedback();
-    final static SolarPanelMover mover = new SolarPanelMover(Main.pinManager,
+    public static final SolarPanelMover mover = new SolarPanelMover(Main.pinManager,
             () -> Db.applyDao(new SolarSystemDao(), SolarSystemDao::getLastKnownPosition), VERTICAL_MOVE_FEEDBACK, HORIZONTAL_MOVE_FEEDBACK
     );
     public static final String STRONG_WIND_PIN_REF_CD = "STRONG_WIND_PIN";
@@ -84,12 +84,7 @@ public class HeatingMain {
     private static void addFireplace() {
         new FireplaceCircularPump(Main.pinManager.getInput(FireplaceCircularPump.FIREPLACE_CIRCULAR_PUMP_REF_CD)).start();
         ServiceMode.addInput(new NamedPort(FireplaceCircularPump.FIREPLACE_CIRCULAR_PUMP_REF_CD, "Krb chod čerpadla"), () -> FireplaceCircularPump.getState());
-        StatsCollector.getInstance().collect("Krb chod čerpadla", FireplaceCircularPump.getState(), new Consumer<Consumer<Boolean>>() {
-            @Override
-            public void accept(Consumer<Boolean> countStats) {
-                FireplaceCircularPump.addSubscriber(countStats);
-            }
-        });
+        StatsCollector.getInstance().collect("Krb chod čerpadla", FireplaceCircularPump.getState(), countStats -> FireplaceCircularPump.addSubscriber(countStats));
     }
 
     private static void configureServiceMode() {
@@ -110,6 +105,8 @@ public class HeatingMain {
         ServiceMode.addOutput(new NamedPort(BOILER_BLOCK_PIN, "Blokovanie ohrevu TA3"), key -> Main.pinManager.getOutput(key));
         ServiceMode.addInput(new NamedPort(Flame.HEATER_FLAME_REF_CD, "Horák plynového kotla"), () -> Flame.getState());
         ServiceMode.addInput(new NamedPort(Boiler.HEATER_BOILER_FEC_CD, "Ohrev TA3 plynovým kotlom"), () -> Boiler.getState());
+        ServiceMode.addInput(new NamedPort(NORTH_SOUTH_MOVE_INDICATOR, "Pohyb S-J"), () -> VERTICAL_MOVE_FEEDBACK.getMoving());
+        ServiceMode.addInput(new NamedPort(EAST_WEST_MOVE_INDICATOR, "Pohyb V-Z"), () -> HORIZONTAL_MOVE_FEEDBACK.getMoving());
 
     }
 

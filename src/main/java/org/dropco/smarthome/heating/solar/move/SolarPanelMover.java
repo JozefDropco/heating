@@ -1,5 +1,6 @@
 package org.dropco.smarthome.heating.solar.move;
 
+import com.google.common.collect.Sets;
 import com.pi4j.io.gpio.PinState;
 import org.dropco.smarthome.PinManager;
 import org.dropco.smarthome.ServiceMode;
@@ -8,10 +9,7 @@ import org.dropco.smarthome.heating.solar.dto.DeltaPosition;
 import org.dropco.smarthome.heating.solar.dto.Position;
 import org.dropco.smarthome.heating.solar.dto.PositionProcessor;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -27,6 +25,8 @@ public class SolarPanelMover implements Mover {
     private static final Logger LOGGER = Logger.getLogger(SolarPanelMover.class.getName());
     private Supplier<AbsolutePosition> currentPositionSupplier;
     private PinManager pinManager;
+
+
     private List<PositionChangeListener> listeners = Collections.synchronizedList(new ArrayList<>());
     private AtomicReference<String> lastMovementRefCd = new AtomicReference<>();
     private AtomicReference<Movement> horizontalMovement = new AtomicReference<>();
@@ -44,6 +44,69 @@ public class SolarPanelMover implements Mover {
         this.horizontalMoveFeedback = horizontalMoveFeedback;
     }
 
+
+    public void connect() {
+        verticalMoveFeedback.addRealTimeTicker(state -> {
+            lock.lock();
+            try {
+                Movement movement = verticalMovement.get();
+                if (state && movement != null) {
+                    AbsolutePosition currentPosition = currentPositionSupplier.get();
+                    currentPosition.setVertical(currentPosition.getVertical() + movement.tick);
+                    if (remainingDiff.get().decVert(movement.tick))
+                        setState(movement, false);
+                    fireUpdate(currentPosition);
+                }
+            } finally {
+                lock.unlock();
+            }
+        });
+        verticalMoveFeedback.addSubscriber(state -> {
+            lock.lock();
+            try {
+                if (!state) {
+                    Movement movement = verticalMovement.getAndSet(null);
+                    if (movement != null) setState(movement, false);
+                    if (horizontalMovement.get() == null) {
+                        waitForEnd.signal();
+                    }
+                }
+
+            } finally {
+                lock.unlock();
+            }
+        });
+        horizontalMoveFeedback.addRealTimeTicker(state -> {
+            lock.lock();
+            try {
+                Movement movement = horizontalMovement.get();
+                if (state && movement != null) {
+                    AbsolutePosition currentPosition = currentPositionSupplier.get();
+                    currentPosition.setHorizontal(currentPosition.getHorizontal() + movement.tick);
+                    if (remainingDiff.get().decHor(movement.tick))
+                        setState(movement, false);
+                    fireUpdate(currentPosition);
+                }
+            } finally {
+                lock.unlock();
+            }
+        });
+        horizontalMoveFeedback.addSubscriber(state -> {
+            lock.lock();
+            try {
+                if (!state) {
+                    Movement movement = horizontalMovement.getAndSet(null);
+                    if (movement != null) setState(movement, false);
+                    if (verticalMovement.get() == null) {
+                        waitForEnd.signal();
+                    }
+                }
+
+            } finally {
+                lock.unlock();
+            }
+        });
+    }
 
     @Override
     public synchronized void moveTo(String movementRefCd, Position position) {
@@ -72,6 +135,7 @@ public class SolarPanelMover implements Mover {
         } finally {
             lock.unlock();
         }
+        // WAIT for second if feedback didnt came back stop() it
         try {
             Thread.sleep(1000);
         } catch (InterruptedException e) {
@@ -82,7 +146,7 @@ public class SolarPanelMover implements Mover {
             try {
                 PosDiff posDiff = remainingDiff.get();
                 if (posDiff != null) {
-                    if ((posDiff.getHor() > 0 && !HorizontalMoveFeedback.getMoving()) || (posDiff.getVert() > 0 && !VerticalMoveFeedback.getMoving()))
+                    if ((posDiff.getHor() > 0 && !horizontalMoveFeedback.getMoving()) || (posDiff.getVert() > 0 && !verticalMoveFeedback.getMoving()))
                         stop();
                 }
             } finally {
@@ -95,11 +159,20 @@ public class SolarPanelMover implements Mover {
     public void stop() {
         lock.lock();
         try {
-            if (remainingDiff.get() != null) {
-                if (horizontalMovement.get() != null)
-                    setState(horizontalMovement.get(), false);
-                if (verticalMovement.get() != null)
-                    setState(verticalMovement.get(), false);
+            setState(Movement.WEST, false);
+            setState(Movement.EAST, false);
+            setState(Movement.NORTH, false);
+            setState(Movement.SOUTH, false);
+            waitForEnd();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void waitForEnd() {
+        lock.lock();
+        try {
+            if (verticalMoveFeedback.getMoving() || horizontalMoveFeedback.getMoving()) {
                 waitForEnd.awaitUninterruptibly();
             }
         } finally {
@@ -107,61 +180,6 @@ public class SolarPanelMover implements Mover {
         }
     }
 
-
-    public void connect() {
-        verticalMoveFeedback.addRealTimeTicker(state -> {
-            lock.lock();
-            try {
-                Movement movement = verticalMovement.get();
-                if (state && movement != null) {
-                    AbsolutePosition currentPosition = currentPositionSupplier.get();
-                    currentPosition.setVertical(currentPosition.getVertical() + movement.tick);
-                    if (remainingDiff.get().decVert(movement.tick))
-                        setState(movement, false);
-                    fireUpdate(currentPosition);
-                }
-            } finally {
-                lock.unlock();
-            }
-        });
-        verticalMoveFeedback.addSubscriber(state -> {
-            lock.lock();
-            try {
-                if (!state) verticalMovement.set(null);
-                if (verticalMovement.get() == null && horizontalMovement.get() == null) {
-                    waitForEnd.signal();
-                }
-            } finally {
-                lock.unlock();
-            }
-        });
-        horizontalMoveFeedback.addRealTimeTicker(state -> {
-            lock.lock();
-            try {
-                Movement movement = horizontalMovement.get();
-                if (state && movement != null) {
-                    AbsolutePosition currentPosition = currentPositionSupplier.get();
-                    currentPosition.setHorizontal(currentPosition.getHorizontal() + movement.tick);
-                    if (remainingDiff.get().decHor(movement.tick))
-                        setState(movement, false);
-                    fireUpdate(currentPosition);
-                }
-            } finally {
-                lock.unlock();
-            }
-        });
-        horizontalMoveFeedback.addSubscriber(state -> {
-            lock.lock();
-            try {
-                if (!state) horizontalMovement.set(null);
-                if (verticalMovement.get() == null && horizontalMovement.get() == null) {
-                    waitForEnd.signal();
-                }
-            } finally {
-                lock.unlock();
-            }
-        });
-    }
 
     private PosDiff calculateDifference(Position position, final AbsolutePosition previousPosition) {
         PosDiff diff = position.invoke(new PositionProcessor<PosDiff>() {
@@ -195,14 +213,19 @@ public class SolarPanelMover implements Mover {
     }
 
 
-    void setState(Movement movement, boolean state) {
-        PinState pinState = pinManager.getState(movement.pinRefCd);
-        if (pinState.isHigh() != state) {
-            if (state)
-                LOGGER.log(Level.INFO, "Natáčam na " + movement.name + ".");
-            else
-                LOGGER.log(Level.INFO, "Zastavujem otáčanie na " + movement.name + ".");
-            pinManager.setState(movement.pinRefCd, state);
+    public void setState(Movement movement, boolean state) {
+        lock.lock();
+        try {
+            PinState pinState = pinManager.getState(movement.pinRefCd);
+            if (pinState.isHigh() != state) {
+                if (state)
+                    LOGGER.log(Level.INFO, "Natáčam na " + movement.name + ".");
+                else
+                    LOGGER.log(Level.INFO, "Zastavujem otáčanie na " + movement.name + ".");
+                pinManager.setState(movement.pinRefCd, state);
+            }
+        } finally {
+            lock.unlock();
         }
     }
 
@@ -213,6 +236,13 @@ public class SolarPanelMover implements Mover {
 
     public void addListener(PositionChangeListener listener) {
         listeners.add(listener);
+    }
+
+    public Set<Movement> getMovements() {
+        HashSet<Movement> movements = Sets.newHashSet();
+        if (horizontalMovement.get() != null) movements.add(horizontalMovement.get());
+        if (verticalMovement.get() != null) movements.add(verticalMovement.get());
+        return movements;
     }
 
 

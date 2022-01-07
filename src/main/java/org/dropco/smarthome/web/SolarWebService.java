@@ -12,6 +12,7 @@ import org.dropco.smarthome.heating.solar.DayLight;
 import org.dropco.smarthome.heating.solar.SolarSystemRefCode;
 import org.dropco.smarthome.heating.solar.dto.*;
 import org.dropco.smarthome.heating.solar.move.HorizontalMoveFeedback;
+import org.dropco.smarthome.heating.solar.move.SolarPanelMover;
 import org.dropco.smarthome.heating.solar.move.SolarPanelStateManager;
 import org.dropco.smarthome.heating.solar.move.VerticalMoveFeedback;
 
@@ -22,6 +23,7 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 
 @Path("/ws/solar")
@@ -73,16 +75,17 @@ public class SolarWebService {
         List<SolarPanelStep> todayRecords = Lists.newArrayList(Iterables.filter(forMonth.getSteps(), step -> TimeUtil.isAfter(Calendar.getInstance(), step.getHour(), step.getMinute())));
 
         src.remainingPositions = Lists.transform(todayRecords, this::toSolarDTO);
-        if (ServiceMode.getPort(SolarSystemRefCode.NORTH_PIN_REF_CD).isHigh() && VerticalMoveFeedback.getMoving()) {
+        Set<SolarPanelMover.Movement> movements = HeatingMain.mover.getMovements();
+        if (movements.contains(SolarPanelMover.Movement.NORTH)) {
             src.movement.add("NORTH");
         }
-        if (ServiceMode.getPort(SolarSystemRefCode.SOUTH_PIN_REF_CD).isHigh() && VerticalMoveFeedback.getMoving()) {
+        if (movements.contains(SolarPanelMover.Movement.SOUTH)) {
             src.movement.add("SOUTH");
         }
-        if (ServiceMode.getPort(SolarSystemRefCode.WEST_PIN_REF_CD).isHigh() && HorizontalMoveFeedback.getMoving()) {
+        if (movements.contains(SolarPanelMover.Movement.WEST)) {
             src.movement.add("WEST");
         }
-        if (ServiceMode.getPort(SolarSystemRefCode.EAST_PIN_REF_CD).isHigh() && HorizontalMoveFeedback.getMoving()) {
+        if (movements.contains(SolarPanelMover.Movement.EAST)) {
             src.movement.add("EAST");
         }
         return Response.ok(new Gson().toJson(src)).build();

@@ -73,7 +73,7 @@ public class SolarPanel {
             }
         });
         ticker();
-        new Thread(()->panelStateManager.nextTick()).start();
+        panelStateManager.nextTick();
     }
 
     private void ticker() {

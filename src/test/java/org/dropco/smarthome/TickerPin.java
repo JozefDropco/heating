@@ -15,11 +15,13 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class TickerPin implements GpioPinDigitalInput {
     private List<GpioPinListenerDigital> listeners = Lists.newArrayList();
     private int sleepMiliseconds;
-    private int tickCount;
+    private final int tickCount;
     private AtomicBoolean executed = new AtomicBoolean();
     private ReentrantLock lock = new ReentrantLock();
     private Condition waitForResume = lock.newCondition();
@@ -35,6 +37,7 @@ public class TickerPin implements GpioPinDigitalInput {
             Executors.defaultThreadFactory().newThread(new Runnable() {
                 @Override
                 public void run() {
+                    int tickCount = TickerPin.this.tickCount;
                     while (tickCount > 0) {
                         if (stopped.get()) {
                             lock.lock();
@@ -45,6 +48,7 @@ public class TickerPin implements GpioPinDigitalInput {
                             }
                         }
                         tickCount--;
+                        Logger.getLogger(TickerPin.class.getName()).log(Level.INFO,"Tick");
                         listeners.forEach(gpioPinListener -> gpioPinListener.handleGpioPinDigitalStateChangeEvent(new GpioPinDigitalStateChangeEvent(TickerPin.this, TickerPin.this, PinState.HIGH)));
                         try {
                             Thread.sleep(sleepMiliseconds);
