@@ -37,7 +37,7 @@ public class SolarSystemDao implements Dao {
 
 
     private static final AtomicReference<AbsolutePosition> lastPosition = new AtomicReference<>();
-    private static final AtomicInteger countDown = new AtomicInteger();
+    private static final AtomicInteger countDown = new AtomicInteger(30);
     private static final Lock lock = new ReentrantLock();
 
     private Connection connection;

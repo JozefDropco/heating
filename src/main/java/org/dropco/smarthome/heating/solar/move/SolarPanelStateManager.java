@@ -16,7 +16,7 @@ import java.util.function.Supplier;
 
 public class SolarPanelStateManager {
     private String afternoonTime;
-    private int SOUTH = 430;
+    private int SOUTH = 431;
     private int NORTH = 0;
     private int WEST = 0;
     private int EAST = 690;
