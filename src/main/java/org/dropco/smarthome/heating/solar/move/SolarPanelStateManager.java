@@ -7,10 +7,8 @@ import org.dropco.smarthome.TimeUtil;
 import org.dropco.smarthome.heating.solar.SolarSerializer;
 import org.dropco.smarthome.heating.solar.dto.*;
 
-import java.util.Calendar;
-import java.util.Iterator;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -24,11 +22,11 @@ public class SolarPanelStateManager {
     private Supplier<AbsolutePosition> currentPosition;
     private final Mover mover;
 
-    private SolarSchedule todaysSchedule;
+    private AtomicReference<SolarSchedule> todaysSchedule =new AtomicReference<>();
     private Supplier<SolarSchedule> solarScheduleSupplier;
     private Consumer<String> recentSolarScheduleUpdater;
 
-    private Set<Event> currentEvents = Sets.newHashSet();
+    private final Set<Event> currentEvents = Collections.synchronizedSet(Sets.newHashSet());
     private Consumer<String> currentEventsUpdater;
 
     public SolarPanelStateManager(String afternoonTime, int south, int north, int west, int east,
@@ -47,19 +45,19 @@ public class SolarPanelStateManager {
         this.currentEventsUpdater = currentEventsUpdater;
         String json = recentTodaysSchedule.get();
         if (json == null) {
-            todaysSchedule = solarScheduleSupplier.get();
+            todaysSchedule.set(solarScheduleSupplier.get());
             updateSchedule();
         } else {
-            todaysSchedule = SolarSerializer.getGson().fromJson(json, SolarSchedule.class);
-            if (!TimeUtil.isToday(todaysSchedule.getAsOfDate())) {
-                todaysSchedule = solarScheduleSupplier.get();
+            todaysSchedule.set(SolarSerializer.getGson().fromJson(json, SolarSchedule.class));
+            if (!TimeUtil.isToday(todaysSchedule.get().getAsOfDate())) {
+                todaysSchedule.set(solarScheduleSupplier.get());
                 updateSchedule();
             }
         }
         String serializedEvents = currentEventsSupplier.get();
         if (serializedEvents != null) {
-            currentEvents = SolarSerializer.getGson().fromJson(serializedEvents, new TypeToken<Set<Event>>() {
-            }.getType());
+            currentEvents.addAll(SolarSerializer.getGson().fromJson(serializedEvents, new TypeToken<Set<Event>>() {
+            }.getType()));
         }
     }
 
@@ -129,7 +127,7 @@ public class SolarPanelStateManager {
 
     private void strongWind() {
         final int[] count = {2};
-        todaysSchedule.getSteps().forEach(step -> {
+        todaysSchedule.get().getSteps().forEach(step -> {
             PositionProcessor<Void> updateFirstTwoRecords = new PositionProcessor<Void>() {
 
                 @Override
@@ -146,7 +144,7 @@ public class SolarPanelStateManager {
         });
         updateSchedule();
         if (!ServiceMode.isServiceMode())
-            mover.moveTo("strongWind", new DeltaPosition(0, -2 * todaysSchedule.getVerticalTickCountForStep()));
+            mover.moveTo("strongWind", new DeltaPosition(0, -2 * todaysSchedule.get().getVerticalTickCountForStep()));
     }
 
     protected Calendar getCurrentTime() {
@@ -159,7 +157,7 @@ public class SolarPanelStateManager {
     }
 
     public Optional<Record> calculatePosition() {
-        Iterator<SolarPanelStep> steps = todaysSchedule.getSteps().iterator();
+        Iterator<SolarPanelStep> steps = todaysSchedule.get().getSteps().iterator();
         Record record = new Record();
         while (steps.hasNext()) {
             SolarPanelStep step = steps.next();
@@ -217,7 +215,7 @@ public class SolarPanelStateManager {
     public void dailyReset() {
         currentEvents.clear();
         updateEvents();
-        todaysSchedule = solarScheduleSupplier.get();
+        todaysSchedule.set(solarScheduleSupplier.get());
         updateSchedule();
     }
 

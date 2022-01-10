@@ -22,7 +22,7 @@ public class HorizontalMoveFeedback {
     private final List<Consumer<Boolean>> realTimeSubcribers = Collections.synchronizedList(Lists.newArrayList());
 
     public void start(GpioPinDigitalInput input) {
-        input.addListener(new PulseInputGpioListener(LOGICAL_HIGH_STATE, 1000, input) {
+        input.addListener(new PulseInputGpioListener(LOGICAL_HIGH_STATE, 2000, input) {
             @Override
             public void handleStateChange(boolean state) {
                 if (state) {

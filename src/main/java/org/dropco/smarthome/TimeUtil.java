@@ -41,7 +41,7 @@ public class TimeUtil {
         current.set(Calendar.SECOND, 0);
         current.set(Calendar.MILLISECOND, 0);
         Date future = current.getTime();
-        return future.getTime() - currentDate.getTime();
+        return future.getTime() - currentDate.getTime()+3*1000;
     }
 
     public static boolean isToday(Date asOfDate) {

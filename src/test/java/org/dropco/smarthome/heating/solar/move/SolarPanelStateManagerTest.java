@@ -18,7 +18,47 @@ import java.util.function.Consumer;
 public class SolarPanelStateManagerTest {
 
     public static final String AFTERNOON_TIME = "13:10";
+    @Test
+    public void daylightReached() {
+        MockedMover mover = new MockedMover();
+        AbsolutePosition current = new AbsolutePosition(0, 0);
+        Consumer<String> recentSolarScheduleUpdater = (Consumer<String>) s -> {
+            System.out.println("SolarSchedule: " + s);
+        };
+        Consumer<String> currentEventsUpdater = new Consumer<String>() {
+            @Override
+            public void accept(String s) {
+                System.out.println("Events :" + s);
+            }
+        };
+        SolarSchedule solarSchedule = getSolarSchedule();
+        SolarPanelStateManager manager = new SolarPanelStateManager(AFTERNOON_TIME, 10, 0, 0, 10,
+                () -> current, mover, () -> null, () -> solarSchedule, recentSolarScheduleUpdater, () -> "[]", currentEventsUpdater
+        ){
+            @Override
+            protected Calendar getCurrentTime() {
+                Calendar currentTime = super.getCurrentTime();
+                currentTime.set(Calendar.HOUR_OF_DAY, 8);
+                currentTime.set(Calendar.MINUTE, 20);
+                return currentTime;
+            }
+        };
+        manager.calculatePosition();
+        mover.lastPosition.invoke(new PositionProcessor<Object>() {
+            @Override
+            public Object process(AbsolutePosition absPos) {
+                Assert.assertEquals(8, absPos.getHorizontal());
+                Assert.assertEquals(8, absPos.getVertical());
+                return null;
+            }
 
+            @Override
+            public Object process(DeltaPosition deltaPos) {
+                Assert.fail();
+                return null;
+            }
+        });
+    }
     @Test
     public void strongWind() {
         MockedMover mover = new MockedMover();
@@ -331,7 +371,7 @@ public class SolarPanelStateManagerTest {
         solarSchedule.setHorizontalTickCountForStep(0);
         solarSchedule.setVerticalTickCountForStep(2);
         solarSchedule.setSteps(Lists.newArrayList());
-        solarSchedule.getSteps().add(solarStep(6, 30, true, absPosition(10, 10)));
+        solarSchedule.getSteps().add(solarStep(6, 30, false, absPosition(10, 10)));
         solarSchedule.getSteps().add(solarStep(8, 30, false, deltaPosition(-2, -2)));
         solarSchedule.getSteps().add(solarStep(10, 30, false, deltaPosition(-2, -2)));
         solarSchedule.getSteps().add(solarStep(12, 30, false, deltaPosition(-1, -1)));

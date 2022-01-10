@@ -9,6 +9,7 @@ import org.dropco.smarthome.heating.solar.StrongWind;
 import org.dropco.smarthome.temp.TempService;
 
 import java.util.Optional;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 
@@ -78,12 +79,16 @@ public class SolarPanel {
 
     private void ticker() {
         Optional<SolarPanelStateManager.Record> nextStep = panelStateManager.calculatePosition();
+        if (!nextStep.isPresent())LOGGER.log(Level.FINE,"Žiadny ďaľší posun na tento deň");
         nextStep.ifPresent(step -> {
-            if (step.getNextMoveHour() != null)
+            if (step.getNextMoveHour() != null) {
                 TimerService.scheduleFor("Solar - ďalší posun", step.getNextMoveHour(), step.getNextMoveMinute(), () -> {
                     panelStateManager.nextTick();
                     ticker();
                 });
+            } else {
+                LOGGER.log(Level.FINE,"Žiadny ďaľší posun na tento deň");
+            }
         });
     }
 
