@@ -21,7 +21,7 @@ public class SolarPanel {
     private static double T1_SOLAR_THRESHOLD = 0;
     private static double T2_WATER_THRESHOLD = 0;
 
-    private SolarPanelStateManager panelStateManager;
+    private final SolarPanelStateManager panelStateManager;
 
     public SolarPanel(SolarPanelStateManager panelStateManager) {
         this.panelStateManager = panelStateManager;

@@ -18,6 +18,7 @@ public class StrongWind {
     private static List<Consumer<Boolean>> subscribers = Collections.synchronizedList(Lists.newArrayList());
 
     public static void connect(GpioPinDigitalInput strongWindPin) {
+        strongWindPin.setDebounce(1000);
         StatsCollector.getInstance().collect("Silný vietor", strongWindPin, PinState.HIGH);
         strongWindPin.addListener(new DelayedGpioPinListener(PinState.HIGH, 5000, strongWindPin) {
             @Override

@@ -12,10 +12,7 @@ import org.dropco.smarthome.heating.heater.Flame;
 import org.dropco.smarthome.heating.pump.FireplaceCircularPump;
 import org.dropco.smarthome.heating.pump.HeaterCircularPump;
 import org.dropco.smarthome.heating.pump.SolarCircularPump;
-import org.dropco.smarthome.heating.solar.DayLight;
-import org.dropco.smarthome.heating.solar.HeatingConfiguration;
-import org.dropco.smarthome.heating.solar.SolarSystemRefCode;
-import org.dropco.smarthome.heating.solar.ThreeWayValve;
+import org.dropco.smarthome.heating.solar.*;
 import org.dropco.smarthome.heating.solar.move.*;
 import org.dropco.smarthome.stats.StatsCollector;
 
@@ -67,6 +64,7 @@ public class HeatingMain {
             if (state) mover.stop();
         });
         DayLight.setInstance(Main.pinManager.getInput(DAY_LIGHT_PIN_REF_CD), () -> Db.applyDao(new SettingsDao(), dao -> (int) dao.getLong(LIGHT_THRESHOLD)));
+        StrongWind.connect(Main.pinManager.getInput(STRONG_WIND_PIN_REF_CD));
         connectDayLight(settingsDao);
         mover.addListener( panel -> Db.acceptDao(new SolarSystemDao(), dao -> dao.updateLastKnownPosition(panel)));
 
