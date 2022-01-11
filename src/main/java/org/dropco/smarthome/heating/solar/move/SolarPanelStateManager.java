@@ -225,7 +225,7 @@ public class SolarPanelStateManager {
     }
 
     private void updateSchedule() {
-        recentSolarScheduleUpdater.accept(SolarSerializer.getGson().toJson(todaysSchedule));
+        recentSolarScheduleUpdater.accept(SolarSerializer.getGson().toJson(todaysSchedule.get()));
     }
 
     public boolean has(Event event) {
