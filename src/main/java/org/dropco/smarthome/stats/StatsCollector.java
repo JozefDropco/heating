@@ -23,6 +23,7 @@ import java.util.logging.Logger;
 
 public class StatsCollector {
     private static final StatsCollector instance = new StatsCollector();
+    private static final Logger LOGGER = Logger.getLogger(StatsCollector.class.getName());
 
     private Map<String, Long> lastIdMap = Collections.synchronizedMap(new HashMap<>());
     private SimpleDateFormat format = new SimpleDateFormat("dd. MM. yyyy HH:mm:ss z");
@@ -32,7 +33,7 @@ public class StatsCollector {
             try {
                 statsDao.markAllFinished(format.parse(settingsDao.getString(StatsRefCode.LAST_HEARTBEAT)));
             } catch (ParseException e) {
-                Logger.getLogger(TempService.class.getName()).log(Level.FINE, "Last Heartbeat not parsable. setting finished to current date", e);
+                LOGGER.log(Level.CONFIG, "Last Heartbeat not parsable. setting finished to current date", e);
                 statsDao.markAllFinished(new Date());
             }
         });
@@ -40,7 +41,7 @@ public class StatsCollector {
             try {
                 Db.acceptDao(new SettingsDao(), dao -> dao.setString(StatsRefCode.LAST_HEARTBEAT, format.format(new Date())));
             } catch (RuntimeException e) {
-                Logger.getLogger(TempService.class.getName()).log(Level.FINE, "Stats collector service not working", e);
+                LOGGER.log(Level.CONFIG, "Stats collector service not working", e);
             }
         }, 0, 1, TimeUnit.MINUTES);
     }
@@ -49,15 +50,9 @@ public class StatsCollector {
         collect(name, port, PinState.HIGH);
     }
 
-    public void collectRealTime(String name, GpioPinDigital port, PinState pinState) {
-        Logger.getLogger(StatsCollector.class.getName()).log(Level.INFO, "Zbieram štatistiky pre " + name);
-
-        collect(pinState.equals(port.getState()), name);
-        port.addListener((GpioPinListenerDigital) event -> collect(event.getState() == pinState, name));
-    }
 
     public void collect(String name, GpioPinDigital port, PinState pinState) {
-        Logger.getLogger(StatsCollector.class.getName()).log(Level.INFO, "Zbieram štatistiky pre " + name);
+        LOGGER.log(Level.CONFIG, "Zbieram štatistiky pre " + name);
         GpioPinListenerDigital listener = new DelayedGpioPinListener(pinState, 1000, port) {
             @Override
             public void handleStateChange(boolean state) {
@@ -69,7 +64,7 @@ public class StatsCollector {
     }
 
     public void collect(String name, boolean startNow, Consumer<Consumer<Boolean>> subscriber) {
-        Logger.getLogger(StatsCollector.class.getName()).log(Level.INFO, "Zbieram štatistiky pre " + name);
+        LOGGER.log(Level.CONFIG, "Zbieram štatistiky pre " + name);
         subscriber.accept(state -> {
             collect(state, name);
         });

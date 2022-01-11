@@ -29,7 +29,7 @@ public class LogHandler extends Handler {
 
     @Override
     public boolean isLoggable(LogRecord record) {
-        return record.getLoggerName().startsWith("org.dropco.smarthome") || record.getLevel().intValue() >= Level.INFO.intValue();
+        return record.getLoggerName().startsWith("org.dropco.smarthome") || record.getLevel().intValue() >= Level.CONFIG.intValue();
     }
 
     @Override

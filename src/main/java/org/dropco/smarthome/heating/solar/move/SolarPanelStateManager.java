@@ -11,8 +11,11 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class SolarPanelStateManager {
+    public static final Logger LOGGER = Logger.getLogger(SolarPanelStateManager.class.getName());
     private String afternoonTime;
     private int SOUTH = 431;
     private int NORTH = 0;
@@ -170,9 +173,11 @@ public class SolarPanelStateManager {
             } else {
                 record.setNextMoveHour(step.getHour());
                 record.setNextMoveMinute(step.getMinute());
+                LOGGER.log(Level.CONFIG, "Calculated solar panel records: "+record);
                 return Optional.ofNullable(record);
             }
         }
+        LOGGER.log(Level.CONFIG, "Calculated solar panel records: "+record);
         return Optional.ofNullable(record);
     }
 
@@ -306,6 +311,18 @@ public class SolarPanelStateManager {
         public Record setMinute(int minute) {
             this.minute = minute;
             return this;
+        }
+
+        @Override
+        public String toString() {
+            final StringBuilder sb = new StringBuilder("Record{");
+            sb.append("position=").append(position);
+            sb.append(", nextMoveHour=").append(nextMoveHour);
+            sb.append(", nextMoveMinute=").append(nextMoveMinute);
+            sb.append(", hour=").append(hour);
+            sb.append(", minute=").append(minute);
+            sb.append('}');
+            return sb.toString();
         }
     }
 }

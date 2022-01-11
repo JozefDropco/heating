@@ -79,7 +79,7 @@ public class SolarPanel {
 
     private void ticker() {
         Optional<SolarPanelStateManager.Record> nextStep = panelStateManager.calculatePosition();
-        if (!nextStep.isPresent())LOGGER.log(Level.FINE,"Žiadny ďaľší posun na tento deň");
+        if (!nextStep.isPresent())LOGGER.log(Level.CONFIG,"Žiadny ďaľší posun na tento deň");
         nextStep.ifPresent(step -> {
             if (step.getNextMoveHour() != null) {
                 TimerService.scheduleFor("Solar - ďalší posun", step.getNextMoveHour(), step.getNextMoveMinute(), () -> {
@@ -87,7 +87,7 @@ public class SolarPanel {
                     ticker();
                 });
             } else {
-                LOGGER.log(Level.FINE,"Žiadny ďaľší posun na tento deň");
+                LOGGER.log(Level.CONFIG,"Žiadny ďaľší posun na tento deň");
             }
         });
     }
