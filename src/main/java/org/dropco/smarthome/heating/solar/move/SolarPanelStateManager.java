@@ -16,20 +16,17 @@ import java.util.logging.Logger;
 
 public class SolarPanelStateManager {
     public static final Logger LOGGER = Logger.getLogger(SolarPanelStateManager.class.getName());
+    private final Mover mover;
+    private final Set<Event> currentEvents = Collections.synchronizedSet(Sets.newHashSet());
     private String afternoonTime;
     private int SOUTH = 431;
     private int NORTH = 0;
     private int WEST = 0;
     private int EAST = 690;
-
     private Supplier<AbsolutePosition> currentPosition;
-    private final Mover mover;
-
-    private AtomicReference<SolarSchedule> todaysSchedule =new AtomicReference<>();
+    private AtomicReference<SolarSchedule> todaysSchedule = new AtomicReference<>();
     private Supplier<SolarSchedule> solarScheduleSupplier;
     private Consumer<String> recentSolarScheduleUpdater;
-
-    private final Set<Event> currentEvents = Collections.synchronizedSet(Sets.newHashSet());
     private Consumer<String> currentEventsUpdater;
 
     public SolarPanelStateManager(String afternoonTime, int south, int north, int west, int east,
@@ -78,7 +75,7 @@ public class SolarPanelStateManager {
                 case DAY_LIGHT_REACHED:
                     nextTick();
                     break;
-                case PARKING_POSTION:
+                case PARKING_POSITION:
                     if (!ServiceMode.isServiceMode())
                         mover.moveTo("PARKING_POSITION", new AbsolutePosition(WEST, NORTH));
             }
@@ -94,7 +91,7 @@ public class SolarPanelStateManager {
                     if (!ServiceMode.isServiceMode())
                         mover.moveTo("noWind", new DeltaPosition(0, 0));
                     break;
-                case PARKING_POSTION:
+                case PARKING_POSITION:
                 case PANEL_OVERHEATED:
                 case WATER_OVERHEATED:
                     nextTick();
@@ -105,7 +102,7 @@ public class SolarPanelStateManager {
     }
 
     public void nextTick() {
-        if (!currentEvents.contains(Event.PARKING_POSTION)) {
+        if (!currentEvents.contains(Event.PARKING_POSITION)) {
             if (!(currentEvents.contains(Event.PANEL_OVERHEATED) || currentEvents.contains(Event.WATER_OVERHEATED))) {
                 if (!ServiceMode.isServiceMode())
                     calculatePosition().ifPresent(step -> mover.moveTo(step.getHour() + ":" + step.getMinute(), step.getPosition()));
@@ -117,15 +114,14 @@ public class SolarPanelStateManager {
 
     private void overheated() {
         if (!ServiceMode.isServiceMode())
-            if (!currentEvents.contains(Event.PARKING_POSTION)) {
-            AbsolutePosition current = currentPosition.get();
-
-            if (TimeUtil.isAfternoon(getCurrentTime(), afternoonTime)) {
-                mover.moveTo("overheated_afternoon", new AbsolutePosition(EAST, (currentEvents.contains(Event.STRONG_WIND) ? current.getVertical() : SOUTH)));
-            } else {
-                mover.moveTo("overheated_morning", new AbsolutePosition(WEST, (currentEvents.contains(Event.STRONG_WIND) ? current.getVertical() : SOUTH)));
+            if (!currentEvents.contains(Event.PARKING_POSITION)) {
+                AbsolutePosition current = currentPosition.get();
+                if (TimeUtil.isAfternoon(getCurrentTime(), afternoonTime)) {
+                    mover.moveTo("overheated_afternoon", new AbsolutePosition(EAST, (currentEvents.contains(Event.STRONG_WIND) ? current.getVertical() : SOUTH)));
+                } else {
+                    mover.moveTo("overheated_morning", new AbsolutePosition(WEST, (currentEvents.contains(Event.STRONG_WIND) ? current.getVertical() : SOUTH)));
+                }
             }
-        }
     }
 
     private void strongWind() {
@@ -173,11 +169,11 @@ public class SolarPanelStateManager {
             } else {
                 record.setNextMoveHour(step.getHour());
                 record.setNextMoveMinute(step.getMinute());
-                LOGGER.log(Level.CONFIG, "Calculated solar panel records: "+record);
+                LOGGER.log(Level.CONFIG, "Calculated solar panel records: " + record);
                 return Optional.ofNullable(record);
             }
         }
-        LOGGER.log(Level.CONFIG, "Calculated solar panel records: "+record);
+        LOGGER.log(Level.CONFIG, "Calculated solar panel records: " + record);
         return Optional.ofNullable(record);
     }
 
@@ -238,7 +234,7 @@ public class SolarPanelStateManager {
         WATER_OVERHEATED,
         PANEL_OVERHEATED,
         DAY_LIGHT_REACHED,
-        PARKING_POSTION;
+        PARKING_POSITION;
     }
 
     public static class Record {

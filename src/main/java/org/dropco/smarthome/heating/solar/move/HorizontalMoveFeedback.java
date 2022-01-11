@@ -50,7 +50,7 @@ public class HorizontalMoveFeedback {
     }
 
 
-    public void addSubscriber(Consumer<Boolean> consumer) {
+    public void addMovingSubscriber(Consumer<Boolean> consumer) {
         movingSubscribers.add(consumer);
     }
 

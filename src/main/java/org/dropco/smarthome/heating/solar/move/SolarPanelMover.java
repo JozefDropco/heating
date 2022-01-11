@@ -1,6 +1,5 @@
 package org.dropco.smarthome.heating.solar.move;
 
-import com.google.common.collect.Sets;
 import com.pi4j.io.gpio.PinState;
 import org.dropco.smarthome.PinManager;
 import org.dropco.smarthome.ServiceMode;
@@ -63,22 +62,6 @@ public class SolarPanelMover implements Mover {
                 lock.unlock();
             }
         });
-        verticalMoveFeedback.addSubscriber(state -> {
-            lock.lock();
-            try {
-                if (!state) {
-                    Movement movement = verticalMovement.getAndSet(null);
-                    if (movement != null) setState(movement, false);
-                    if (horizontalMovement.get() == null) {
-                        waitForEnd.signal();
-                        flushPosition.accept(null);
-                    }
-                }
-
-            } finally {
-                lock.unlock();
-            }
-        });
         horizontalMoveFeedback.addRealTimeTicker(state -> {
             lock.lock();
             try {
@@ -86,15 +69,32 @@ public class SolarPanelMover implements Mover {
                 if (state && movement != null) {
                     AbsolutePosition currentPosition = currentPositionSupplier.get();
                     currentPosition.setHorizontal(currentPosition.getHorizontal() + movement.tick);
-                    if (remainingDiff.get().decHor(movement.tick))
+                    if (remainingDiff.get().decHor(movement.tick)) {
                         setState(movement, false);
+                    }
                     fireUpdate(currentPosition);
                 }
             } finally {
                 lock.unlock();
             }
         });
-        horizontalMoveFeedback.addSubscriber(state -> {
+        verticalMoveFeedback.addSubscriber(state -> {
+            lock.lock();
+            try {
+                if (!state) {
+                    Movement movement = verticalMovement.getAndSet(null);
+                    if (movement != null) setState(movement, false);
+                    if (horizontalMovement.get() == null) {
+                        flushPosition.accept(null);
+                        waitForEnd.signal();
+                    }
+                }
+
+            } finally {
+                lock.unlock();
+            }
+        });
+        horizontalMoveFeedback.addMovingSubscriber(state -> {
             lock.lock();
             try {
                 if (!state) {

@@ -22,7 +22,6 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Logger;
 
 @Path("/ws/solar")
@@ -42,7 +41,7 @@ public class SolarWebService {
     @Path("/parkingPosition")
     @Produces(MediaType.APPLICATION_JSON)
     public Response parkingPositionGet() throws ParseException {
-        boolean inParkingPosition = HeatingMain.panelStateManager.has(SolarPanelStateManager.Event.PARKING_POSTION);
+        boolean inParkingPosition = HeatingMain.panelStateManager.has(SolarPanelStateManager.Event.PARKING_POSITION);
         return Response.ok(String.valueOf(inParkingPosition)).build();
     }
 
@@ -50,10 +49,10 @@ public class SolarWebService {
     @Path("/parkingPosition")
     @Produces(MediaType.APPLICATION_JSON)
     public Response parkingPositionSet() throws ParseException {
-        if (HeatingMain.panelStateManager.has(SolarPanelStateManager.Event.PARKING_POSTION))
-            HeatingMain.panelStateManager.remove(SolarPanelStateManager.Event.PARKING_POSTION);
+        if (HeatingMain.panelStateManager.has(SolarPanelStateManager.Event.PARKING_POSITION))
+            HeatingMain.panelStateManager.remove(SolarPanelStateManager.Event.PARKING_POSITION);
         else
-            HeatingMain.panelStateManager.add(SolarPanelStateManager.Event.PARKING_POSTION);
+            HeatingMain.panelStateManager.add(SolarPanelStateManager.Event.PARKING_POSITION);
         return Response.ok().build();
     }
 

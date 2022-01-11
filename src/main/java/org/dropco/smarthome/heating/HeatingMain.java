@@ -91,7 +91,7 @@ public class HeatingMain {
         ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.WEST_PIN_REF_CD, "Kolektory - Západ"), key -> Main.pinManager.getOutput(key));
         ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.NORTH_PIN_REF_CD, "Kolektory - Sever"), key -> Main.pinManager.getOutput(key));
         ServiceMode.addOutput(new NamedPort(SolarSystemRefCode.SOUTH_PIN_REF_CD, "Kolektory - Juh"), key -> Main.pinManager.getOutput(key));
-        ServiceMode.addInput(new NamedPort(STRONG_WIND_PIN_REF_CD, "Silný vietor"), () -> Main.pinManager.getInput(STRONG_WIND_PIN_REF_CD).isHigh());
+        ServiceMode.addInput(new NamedPort(STRONG_WIND_PIN_REF_CD, "Silný vietor"), () -> Main.pinManager.getInput(STRONG_WIND_PIN_REF_CD).isLow());
         ServiceMode.addInput(new NamedPort(DAY_LIGHT_PIN_REF_CD, "Jas"), () -> DayLight.inst().getCurrentState());
         ServiceMode.addInput(new NamedPort("DAY_LIGHT_LIMIT", "Jas - limit splnený"), () -> DayLight.inst().enoughLight());
         ServiceMode.getExclusions().put(SolarSystemRefCode.EAST_PIN_REF_CD, SolarSystemRefCode.WEST_PIN_REF_CD);
@@ -115,7 +115,7 @@ public class HeatingMain {
         StatsCollector.getInstance().collect("Kolektory - Východ", Main.pinManager.getOutput(SolarSystemRefCode.EAST_PIN_REF_CD));
         StatsCollector.getInstance().collect("Kolektory - Západ", Main.pinManager.getOutput(SolarSystemRefCode.WEST_PIN_REF_CD));
         StatsCollector.getInstance().collect("S-J indikator", VERTICAL_MOVE_FEEDBACK.getMoving(), VERTICAL_MOVE_FEEDBACK::addSubscriber);
-        StatsCollector.getInstance().collect("V-Z indikator", HORIZONTAL_MOVE_FEEDBACK.getMoving(), HORIZONTAL_MOVE_FEEDBACK::addSubscriber);
+        StatsCollector.getInstance().collect("V-Z indikator", HORIZONTAL_MOVE_FEEDBACK.getMoving(), HORIZONTAL_MOVE_FEEDBACK::addMovingSubscriber);
 
         StatsCollector.getInstance().collect("Kolektory - obehové čerpadlo", Main.pinManager.getOutput(CIRCULAR_PUMP_PORT));
         StatsCollector.getInstance().collect("3-cestný ventil - Bypass", !ThreeWayValve.getState() && SolarCircularPump.getState(), addToStats -> {
