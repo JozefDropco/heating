@@ -3,19 +3,17 @@ package org.dropco.smarthome.web;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.gson.Gson;
-import org.dropco.smarthome.ServiceMode;
+import com.pi4j.io.gpio.PinState;
+import org.dropco.smarthome.Main;
 import org.dropco.smarthome.TimeUtil;
 import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.heating.HeatingMain;
 import org.dropco.smarthome.heating.db.SolarSystemDao;
 import org.dropco.smarthome.heating.solar.DayLight;
-import org.dropco.smarthome.heating.solar.SolarSystemRefCode;
 import org.dropco.smarthome.heating.solar.StrongWind;
 import org.dropco.smarthome.heating.solar.dto.*;
-import org.dropco.smarthome.heating.solar.move.HorizontalMoveFeedback;
 import org.dropco.smarthome.heating.solar.move.SolarPanelMover;
 import org.dropco.smarthome.heating.solar.move.SolarPanelStateManager;
-import org.dropco.smarthome.heating.solar.move.VerticalMoveFeedback;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -78,17 +76,16 @@ public class SolarWebService {
         List<SolarPanelStep> todayRecords = Lists.newArrayList(Iterables.filter(forMonth.getSteps(), step -> TimeUtil.isAfter(Calendar.getInstance(), step.getHour(), step.getMinute())));
 
         src.remainingPositions = Lists.transform(todayRecords, this::toSolarDTO);
-        Set<SolarPanelMover.Movement> movements = HeatingMain.mover.getMovements();
-        if (movements.contains(SolarPanelMover.Movement.NORTH)) {
+        if (Main.pinManager.getState(SolarPanelMover.Movement.NORTH.getPinRefCd()) == PinState.HIGH) {
             src.movement.add("NORTH");
         }
-        if (movements.contains(SolarPanelMover.Movement.SOUTH)) {
+        if (Main.pinManager.getState(SolarPanelMover.Movement.SOUTH.getPinRefCd()) == PinState.HIGH) {
             src.movement.add("SOUTH");
         }
-        if (movements.contains(SolarPanelMover.Movement.WEST)) {
+        if (Main.pinManager.getState(SolarPanelMover.Movement.WEST.getPinRefCd()) == PinState.HIGH) {
             src.movement.add("WEST");
         }
-        if (movements.contains(SolarPanelMover.Movement.EAST)) {
+        if (Main.pinManager.getState(SolarPanelMover.Movement.EAST.getPinRefCd()) == PinState.HIGH) {
             src.movement.add("EAST");
         }
         return Response.ok(new Gson().toJson(src)).build();

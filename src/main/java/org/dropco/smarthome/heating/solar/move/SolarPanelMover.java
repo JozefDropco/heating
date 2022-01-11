@@ -242,12 +242,6 @@ public class SolarPanelMover implements Mover {
         listeners.add(listener);
     }
 
-    public Set<Movement> getMovements() {
-        HashSet<Movement> movements = Sets.newHashSet();
-        if (horizontalMovement.get() != null) movements.add(horizontalMovement.get());
-        if (verticalMovement.get() != null) movements.add(verticalMovement.get());
-        return movements;
-    }
 
 
     public enum Movement {
@@ -265,6 +259,14 @@ public class SolarPanelMover implements Mover {
             this.pinRefCd = pinRefCd;
             this.tick = tick;
             this.name = name;
+        }
+
+        /***
+         * Gets the pinRefCd
+         * @return
+         */
+        public String getPinRefCd() {
+            return pinRefCd;
         }
     }
 
