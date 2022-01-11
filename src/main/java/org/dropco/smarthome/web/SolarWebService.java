@@ -10,6 +10,7 @@ import org.dropco.smarthome.heating.HeatingMain;
 import org.dropco.smarthome.heating.db.SolarSystemDao;
 import org.dropco.smarthome.heating.solar.DayLight;
 import org.dropco.smarthome.heating.solar.SolarSystemRefCode;
+import org.dropco.smarthome.heating.solar.StrongWind;
 import org.dropco.smarthome.heating.solar.dto.*;
 import org.dropco.smarthome.heating.solar.move.HorizontalMoveFeedback;
 import org.dropco.smarthome.heating.solar.move.SolarPanelMover;
@@ -69,9 +70,11 @@ public class SolarWebService {
             pos.x = lastKnownPosition.getHorizontal();
             pos.y = lastKnownPosition.getVertical();
             src.pos = pos;
-            src.dayLight = DayLight.inst().enoughLight();
             return dao.getTodaysSchedule(Calendar.getInstance());
         });
+        src.dayLight = DayLight.inst().enoughLight();
+        src.windy = StrongWind.isWindy();
+
         List<SolarPanelStep> todayRecords = Lists.newArrayList(Iterables.filter(forMonth.getSteps(), step -> TimeUtil.isAfter(Calendar.getInstance(), step.getHour(), step.getMinute())));
 
         src.remainingPositions = Lists.transform(todayRecords, this::toSolarDTO);
