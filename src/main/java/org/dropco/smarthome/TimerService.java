@@ -26,7 +26,12 @@ public class TimerService {
     }
 
     public static void schedule(String name, Runnable runnable, long delay) {
-        logger.log(Level.FINE, "Scheduling " + name + " with delay of " + delay + " ms.");
-        executorService.schedule(runnable, delay, TimeUnit.MILLISECONDS);
+        if (delay<0){
+            logger.log(Level.SEVERE, "Scheduling disabled for " + name + ". Negative delay");
+        }
+        else {
+            logger.log(Level.CONFIG, "Scheduling " + name + " with delay of " + delay + " ms.");
+            executorService.schedule(runnable, delay, TimeUnit.MILLISECONDS);
+        }
     }
 }

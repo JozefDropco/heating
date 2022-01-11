@@ -25,23 +25,17 @@ public class TimeUtil {
     }
 
     public static long milisRemaingForNextDay() {
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.HOUR_OF_DAY, 0);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-        calendar.set(Calendar.MILLISECOND, 0);
-        calendar.add(Calendar.DAY_OF_YEAR, 1);
-        return millisRemaining(Calendar.getInstance(), 23, 59) + 65 * 1000;
+        return millisRemaining(Calendar.getInstance(), 23, 59) + 60 * 1000;
     }
 
     public static long millisRemaining(Calendar current, int hour, int minute) {
         Date currentDate = current.getTime();
         current.set(Calendar.HOUR_OF_DAY, hour);
         current.set(Calendar.MINUTE, minute);
-        current.set(Calendar.SECOND, 0);
+        current.set(Calendar.SECOND, 5);
         current.set(Calendar.MILLISECOND, 0);
         Date future = current.getTime();
-        return future.getTime() - currentDate.getTime()+3*1000;
+        return future.getTime() - currentDate.getTime();
     }
 
     public static boolean isToday(Date asOfDate) {
