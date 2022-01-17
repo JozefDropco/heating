@@ -14,7 +14,8 @@ public class TimeUtilTest {
         Calendar instance = Calendar.getInstance();
         instance.set(Calendar.HOUR_OF_DAY, 6);
         instance.set(Calendar.MINUTE, 30);
-        instance.set(Calendar.SECOND, 32);
+        instance.set(Calendar.SECOND, 0);
+        instance.set(Calendar.MILLISECOND, 0);
         boolean after = TimeUtil.isAfter(instance, 6, 30);
         Assert.assertTrue(after);
     }

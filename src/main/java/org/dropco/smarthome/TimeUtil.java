@@ -8,10 +8,12 @@ public class TimeUtil {
 
 
     public static boolean isAfter(Calendar calendar, int hour, int minute) {
-        int currentHour = calendar.get(Calendar.HOUR_OF_DAY);
-        if (currentHour < hour) return true;
-        if (currentHour == hour && calendar.get(Calendar.MINUTE) <= minute) return true;
-        return false;
+        Date currentDate = calendar.getTime();
+        calendar.set(Calendar.HOUR_OF_DAY,hour);
+        calendar.set(Calendar.MINUTE,minute);
+        calendar.set(Calendar.SECOND,0);
+        calendar.set(Calendar.MILLISECOND,0);
+        return currentDate.compareTo(calendar.getTime())!=-1;
     }
 
     public static boolean isAfternoon(Calendar currentTime, String afternoonTime) {
