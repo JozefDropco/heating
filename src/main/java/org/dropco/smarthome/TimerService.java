@@ -15,21 +15,21 @@ public class TimerService {
     public static void setExecutorService(ScheduledExecutorService executorService) {
         TimerService.executorService = executorService;
     }
-    public static void scheduleFor(String name, int hour, int minute, Runnable runnable){
-        long delay = TimeUtil.millisRemaining(Calendar.getInstance(),hour,minute);
+
+    public static void scheduleFor(String name, int hour, int minute, Runnable runnable) {
+        long delay = TimeUtil.millisRemaining(Calendar.getInstance(), hour, minute);
         schedule(name, runnable, delay);
     }
 
-    public static void scheduleForNextDay(String name, Runnable runnable){
+    public static void scheduleForNextDay(String name, Runnable runnable) {
         long nextDay = TimeUtil.milisRemaingForNextDay();
         schedule(name, runnable, nextDay);
     }
 
     public static void schedule(String name, Runnable runnable, long delay) {
-        if (delay<0){
+        if (delay <= 0l) {
             logger.log(Level.SEVERE, "Scheduling disabled for " + name + ". Negative delay");
-        }
-        else {
+        } else {
             logger.log(Level.CONFIG, "Scheduling " + name + " with delay of " + delay + " ms.");
             executorService.schedule(runnable, delay, TimeUnit.MILLISECONDS);
         }

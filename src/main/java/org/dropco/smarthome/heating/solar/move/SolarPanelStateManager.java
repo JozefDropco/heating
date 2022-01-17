@@ -158,9 +158,10 @@ public class SolarPanelStateManager {
     public Optional<Record> calculatePosition() {
         Iterator<SolarPanelStep> steps = todaysSchedule.get().getSteps().iterator();
         Record record = new Record();
+        Calendar currentTime = getCurrentTime();
         while (steps.hasNext()) {
             SolarPanelStep step = steps.next();
-            if (!TimeUtil.isAfter(getCurrentTime(), step.getHour(), step.getMinute())) {
+            if (!TimeUtil.isAfter(currentTime, step.getHour(), step.getMinute())) {
                 if (step.getIgnoreDayLight() || currentEvents.contains(Event.DAY_LIGHT_REACHED)) {
                     record.setHour(step.getHour());
                     record.setMinute(step.getMinute());
