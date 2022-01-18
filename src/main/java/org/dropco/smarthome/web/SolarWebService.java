@@ -7,12 +7,14 @@ import com.pi4j.io.gpio.PinState;
 import org.dropco.smarthome.Main;
 import org.dropco.smarthome.TimeUtil;
 import org.dropco.smarthome.database.Db;
-import org.dropco.smarthome.heating.HeatingMain;
+import org.dropco.smarthome.dto.NamedPort;
 import org.dropco.smarthome.heating.db.SolarSystemDao;
 import org.dropco.smarthome.heating.solar.DayLight;
+import org.dropco.smarthome.heating.solar.ServiceMode;
+import org.dropco.smarthome.heating.solar.SolarMain;
 import org.dropco.smarthome.heating.solar.StrongWind;
 import org.dropco.smarthome.heating.solar.dto.*;
-import org.dropco.smarthome.heating.solar.move.SolarPanelMover;
+import org.dropco.smarthome.heating.solar.move.Movement;
 import org.dropco.smarthome.heating.solar.move.SolarPanelStateManager;
 
 import javax.ws.rs.*;
@@ -22,10 +24,11 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 
 @Path("/ws/solar")
-public class SolarWebService {
+public class SolarWebService extends ServiceModeWebService {
     private static final Logger logger = Logger.getLogger(SolarWebService.class.getName());
 
     @GET
@@ -41,7 +44,7 @@ public class SolarWebService {
     @Path("/parkingPosition")
     @Produces(MediaType.APPLICATION_JSON)
     public Response parkingPositionGet() throws ParseException {
-        boolean inParkingPosition = HeatingMain.panelStateManager.has(SolarPanelStateManager.Event.PARKING_POSITION);
+        boolean inParkingPosition = SolarMain.panelStateManager.has(SolarPanelStateManager.Event.PARKING_POSITION);
         return Response.ok(String.valueOf(inParkingPosition)).build();
     }
 
@@ -49,10 +52,10 @@ public class SolarWebService {
     @Path("/parkingPosition")
     @Produces(MediaType.APPLICATION_JSON)
     public Response parkingPositionSet() throws ParseException {
-        if (HeatingMain.panelStateManager.has(SolarPanelStateManager.Event.PARKING_POSITION))
-            HeatingMain.panelStateManager.remove(SolarPanelStateManager.Event.PARKING_POSITION);
+        if (SolarMain.panelStateManager.has(SolarPanelStateManager.Event.PARKING_POSITION))
+            SolarMain.panelStateManager.remove(SolarPanelStateManager.Event.PARKING_POSITION);
         else
-            HeatingMain.panelStateManager.add(SolarPanelStateManager.Event.PARKING_POSITION);
+            SolarMain.panelStateManager.add(SolarPanelStateManager.Event.PARKING_POSITION);
         return Response.ok().build();
     }
 
@@ -75,16 +78,16 @@ public class SolarWebService {
         List<SolarPanelStep> todayRecords = Lists.newArrayList(Iterables.filter(forMonth.getSteps(), step -> TimeUtil.isAfter(Calendar.getInstance(), step.getHour(), step.getMinute())));
 
         src.remainingPositions = Lists.transform(todayRecords, this::toSolarDTO);
-        if (Main.pinManager.getState(SolarPanelMover.Movement.NORTH.getPinRefCd()) == PinState.HIGH) {
+        if (Main.pinManager.getState(Movement.NORTH.getPinRefCd()) == PinState.HIGH) {
             src.movement.add("NORTH");
         }
-        if (Main.pinManager.getState(SolarPanelMover.Movement.SOUTH.getPinRefCd()) == PinState.HIGH) {
+        if (Main.pinManager.getState(Movement.SOUTH.getPinRefCd()) == PinState.HIGH) {
             src.movement.add("SOUTH");
         }
-        if (Main.pinManager.getState(SolarPanelMover.Movement.WEST.getPinRefCd()) == PinState.HIGH) {
+        if (Main.pinManager.getState(Movement.WEST.getPinRefCd()) == PinState.HIGH) {
             src.movement.add("WEST");
         }
-        if (Main.pinManager.getState(SolarPanelMover.Movement.EAST.getPinRefCd()) == PinState.HIGH) {
+        if (Main.pinManager.getState(Movement.EAST.getPinRefCd()) == PinState.HIGH) {
             src.movement.add("EAST");
         }
         return Response.ok(new Gson().toJson(src)).build();
@@ -131,11 +134,45 @@ public class SolarWebService {
                 solarDTO.vert = deltaPos.getDeltaVerticalTicks();
                 return null;
             }
+
+            @Override
+            public Void process(ParkPosition parkPosition) {
+                solarDTO.moveType = "Parkovacia";
+                solarDTO.hor = 0;
+                solarDTO.vert = 0;
+                return null;
+            }
         });
         solarDTO.hour = rec.getHour();
         solarDTO.minute = rec.getMinute();
         return solarDTO;
     }
+
+    @Override
+    protected Set<NamedPort> getInputs() {
+        return ServiceMode.getInputs();
+    }
+
+    @Override
+    protected boolean getInputState(String portRefCd) {
+        return ServiceMode.getInputState(portRefCd);
+    }
+
+    @Override
+    protected Set<NamedPort> getOutputs() {
+        return ServiceMode.getOutputs();
+    }
+
+    @Override
+    protected boolean getOutputState(String portRefCd) {
+        return ServiceMode.getOutputState(portRefCd);
+    }
+
+    @Override
+    protected Set<String> setOutputState(String portRefCd, boolean state) {
+        return ServiceMode.setState(portRefCd, state);
+    }
+
 
     public static class CurrentState {
         public List<SolarDTO> remainingPositions;

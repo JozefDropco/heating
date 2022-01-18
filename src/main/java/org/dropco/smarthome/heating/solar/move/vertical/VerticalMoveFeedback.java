@@ -1,4 +1,4 @@
-package org.dropco.smarthome.heating.solar.move;
+package org.dropco.smarthome.heating.solar.move.vertical;
 
 import com.google.common.collect.Lists;
 import com.pi4j.io.gpio.GpioPinDigitalInput;
@@ -45,12 +45,12 @@ public class VerticalMoveFeedback {
      * Gets the moving
      * @return
      */
-    public boolean getMoving() {
+    public boolean isMoving() {
         return moving.get();
     }
 
 
-    public void addSubscriber(Consumer<Boolean> consumer) {
+    public void addMovingSubscriber(Consumer<Boolean> consumer) {
         movingSubscribers.add(consumer);
     }
 

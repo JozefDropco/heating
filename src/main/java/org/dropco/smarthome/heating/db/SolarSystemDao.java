@@ -10,18 +10,17 @@ import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.database.querydsl.SolarMove;
 import org.dropco.smarthome.dto.LongConstant;
 import org.dropco.smarthome.heating.solar.SolarSystemRefCode;
-import org.dropco.smarthome.heating.solar.dto.AbsolutePosition;
-import org.dropco.smarthome.heating.solar.dto.DeltaPosition;
-import org.dropco.smarthome.heating.solar.dto.SolarPanelStep;
-import org.dropco.smarthome.heating.solar.dto.SolarSchedule;
+import org.dropco.smarthome.heating.solar.dto.*;
 
 import java.sql.Connection;
 import java.util.Calendar;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.IntBinaryOperator;
 
 import static org.dropco.smarthome.database.querydsl.SolarMove.SOLAR_MOVE;
 import static org.dropco.smarthome.database.querydsl.SolarPanelSchedule.SOLAR_SCHEDULE;
@@ -36,7 +35,14 @@ public class SolarSystemDao implements Dao {
             .setConstantType("number").setGroup("Kolektory").setValueType("number");
 
 
-    private static final AtomicReference<AbsolutePosition> lastPosition = new AtomicReference<>();
+    private static final AtomicBoolean loaded = new AtomicBoolean();
+    private static final AtomicInteger vertical = new AtomicInteger();
+    private static final AtomicInteger horizontal = new AtomicInteger();
+    private static final AtomicInteger NORTH = new AtomicInteger();
+    private static final AtomicInteger SOUTH = new AtomicInteger();
+    private static final AtomicInteger EAST = new AtomicInteger();
+    private static final AtomicInteger WEST = new AtomicInteger();
+
     private static final AtomicInteger countDown = new AtomicInteger(30);
     private static final Lock lock = new ReentrantLock();
 
@@ -48,24 +54,63 @@ public class SolarSystemDao implements Dao {
     public AbsolutePosition getLastKnownPosition() {
         lock.lock();
         try {
-            if (lastPosition.get() == null)
-                lastPosition.set(new AbsolutePosition((int) settingsDao.getLong(SolarSystemRefCode.LAST_KNOWN_POSITION_HORIZONTAL), (int) settingsDao.getLong(SolarSystemRefCode.LAST_KNOWN_POSITION_VERTICAL)));
-            return lastPosition.get();
+            if (!loaded.get()){
+                vertical.set((int) settingsDao.getLong(SolarSystemRefCode.LAST_KNOWN_POSITION_VERTICAL));
+                horizontal.set((int) settingsDao.getLong(SolarSystemRefCode.LAST_KNOWN_POSITION_HORIZONTAL));
+                WEST.set((int) settingsDao.getLong("WEST"));
+                EAST.set((int) settingsDao.getLong("EAST"));
+                NORTH.set((int) settingsDao.getLong("NORTH"));
+                SOUTH.set((int) settingsDao.getLong("SOUTH"));
+                loaded.set(true);
+            }
+            return new AbsolutePosition(horizontal.get(),vertical.get());
         } finally {
             lock.unlock();
         }
     }
 
-    public void updateLastKnownPosition(AbsolutePosition currentPosition) {
+
+    public void updateLastKnownVerticalPosition(int tick) {
         lock.lock();
         int current;
         try {
-            lastPosition.set(currentPosition);
+            vertical.accumulateAndGet(tick, (left, right) -> {
+                int value = left + right;
+                int min = Math.min(NORTH.get(), SOUTH.get());
+                int max = Math.max(NORTH.get(), SOUTH.get());
+                if (value< min) return min;
+                if (value> max) return max;
+                return value;
+            });
             current = countDown.decrementAndGet();
             if (current == 0) {
                 countDown.set(30);
-                settingsDao.updateLongConstant(HORIZONTAL.setValue((long) currentPosition.getHorizontal()));
-                settingsDao.updateLongConstant(VERTICAL.setValue((long) currentPosition.getVertical()));
+                settingsDao.updateLongConstant(HORIZONTAL.setValue((long) horizontal.get()));
+                settingsDao.updateLongConstant(VERTICAL.setValue((long) vertical.get()));
+            }
+        } finally {
+            lock.unlock();
+        }
+    }
+
+
+    public void updateLastKnownHorizontalPosition(int tick) {
+        lock.lock();
+        int current;
+        try {
+            horizontal.accumulateAndGet(tick, (left, right) -> {
+                int value = left + right;
+                int min = Math.min(WEST.get(), EAST.get());
+                int max = Math.max(WEST.get(), EAST.get());
+                if (value< min) return min;
+                if (value> max) return max;
+                return value;
+            });
+            current = countDown.decrementAndGet();
+            if (current == 0) {
+                countDown.set(30);
+                settingsDao.updateLongConstant(HORIZONTAL.setValue((long) horizontal.get()));
+                settingsDao.updateLongConstant(VERTICAL.setValue((long) vertical.get()));
             }
         } finally {
             lock.unlock();
@@ -75,8 +120,8 @@ public class SolarSystemDao implements Dao {
     public void flushPosition(){
         lock.lock();
         try {
-                settingsDao.updateLongConstant(HORIZONTAL.setValue((long) lastPosition.get().getHorizontal()));
-                settingsDao.updateLongConstant(VERTICAL.setValue((long) lastPosition.get().getVertical()));
+            settingsDao.updateLongConstant(HORIZONTAL.setValue((long) horizontal.get()));
+            settingsDao.updateLongConstant(VERTICAL.setValue((long) vertical.get()));
         } finally {
             lock.unlock();
         }
@@ -93,7 +138,7 @@ public class SolarSystemDao implements Dao {
         SolarPanelStep sunRise = new SolarPanelStep();
         sunRise.setHour(sTuple.get(SOLAR_SCHEDULE.sunRiseHour));
         sunRise.setMinute(sTuple.get(SOLAR_SCHEDULE.sunRiseMinute));
-        sunRise.setPosition(new AbsolutePosition(sTuple.get(SOLAR_SCHEDULE.sunRiseAbsPosHor), sTuple.get(SOLAR_SCHEDULE.sunRiseAbsPosVert)));
+        sunRise.setPosition(ParkPosition.INSTANCE);
         sunRise.setIgnoreDayLight(false);
         schedule.getSteps().add(sunRise);
 

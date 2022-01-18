@@ -6,4 +6,7 @@ public interface Mover {
 
     void moveTo(String movementRefCd, Position position);
     void stop();
+    void moveTo(Movement movement, boolean state);
+
+    void moveTo(String movementRefCd, Movement horizontal, Movement vertical);
 }

@@ -11,7 +11,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
@@ -41,28 +40,28 @@ public class TickerPin implements GpioPinDigitalInput {
                     while (tickCount > 0) {
                         if (stopped.get()) {
                             lock.lock();
-                            try{
+                            try {
                                 waitForResume.awaitUninterruptibly();
-                            }finally {
+                            } finally {
                                 lock.unlock();
                             }
                         }
                         tickCount--;
-                        Logger.getLogger(TickerPin.class.getName()).log(Level.INFO,"Tick");
-                        listeners.forEach(gpioPinListener -> gpioPinListener.handleGpioPinDigitalStateChangeEvent(new GpioPinDigitalStateChangeEvent(TickerPin.this, TickerPin.this, PinState.HIGH)));
+                        Logger.getLogger(TickerPin.class.getName()).log(Level.INFO, "Tick");
+                        listeners.forEach(gpioPinListener -> gpioPinListener.handleGpioPinDigitalStateChangeEvent(new GpioPinDigitalStateChangeEvent(TickerPin.this, TickerPin.this, PinState.LOW)));
                         try {
                             Thread.sleep(sleepMiliseconds);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
-                        listeners.forEach(gpioPinListener -> gpioPinListener.handleGpioPinDigitalStateChangeEvent(new GpioPinDigitalStateChangeEvent(TickerPin.this, TickerPin.this, PinState.LOW)));
+                            listeners.forEach(gpioPinListener -> gpioPinListener.handleGpioPinDigitalStateChangeEvent(new GpioPinDigitalStateChangeEvent(TickerPin.this, TickerPin.this, PinState.HIGH)));
 
                     }
                 }
             }).start();
         else {
             lock.lock();
-            try{
+            try {
                 stopped.set(false);
                 waitForResume.signal();
             } finally {

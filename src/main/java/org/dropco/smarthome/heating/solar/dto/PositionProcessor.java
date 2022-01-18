@@ -8,4 +8,6 @@ public interface PositionProcessor<T> {
     default T process(DeltaPosition deltaPos) {
         return null;
     }
+
+    default T process(ParkPosition parkPosition) {return null;}
 }

@@ -1,6 +1,6 @@
 package org.dropco.smarthome.heating.heater;
 
-import org.dropco.smarthome.ServiceMode;
+import org.dropco.smarthome.heating.ServiceMode;
 import org.dropco.smarthome.heating.pump.SolarCircularPump;
 import org.dropco.smarthome.heating.solar.HeatingConfiguration;
 import org.dropco.smarthome.heating.solar.ThreeWayValve;

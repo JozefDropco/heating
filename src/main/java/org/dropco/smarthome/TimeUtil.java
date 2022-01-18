@@ -9,11 +9,13 @@ public class TimeUtil {
 
     public static boolean isAfter(Calendar calendar, int hour, int minute) {
         Date currentDate = calendar.getTime();
-        calendar.set(Calendar.HOUR_OF_DAY,hour);
-        calendar.set(Calendar.MINUTE,minute);
-        calendar.set(Calendar.SECOND,0);
-        calendar.set(Calendar.MILLISECOND,0);
-        return currentDate.compareTo(calendar.getTime())!=-1;
+        Calendar after = Calendar.getInstance();
+        after.setTime(currentDate);
+        after.set(Calendar.HOUR_OF_DAY,hour);
+        after.set(Calendar.MINUTE,minute);
+        after.set(Calendar.SECOND,0);
+        after.set(Calendar.MILLISECOND,0);
+        return currentDate.compareTo(after.getTime())!=1;
     }
 
     public static boolean isAfternoon(Calendar currentTime, String afternoonTime) {

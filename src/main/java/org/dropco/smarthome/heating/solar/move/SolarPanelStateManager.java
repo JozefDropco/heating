@@ -2,8 +2,8 @@ package org.dropco.smarthome.heating.solar.move;
 
 import com.google.common.collect.Sets;
 import com.google.common.reflect.TypeToken;
-import org.dropco.smarthome.ServiceMode;
 import org.dropco.smarthome.TimeUtil;
+import org.dropco.smarthome.heating.solar.ServiceMode;
 import org.dropco.smarthome.heating.solar.SolarSerializer;
 import org.dropco.smarthome.heating.solar.dto.*;
 
@@ -19,29 +19,20 @@ public class SolarPanelStateManager {
     private final Mover mover;
     private final Set<Event> currentEvents = Collections.synchronizedSet(Sets.newHashSet());
     private String afternoonTime;
-    private int SOUTH = 431;
-    private int NORTH = 0;
-    private int WEST = 0;
-    private int EAST = 690;
-    private Supplier<AbsolutePosition> currentPosition;
     private AtomicReference<SolarSchedule> todaysSchedule = new AtomicReference<>();
     private Supplier<SolarSchedule> solarScheduleSupplier;
     private Consumer<String> recentSolarScheduleUpdater;
     private Consumer<String> currentEventsUpdater;
 
-    public SolarPanelStateManager(String afternoonTime, int south, int north, int west, int east,
-                                  Supplier<AbsolutePosition> currentPosition, Mover mover,
+    public SolarPanelStateManager(String afternoonTime,
+                                  Mover mover,
                                   Supplier<String> recentTodaysSchedule, Supplier<SolarSchedule> solarScheduleSupplier, Consumer<String> recentSolarScheduleUpdater,
                                   Supplier<String> currentEventsSupplier, Consumer<String> currentEventsUpdater) {
         this.afternoonTime = afternoonTime;
-        this.SOUTH = south;
-        this.NORTH = north;
-        this.WEST = west;
-        this.EAST = east;
+
         this.solarScheduleSupplier = solarScheduleSupplier;
         this.mover = mover;
         this.recentSolarScheduleUpdater = recentSolarScheduleUpdater;
-        this.currentPosition = currentPosition;
         this.currentEventsUpdater = currentEventsUpdater;
         String json = recentTodaysSchedule.get();
         if (json == null) {
@@ -76,8 +67,9 @@ public class SolarPanelStateManager {
                     nextTick();
                     break;
                 case PARKING_POSITION:
-                    if (!ServiceMode.isServiceMode())
-                        mover.moveTo("PARKING_POSITION", new AbsolutePosition(WEST, NORTH));
+                    if (!ServiceMode.isServiceMode()) {
+                        mover.moveTo("PARKING_POSITION", Movement.WEST, Movement.NORTH);
+                    }
             }
 
         }
@@ -105,7 +97,14 @@ public class SolarPanelStateManager {
         if (!currentEvents.contains(Event.PARKING_POSITION)) {
             if (!(currentEvents.contains(Event.PANEL_OVERHEATED) || currentEvents.contains(Event.WATER_OVERHEATED))) {
                 if (!ServiceMode.isServiceMode())
-                    calculatePosition().ifPresent(step -> mover.moveTo(step.getHour() + ":" + step.getMinute(), step.getPosition()));
+                    calculatePosition().ifPresent(step -> {
+                        if (step.getPosition() != null) {
+                            if (step.getPosition() instanceof ParkPosition) {
+                                mover.moveTo(step.getHour() + ":" + step.getMinute(), Movement.WEST,Movement.NORTH);
+                            } else
+                                mover.moveTo(step.getHour() + ":" + step.getMinute(), step.getPosition());
+                        }
+                    });
             } else {
                 overheated();
             }
@@ -115,11 +114,10 @@ public class SolarPanelStateManager {
     private void overheated() {
         if (!ServiceMode.isServiceMode())
             if (!currentEvents.contains(Event.PARKING_POSITION)) {
-                AbsolutePosition current = currentPosition.get();
                 if (TimeUtil.isAfternoon(getCurrentTime(), afternoonTime)) {
-                    mover.moveTo("overheated_afternoon", new AbsolutePosition(EAST, (currentEvents.contains(Event.STRONG_WIND) ? current.getVertical() : SOUTH)));
+                    mover.moveTo("overheated_afternoon", Movement.EAST, currentEvents.contains(Event.STRONG_WIND) ? null : Movement.SOUTH);
                 } else {
-                    mover.moveTo("overheated_morning", new AbsolutePosition(WEST, (currentEvents.contains(Event.STRONG_WIND) ? current.getVertical() : SOUTH)));
+                    mover.moveTo("overheated_morning", Movement.WEST, currentEvents.contains(Event.STRONG_WIND) ? null : Movement.SOUTH);
                 }
             }
     }
@@ -193,6 +191,11 @@ public class SolarPanelStateManager {
                     public Position process(DeltaPosition deltaPos) {
                         return new AbsolutePosition(prevAbsPos.getHorizontal() + deltaPos.getDeltaHorizontalTicks(), prevAbsPos.getVertical() + deltaPos.getDeltaVerticalTicks());
                     }
+
+                    @Override
+                    public Position process(ParkPosition parkPosition) {
+                        return parkPosition;
+                    }
                 });
             }
 
@@ -227,6 +230,22 @@ public class SolarPanelStateManager {
 
     public boolean has(Event event) {
         return currentEvents.contains(event);
+    }
+
+    public synchronized Set<String> move(Movement movement, Boolean state) {
+        mover.moveTo(movement, state);
+        switch (movement) {
+            case SOUTH:
+                return Collections.singleton(Movement.NORTH.getPinRefCd());
+            case NORTH:
+                return Collections.singleton(Movement.SOUTH.getPinRefCd());
+            case WEST:
+                return Collections.singleton(Movement.EAST.getPinRefCd());
+            case EAST:
+                return Collections.singleton(Movement.WEST.getPinRefCd());
+            default:
+                return null;
+        }
     }
 
 

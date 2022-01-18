@@ -1,6 +1,5 @@
 package org.dropco.smarthome.watering;
 
-import org.dropco.smarthome.ServiceMode;
 import org.dropco.smarthome.temp.TempService;
 import org.dropco.smarthome.watering.db.WateringRecord;
 

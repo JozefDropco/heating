@@ -1,7 +1,6 @@
 package org.dropco.smarthome.watering;
 
 import org.dropco.smarthome.Main;
-import org.dropco.smarthome.ServiceMode;
 import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.dto.NamedPort;

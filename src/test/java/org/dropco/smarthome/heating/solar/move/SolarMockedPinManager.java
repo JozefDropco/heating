@@ -15,6 +15,7 @@ class SolarMockedPinManager extends MockedPinManager {
 
     @Override
     public void setState(String key, boolean value) {
+        System.out.println(key+" "+value);
         switch (key) {
             case SolarSystemRefCode.NORTH_PIN_REF_CD:
             case SolarSystemRefCode.SOUTH_PIN_REF_CD:

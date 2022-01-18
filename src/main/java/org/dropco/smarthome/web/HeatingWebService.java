@@ -6,6 +6,7 @@ import com.google.gson.TypeAdapter;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonWriter;
 import org.dropco.smarthome.database.Db;
+import org.dropco.smarthome.dto.NamedPort;
 import org.dropco.smarthome.heating.pump.FireplaceCircularPump;
 import org.dropco.smarthome.heating.db.HeatingDao;
 import org.dropco.smarthome.heating.dto.SolarHeatingSchedule;
@@ -15,6 +16,7 @@ import org.dropco.smarthome.heating.heater.Flame;
 import org.dropco.smarthome.heating.heater.BoilerBlocker;
 import org.dropco.smarthome.heating.pump.SolarCircularPump;
 import org.dropco.smarthome.heating.solar.ThreeWayValve;
+import org.dropco.smarthome.heating.ServiceMode;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -25,11 +27,13 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.TemporalQueries;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Logger;
 
 @Path("/ws/heating")
-public class HeatingWebService {
+public class HeatingWebService extends ServiceModeWebService{
     private static final Logger logger = Logger.getLogger(HeatingWebService.class.getName());
     public static final Gson GSON = new GsonBuilder().registerTypeAdapter(LocalTime.class, new TypeAdapter<LocalTime>() {
         DateTimeFormatter simpleDateFormat = DateTimeFormatter.ISO_DATE_TIME;
@@ -59,6 +63,33 @@ public class HeatingWebService {
         fullStats.heaterCircularPump = HeaterCircularPump.getState();
         return Response.ok(new Gson().toJson(fullStats)).build();
     }
+
+    @Override
+    protected Set<NamedPort> getInputs() {
+        return ServiceMode.getInputs();
+    }
+
+    @Override
+    protected boolean getInputState(String portRefCd) {
+        return ServiceMode.getInputState(portRefCd);
+    }
+
+    @Override
+    protected Set<NamedPort> getOutputs() {
+        return ServiceMode.getOutputs();
+    }
+
+    @Override
+    protected boolean getOutputState(String portRefCd) {
+        return ServiceMode.getPort(portRefCd).getState().isHigh();
+    }
+
+    @Override
+    protected Set<String> setOutputState(String portRefCd, boolean state) {
+        ServiceMode.getPort(portRefCd).setState(state);
+        return Collections.emptySet();
+    }
+
 
     private class FullStats {
         boolean solarCircularPump;

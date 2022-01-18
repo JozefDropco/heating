@@ -32,8 +32,7 @@ public class SolarPanelStateManagerTest {
             }
         };
         SolarSchedule solarSchedule = getSolarSchedule();
-        SolarPanelStateManager manager = new SolarPanelStateManager(AFTERNOON_TIME, 10, 0, 0, 10,
-                () -> current, mover, () -> null, () -> solarSchedule, recentSolarScheduleUpdater, () -> "[]", currentEventsUpdater
+        SolarPanelStateManager manager = new SolarPanelStateManager(AFTERNOON_TIME,  mover, () -> null, () -> solarSchedule, recentSolarScheduleUpdater, () -> "[]", currentEventsUpdater
         ){
             @Override
             protected Calendar getCurrentTime() {
@@ -66,8 +65,7 @@ public class SolarPanelStateManagerTest {
         Consumer recentSolarUpdater = Mockito.mock(Consumer.class);
         Consumer currentEventsUpdater = Mockito.mock(Consumer.class);
         SolarSchedule solarSchedule = getSolarSchedule();
-        SolarPanelStateManager manager = new SolarPanelStateManager("13:10", 10, 0, 0, 10,
-                () -> current, mover, () -> null, () -> solarSchedule, recentSolarUpdater, () -> null, currentEventsUpdater
+        SolarPanelStateManager manager = new SolarPanelStateManager("13:10", mover, () -> null, () -> solarSchedule, recentSolarUpdater, () -> null, currentEventsUpdater
         ) {
             @Override
             protected Calendar getCurrentTime() {
@@ -129,8 +127,7 @@ public class SolarPanelStateManagerTest {
             }
         };
         SolarSchedule solarSchedule = getSolarSchedule();
-        SolarPanelStateManager manager = new SolarPanelStateManager("13:10", 10, 0, 0, 10,
-                () -> current, mover, () -> null, () -> solarSchedule, recentSolarScheduleUpdater, () -> "[\"STRONG_WIND\"]", currentEventsUpdater
+        SolarPanelStateManager manager = new SolarPanelStateManager("13:10", mover, () -> null, () -> solarSchedule, recentSolarScheduleUpdater, () -> "[\"STRONG_WIND\"]", currentEventsUpdater
         );
         manager.remove(SolarPanelStateManager.Event.STRONG_WIND);
         Assert.assertNull(mover.lastPosition);
@@ -150,8 +147,7 @@ public class SolarPanelStateManagerTest {
             }
         };
         SolarSchedule solarSchedule = getSolarSchedule();
-        SolarPanelStateManager manager = new SolarPanelStateManager(AFTERNOON_TIME, 10, 0, 0, 10,
-                () -> current, mover, () -> null, () -> solarSchedule, recentSolarScheduleUpdater, () -> null, currentEventsUpdater
+        SolarPanelStateManager manager = new SolarPanelStateManager(AFTERNOON_TIME, mover, () -> null, () -> solarSchedule, recentSolarScheduleUpdater, () -> null, currentEventsUpdater
         );
         manager.add(SolarPanelStateManager.Event.PANEL_OVERHEATED);
         mover.lastPosition.invoke(new PositionProcessor<Object>() {
@@ -187,8 +183,7 @@ public class SolarPanelStateManagerTest {
             }
         };
         SolarSchedule solarSchedule = getSolarSchedule();
-        SolarPanelStateManager manager = new SolarPanelStateManager(AFTERNOON_TIME, 10, 0, 0, 10,
-                () -> current, mover, () -> null, () -> solarSchedule, recentSolarScheduleUpdater, () -> "[\"PANEL_OVERHEATED\"]", currentEventsUpdater
+        SolarPanelStateManager manager = new SolarPanelStateManager(AFTERNOON_TIME, mover, () -> null, () -> solarSchedule, recentSolarScheduleUpdater, () -> "[\"PANEL_OVERHEATED\"]", currentEventsUpdater
         );
         manager.remove(SolarPanelStateManager.Event.PANEL_OVERHEATED);
         mover.lastPosition.invoke(new PositionProcessor<Object>() {
@@ -221,8 +216,7 @@ public class SolarPanelStateManagerTest {
             }
         };
         SolarSchedule solarSchedule = getSolarSchedule();
-        SolarPanelStateManager manager = new SolarPanelStateManager(AFTERNOON_TIME, 10, 0, 0, 10,
-                () -> current, mover, () -> null, () -> solarSchedule, recentSolarScheduleUpdater, () -> "[\"PANEL_OVERHEATED\",\"DAY_LIGHT_REACHED\"]", currentEventsUpdater
+        SolarPanelStateManager manager = new SolarPanelStateManager(AFTERNOON_TIME, mover, () -> null, () -> solarSchedule, recentSolarScheduleUpdater, () -> "[\"PANEL_OVERHEATED\",\"DAY_LIGHT_REACHED\"]", currentEventsUpdater
         ){
             @Override
             protected Calendar getCurrentTime() {
@@ -255,8 +249,7 @@ public class SolarPanelStateManagerTest {
         Consumer recentSolarUpdater = Mockito.mock(Consumer.class);
         Consumer currentEventsUpdater = Mockito.mock(Consumer.class);
         SolarSchedule solarSchedule = getSolarSchedule();
-        SolarPanelStateManager manager = new SolarPanelStateManager("13:10", 10, 0, 0, 10,
-                () -> current, mover, () -> null, () -> solarSchedule, recentSolarUpdater, () -> null, currentEventsUpdater
+        SolarPanelStateManager manager = new SolarPanelStateManager("13:10", mover, () -> null, () -> solarSchedule, recentSolarUpdater, () -> null, currentEventsUpdater
         ) {
             @Override
             protected Calendar getCurrentTime() {
@@ -312,8 +305,7 @@ public class SolarPanelStateManagerTest {
         Consumer recentSolarUpdater = Mockito.mock(Consumer.class);
         Consumer currentEventsUpdater = Mockito.mock(Consumer.class);
         SolarSchedule solarSchedule = getSolarSchedule();
-        SolarPanelStateManager manager = new SolarPanelStateManager("13:10", 10, 0, 0, 10,
-                () -> current, mover, () -> null, () -> solarSchedule, recentSolarUpdater, () -> null, currentEventsUpdater
+        SolarPanelStateManager manager = new SolarPanelStateManager("13:10", mover, () -> null, () -> solarSchedule, recentSolarUpdater, () -> null, currentEventsUpdater
         ) {
             @Override
             protected Calendar getCurrentTime() {
@@ -410,6 +402,16 @@ public class SolarPanelStateManagerTest {
         @Override
         public void stop() {
             System.out.println("STOP mover");
+        }
+
+        @Override
+        public void moveTo(String movementRefCd, Movement horizontal, Movement vertical) {
+            System.out.println("Move to ref-cd="+movementRefCd+" "+horizontal.getPinRefCd()+", " +vertical.getPinRefCd());
+        }
+
+        @Override
+        public void moveTo(Movement movement, boolean state) {
+            System.out.println("Move to mover - "+movement.getPinRefCd()+", state="+state);
         }
     }
 }

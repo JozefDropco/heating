@@ -4,11 +4,10 @@ import com.pi4j.io.gpio.GpioFactory;
 import com.pi4j.io.gpio.GpioPinDigital;
 import com.pi4j.io.gpio.PinState;
 import com.pi4j.io.gpio.event.GpioPinListenerDigital;
-import org.dropco.smarthome.ServiceMode;
+import org.dropco.smarthome.watering.ServiceMode;
 import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.gpioextension.DelayedGpioPinListener;
-import org.dropco.smarthome.temp.TempService;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -72,12 +71,10 @@ public class StatsCollector {
     }
 
     protected void collect(boolean state, String name) {
-        if (!ServiceMode.isServiceMode()) {
             if (state)
                 handle(state, name);
             else
                 handle(state, name);
-        }
     }
 
 

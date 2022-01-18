@@ -8,7 +8,6 @@ import com.pi4j.io.gpio.GpioFactory;
 import com.pi4j.io.w1.W1Device;
 import com.pi4j.io.w1.W1Master;
 import com.pi4j.temperature.TemperatureScale;
-import org.dropco.smarthome.ServiceMode;
 import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.database.LogDao;
 import org.dropco.smarthome.heating.db.HeatingDao;
@@ -32,7 +31,6 @@ public class TempService implements Runnable {
         GpioFactory.getExecutorServiceFactory().getScheduledExecutorService().scheduleAtFixedRate(() -> {
             try {
                 W1Master master = new W1Master();
-                if (!ServiceMode.isServiceMode()) {
                     List<TemperatureSensor> sensors = master.getDevices(TemperatureSensor.class);
                     for (TemperatureSensor sensor : sensors) {
                         W1Device device = (W1Device) sensor;
@@ -50,7 +48,6 @@ public class TempService implements Runnable {
                             }
                         }
                     }
-                }
             } catch (RuntimeException e) {
                 Logger.getLogger(TempService.class.getName()).log(Level.FINE, "Temp service not working", e);
             }

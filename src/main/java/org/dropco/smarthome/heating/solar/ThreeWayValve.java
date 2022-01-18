@@ -2,7 +2,6 @@ package org.dropco.smarthome.heating.solar;
 
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.AtomicDouble;
-import org.dropco.smarthome.ServiceMode;
 import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.heating.db.HeatingDao;
