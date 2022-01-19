@@ -105,8 +105,8 @@ public class SolarWebService extends ServiceModeWebService {
         SolarPanelStep sunSet = Iterables.getLast(schedule.getSteps());
         s.sunSetHour = sunSet.getHour();
         s.sunSetMinute = sunSet.getMinute();
-        s.sunSetAbsVer = ((AbsolutePosition) sunSet.getPosition()).getVertical();
-        s.sunSetAbsHor = ((AbsolutePosition) sunSet.getPosition()).getHorizontal();
+        s.sunSetAbsVer = 0;
+        s.sunSetAbsHor = 0;
         for (SolarPanelStep r : Iterables.limit(Iterables.skip(schedule.getSteps(), 1), schedule.getSteps().size() - 2)) {
             SolarDTO dto = toSolarDTO(r);
             dto.vert = dto.vert / s.verticalStep;
