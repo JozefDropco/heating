@@ -191,6 +191,7 @@ public class MainTest {
 
             @Override
             public PinState getState(Pin pin) {
+                if (pin.getName().equals("GPIO 2")) return PinState.HIGH;
                 return PinState.LOW;
             }
 

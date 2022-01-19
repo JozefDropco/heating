@@ -10,10 +10,10 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class PinManagerImpl implements PinManager {
-    private Map<String, GpioPinDigitalInput> inputMap = Collections.synchronizedMap(new HashMap<>());
-    private Map<String, GpioPinDigitalOutput> outputMap = Collections.synchronizedMap(new HashMap<>());
+    private final Map<String, GpioPinDigitalInput> inputMap = Collections.synchronizedMap(new HashMap<>());
+    private final Map<String, GpioPinDigitalOutput> outputMap = Collections.synchronizedMap(new HashMap<>());
 
-    private static GpioController gpio = GpioFactory.getInstance();
+    private static final GpioController gpio = GpioFactory.getInstance();
 
 
 

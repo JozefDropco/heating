@@ -16,7 +16,7 @@ import java.util.logging.Logger;
 
 
 public class Main {
-    public static PinManager pinManager = new PinManagerImpl();
+    public static final PinManager pinManager = new PinManagerImpl();
     public static final Set<String> INPUTS = Sets.newHashSet();
 
     public static void main(String[] args) throws Exception {
