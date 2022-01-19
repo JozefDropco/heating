@@ -138,7 +138,7 @@ public class SolarSystemDao implements Dao {
         SolarPanelStep sunRise = new SolarPanelStep();
         sunRise.setHour(sTuple.get(SOLAR_SCHEDULE.sunRiseHour));
         sunRise.setMinute(sTuple.get(SOLAR_SCHEDULE.sunRiseMinute));
-        sunRise.setPosition(ParkPosition.INSTANCE);
+        sunRise.setPosition(new AbsolutePosition(sTuple.get(SOLAR_SCHEDULE.sunRiseAbsPosHor), sTuple.get(SOLAR_SCHEDULE.sunRiseAbsPosVert)));
         sunRise.setIgnoreDayLight(false);
         schedule.getSteps().add(sunRise);
 
@@ -151,7 +151,7 @@ public class SolarSystemDao implements Dao {
         SolarPanelStep sunSet = new SolarPanelStep();
         sunSet.setHour(sTuple.get(SOLAR_SCHEDULE.sunSetHour));
         sunSet.setMinute(sTuple.get(SOLAR_SCHEDULE.sunSetMinute));
-        sunSet.setPosition(new AbsolutePosition(sTuple.get(SOLAR_SCHEDULE.sunSetAbsPosHor), sTuple.get(SOLAR_SCHEDULE.sunSetAbsPosVert)));
+        sunSet.setPosition(ParkPosition.INSTANCE);
         sunSet.setIgnoreDayLight(true);
         schedule.getSteps().add(sunSet);
         return schedule;
