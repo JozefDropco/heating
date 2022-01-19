@@ -74,6 +74,8 @@ public class SolarPanel {
             }
         });
         ticker();
+        if (DayLight.inst().enoughLight()) panelStateManager.add(SolarPanelStateManager.Event.DAY_LIGHT_REACHED,false);
+        if (StrongWind.isWindy()) panelStateManager.add(SolarPanelStateManager.Event.STRONG_WIND,false);
         panelStateManager.nextTick();
     }
 

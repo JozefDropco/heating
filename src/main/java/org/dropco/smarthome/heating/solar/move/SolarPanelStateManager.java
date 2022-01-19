@@ -53,21 +53,24 @@ public class SolarPanelStateManager {
     }
 
     public void add(Event event) {
+        add(event,true);
+    }
+    public void add(Event event, boolean emitEvents) {
         if (currentEvents.add(event)) {
             updateEvents();
             switch (event) {
                 case STRONG_WIND:
-                    strongWind();
+                    if (emitEvents) strongWind();
                     break;
                 case PANEL_OVERHEATED:
                 case WATER_OVERHEATED:
-                    overheated();
+                    if (emitEvents)overheated();
                     break;
                 case DAY_LIGHT_REACHED:
-                    nextTick();
+                    if (emitEvents)nextTick();
                     break;
                 case PARKING_POSITION:
-                    if (!ServiceMode.isServiceMode()) {
+                    if (emitEvents && !ServiceMode.isServiceMode()) {
                         mover.moveTo("PARKING_POSITION", Movement.WEST, Movement.NORTH);
                     }
             }
@@ -100,7 +103,7 @@ public class SolarPanelStateManager {
                     calculatePosition().ifPresent(step -> {
                         if (step.getPosition() != null) {
                             if (step.getPosition() instanceof ParkPosition) {
-                                mover.moveTo(step.getHour() + ":" + step.getMinute(), Movement.WEST,Movement.NORTH);
+                                add(Event.PARKING_POSITION);
                             } else
                                 mover.moveTo(step.getHour() + ":" + step.getMinute(), step.getPosition());
                         }
