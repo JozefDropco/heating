@@ -30,6 +30,9 @@ public class SolarMain {
     public static final String CURRENT_EVENTS = "SOLAR_CURRENT_EVENTS";
     public static final String TODAYS_SCHEDULE = "SOLAR_TODAYS_SCHEDULE";
     public static final String AFTERNOON_TIME = "SOLAR_AFTERNOON_TIME";
+    public static final String STRONG_WIND_PIN_REF_CD = "STRONG_WIND_PIN";
+    public static final String DAY_LIGHT_PIN_REF_CD = "DAY_LIGHT_PIN";
+    protected static final String LIGHT_THRESHOLD = "LIGHT_THRESHOLD";
     public static SolarPanelStateManager panelStateManager;
 
     public static void start(SettingsDao settingsDao) {
@@ -38,6 +41,9 @@ public class SolarMain {
         HeatingConfiguration.start();
         HORIZONTAL_MOVE.start();
         VERTICAL_MOVE.start();
+        DayLight.setInstance(Main.pinManager.getInput(DAY_LIGHT_PIN_REF_CD), () -> Db.applyDao(new SettingsDao(), dao -> (int) dao.getLong(LIGHT_THRESHOLD)));
+        StrongWind.connect(Main.pinManager.getInput(STRONG_WIND_PIN_REF_CD));
+        connectDayLight(settingsDao);
         configureServiceMode();
         addToStats();
         ServiceMode.addSubsriber(state -> {
@@ -59,6 +65,9 @@ public class SolarMain {
         ServiceMode.addOutput(new NamedPort(WEST_PIN_REF_CD, "Kolektory - Západ"), () -> Main.pinManager.getOutput(WEST_PIN_REF_CD).isHigh(),(state) -> panelStateManager.move(Movement.WEST,state));
         ServiceMode.addOutput(new NamedPort(NORTH_PIN_REF_CD, "Kolektory - Sever"), () -> Main.pinManager.getOutput(NORTH_PIN_REF_CD).isHigh(),(state) -> panelStateManager.move(Movement.NORTH,state));
         ServiceMode.addOutput(new NamedPort(SOUTH_PIN_REF_CD, "Kolektory - Juh"), () -> Main.pinManager.getOutput(SOUTH_PIN_REF_CD).isHigh(),(state) -> panelStateManager.move(Movement.SOUTH,state));
+        ServiceMode.addInput(new NamedPort(STRONG_WIND_PIN_REF_CD, "Silný vietor"), () -> Main.pinManager.getInput(STRONG_WIND_PIN_REF_CD).isLow());
+        ServiceMode.addInput(new NamedPort(DAY_LIGHT_PIN_REF_CD, "Jas"), () -> DayLight.inst().getCurrentState());
+        ServiceMode.addInput(new NamedPort("DAY_LIGHT_LIMIT", "Jas - limit splnený"), () -> DayLight.inst().enoughLight());
         ServiceMode.getExclusions().put(EAST_PIN_REF_CD, WEST_PIN_REF_CD);
         ServiceMode.getExclusions().put(WEST_PIN_REF_CD, EAST_PIN_REF_CD);
         ServiceMode.getExclusions().put(NORTH_PIN_REF_CD, SOUTH_PIN_REF_CD);
@@ -75,6 +84,18 @@ public class SolarMain {
         StatsCollector.getInstance().collect("Kolektory - Západ", Main.pinManager.getOutput(WEST_PIN_REF_CD));
         StatsCollector.getInstance().collect("S-J indikator", VERTICAL_MOVE_FEEDBACK.isMoving(), VERTICAL_MOVE_FEEDBACK::addMovingSubscriber);
         StatsCollector.getInstance().collect("V-Z indikator", HORIZONTAL_MOVE_FEEDBACK.isMoving(), HORIZONTAL_MOVE_FEEDBACK::addMovingSubscriber);
+    }
+
+    private static void connectDayLight(SettingsDao settingsDao) {
+        boolean dayLight = settingsDao.getLong(SolarSystemRefCode.DAYLIGHT) == 1;
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        boolean modifiedAfter = settingsDao.isLongModifiedAfter(SolarSystemRefCode.DAYLIGHT, calendar.getTime());
+        if (!modifiedAfter) dayLight = false;
+        DayLight.inst().connect(dayLight);
     }
 
 }

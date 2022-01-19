@@ -26,11 +26,6 @@ import static org.dropco.smarthome.heating.pump.SolarCircularPump.CIRCULAR_PUMP_
 import static org.dropco.smarthome.heating.solar.ThreeWayValve.THREE_WAY_PORT;
 
 public class HeatingMain {
-    public static final VerticalMoveFeedback VERTICAL_MOVE_FEEDBACK = new VerticalMoveFeedback();
-    public static final HorizontalMoveFeedback HORIZONTAL_MOVE_FEEDBACK = new HorizontalMoveFeedback();
-     public static final String STRONG_WIND_PIN_REF_CD = "STRONG_WIND_PIN";
-    public static final String DAY_LIGHT_PIN_REF_CD = "DAY_LIGHT_PIN";
-    protected static final String LIGHT_THRESHOLD = "LIGHT_THRESHOLD";
 
     public static void start(SettingsDao settingsDao) {
         BiConsumer<String, Boolean> commandExecutor = (key, value) -> {
@@ -46,9 +41,6 @@ public class HeatingMain {
         addFireplace();
         configureServiceMode();
         addToStats();
-        DayLight.setInstance(Main.pinManager.getInput(DAY_LIGHT_PIN_REF_CD), () -> Db.applyDao(new SettingsDao(), dao -> (int) dao.getLong(LIGHT_THRESHOLD)));
-        StrongWind.connect(Main.pinManager.getInput(STRONG_WIND_PIN_REF_CD));
-        connectDayLight(settingsDao);
         SolarMain.start(settingsDao);
     }
 
@@ -59,9 +51,6 @@ public class HeatingMain {
     }
 
     private static void configureServiceMode() {
-        ServiceMode.addInput(new NamedPort(STRONG_WIND_PIN_REF_CD, "Silný vietor"), () -> Main.pinManager.getInput(STRONG_WIND_PIN_REF_CD).isLow());
-        ServiceMode.addInput(new NamedPort(DAY_LIGHT_PIN_REF_CD, "Jas"), () -> DayLight.inst().getCurrentState());
-        ServiceMode.addInput(new NamedPort("DAY_LIGHT_LIMIT", "Jas - limit splnený"), () -> DayLight.inst().enoughLight());
         ServiceMode.addInput(new NamedPort(HEATER_CIRCULAR_REF_CD, "Kúrenie chod čerpadla"), () -> HeaterCircularPump.getState());
         ServiceMode.addOutput(new NamedPort(CIRCULAR_PUMP_PORT, "Kolektory - obehové čerpadlo"), key -> Main.pinManager.getOutput(key));
         ServiceMode.addOutput(new NamedPort(THREE_WAY_PORT, "3-cestný ventil"), key -> Main.pinManager.getOutput(key));
@@ -101,15 +90,4 @@ public class HeatingMain {
         StatsCollector.getInstance().collect("Ohrev TA3 plynovým kotlom", Boiler.getState(), countStats -> Boiler.addSubscriber(countStats));
     }
 
-    private static void connectDayLight(SettingsDao settingsDao) {
-        boolean dayLight = settingsDao.getLong(SolarSystemRefCode.DAYLIGHT) == 1;
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.HOUR_OF_DAY, 0);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-        calendar.set(Calendar.MILLISECOND, 0);
-        boolean modifiedAfter = settingsDao.isLongModifiedAfter(SolarSystemRefCode.DAYLIGHT, calendar.getTime());
-        if (!modifiedAfter) dayLight = false;
-        DayLight.inst().connect(dayLight);
-    }
 }
