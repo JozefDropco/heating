@@ -64,10 +64,13 @@ public class VerticalMove extends Thread {
                         waitForEnd.signal();
                     }
                     if (upd == Update.TICK) {
-                        int tick = movement.get().getTick();
-                        tickUpdater.accept(tick);
-                        if (remaining.addAndGet(-tick) == 0) {
-                            setState(movement.get(), false);
+                        Movement movement = this.movement.get();
+                        if (movement!=null) {
+                            int tick = movement.getTick();
+                            tickUpdater.accept(tick);
+                            if (remaining.addAndGet(-tick) == 0) {
+                                setState(movement, false);
+                            }
                         }
                     }
                 } finally {

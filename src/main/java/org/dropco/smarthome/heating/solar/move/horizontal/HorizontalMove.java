@@ -63,11 +63,12 @@ public class HorizontalMove extends Thread {
                         flush.accept(null);
                         waitForEnd.signal();
                     }
-                    if (upd == Update.TICK) {
-                        int tick = movement.get().getTick();
+                    Movement movement = this.movement.get();
+                    if (movement!=null) {
+                        int tick = movement.getTick();
                         tickUpdater.accept(tick);
                         if (remaining.addAndGet(-tick) == 0) {
-                            setState(movement.get(), false);
+                            setState(movement, false);
                         }
                     }
                 } finally {
