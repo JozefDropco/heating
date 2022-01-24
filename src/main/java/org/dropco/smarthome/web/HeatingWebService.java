@@ -15,8 +15,10 @@ import org.dropco.smarthome.heating.pump.HeaterCircularPump;
 import org.dropco.smarthome.heating.heater.Flame;
 import org.dropco.smarthome.heating.heater.BoilerBlocker;
 import org.dropco.smarthome.heating.pump.SolarCircularPump;
+import org.dropco.smarthome.heating.solar.SolarMain;
 import org.dropco.smarthome.heating.solar.ThreeWayValve;
 import org.dropco.smarthome.heating.ServiceMode;
+import org.dropco.smarthome.heating.solar.move.SolarPanelStateManager;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -62,6 +64,21 @@ public class HeatingWebService extends ServiceModeWebService{
         fullStats.fireplaceCircularPump = FireplaceCircularPump.getState();
         fullStats.heaterCircularPump = HeaterCircularPump.getState();
         return Response.ok(new Gson().toJson(fullStats)).build();
+    }
+
+    @GET
+    @Path("/manualWaterBoilerHeat")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response getManualWaterBoilerHeat() throws ParseException {
+        return  Response.ok(String.valueOf(BoilerBlocker.getManualOverride())).build();
+    }
+
+    @POST
+    @Path("/manualWaterBoilerHeat")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response manualWaterBoilerHeat() throws ParseException {
+        BoilerBlocker.manualOverride();
+        return Response.ok().build();
     }
     @Override
     protected boolean getServiceMode() {
