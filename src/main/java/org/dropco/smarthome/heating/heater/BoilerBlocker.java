@@ -1,5 +1,6 @@
 package org.dropco.smarthome.heating.heater;
 
+import org.dropco.smarthome.TimerService;
 import org.dropco.smarthome.heating.ServiceMode;
 import org.dropco.smarthome.heating.pump.SolarCircularPump;
 import org.dropco.smarthome.heating.solar.HeatingConfiguration;
@@ -66,6 +67,7 @@ public class BoilerBlocker implements Runnable {
     public static void manualOverride() {
         if (oneTimeManual.compareAndSet(false, true)) {
             lastOneTimeStart.set(System.currentTimeMillis());
+            TimerService.schedule("Delayed shutdown of one time manual", () -> update.release(),35000);
             update.release();
         } else {
             if (oneTimeManual.compareAndSet(true, false)) {
