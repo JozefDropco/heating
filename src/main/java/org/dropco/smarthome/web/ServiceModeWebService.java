@@ -53,20 +53,17 @@ public abstract class ServiceModeWebService {
     @Path("/serviceMode")
     @Produces(MediaType.APPLICATION_JSON)
     public Response getServiceModeState() {
-        return Response.ok(getServiceModeJson(ServiceMode.isServiceMode())).build();
+        return Response.ok(getServiceModeJson(getServiceMode())).build();
     }
+
 
     @POST
     @Path("/serviceMode")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response setServiceMode(@QueryParam("state") boolean state) {
-        if (state) {
-            ServiceMode.startServiceMode();
-        } else
-            ServiceMode.stopServiceMode();
-        return Response.ok(getServiceModeJson(ServiceMode.isServiceMode())).build();
+    public Response setServiceModeState(@QueryParam("state") boolean state) {
+       setServiceMode(state);
+        return Response.ok(getServiceMode()).build();
     }
-
     String getServiceModeJson(boolean state) {
         return new Gson().toJson(new org.dropco.smarthome.web.dto.ServiceMode(state));
     }
@@ -108,6 +105,10 @@ public abstract class ServiceModeWebService {
         Set<String> mutualExclussion = setOutputState(refCd, new Gson().fromJson(value, Boolean.class));
         return Response.ok(new Gson().toJson(mutualExclussion)).build();
     }
+
+    protected abstract boolean getServiceMode();
+
+    protected abstract void setServiceMode(boolean state);
 
     protected abstract Set<NamedPort> getInputs();
 

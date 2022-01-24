@@ -69,6 +69,19 @@ public class WateringWebService  extends ServiceModeWebService {
     }
 
     @Override
+    protected boolean getServiceMode() {
+        return ServiceMode.isServiceMode();
+    }
+
+    @Override
+    public void setServiceMode(boolean state) {
+        if (state) {
+            ServiceMode.startServiceMode();
+        } else
+            ServiceMode.stopServiceMode();
+    }
+
+    @Override
     protected Set<NamedPort> getInputs() {
         return ServiceMode.getInputs();
     }

@@ -29,7 +29,6 @@ public class SolarPanelMover implements Mover {
     private final VerticalMove verticalMove;
     private final HorizontalMove horizontalMove;
     private ReentrantLock lock = new ReentrantLock(true);
-    private Condition waitForEnd = lock.newCondition();
 
     public SolarPanelMover(Supplier<AbsolutePosition> currentPositionSupplier, HorizontalMove horizontalMove, VerticalMove verticalMove) {
         this.currentPositionSupplier = currentPositionSupplier;
