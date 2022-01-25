@@ -45,10 +45,6 @@ public class WebServer {
         resource_handler.setResourceBase(resourceBase);
 
         HandlerList container = new HandlerList(resource_handler,context);
-        FilterHolder holder = new FilterHolder(new CrossOriginFilter());
-        holder.setInitParameter(CrossOriginFilter.ALLOWED_METHODS_PARAM, "GET,POST,PUT,OPTIONS");
-        holder.setInitParameter(CrossOriginFilter.ALLOW_CREDENTIALS_PARAM, "true");
-        context.addFilter(holder, "/*", EnumSet.of(DispatcherType.REQUEST));
         server.setHandler(container);
         server.dumpStdErr();
 
