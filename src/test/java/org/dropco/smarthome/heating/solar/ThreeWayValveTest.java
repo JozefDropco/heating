@@ -1,19 +1,10 @@
 package org.dropco.smarthome.heating.solar;
 
-import org.dropco.smarthome.database.SettingsDao;
-import org.dropco.smarthome.heating.solar.ThreeWayValve;
-import org.dropco.smarthome.temp.TempService;
-import org.junit.Before;
 import org.junit.Ignore;
-import org.junit.Test;
-import org.mockito.Mockito;
-
-import java.util.function.BiConsumer;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.times;
+
 //TODO:FIX
 @Ignore
 public class ThreeWayValveTest {

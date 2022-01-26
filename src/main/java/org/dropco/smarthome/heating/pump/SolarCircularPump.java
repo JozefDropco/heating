@@ -7,7 +7,7 @@ import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.heating.ServiceMode;
 import org.dropco.smarthome.heating.db.HeatingDao;
-import org.dropco.smarthome.heating.solar.ThreeWayValve;
+import org.dropco.smarthome.heating.ThreeWayValve;
 import org.dropco.smarthome.temp.TempService;
 
 import java.util.Collections;

@@ -4,7 +4,7 @@ import org.dropco.smarthome.TimerService;
 import org.dropco.smarthome.heating.ServiceMode;
 import org.dropco.smarthome.heating.pump.SolarCircularPump;
 import org.dropco.smarthome.heating.solar.HeatingConfiguration;
-import org.dropco.smarthome.heating.solar.ThreeWayValve;
+import org.dropco.smarthome.heating.ThreeWayValve;
 
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;

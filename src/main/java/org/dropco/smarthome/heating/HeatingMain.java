@@ -1,10 +1,8 @@
 package org.dropco.smarthome.heating;
 
 import org.dropco.smarthome.Main;
-import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.dto.NamedPort;
-import org.dropco.smarthome.heating.db.SolarSystemDao;
 import org.dropco.smarthome.heating.heater.Boiler;
 import org.dropco.smarthome.heating.heater.BoilerBlocker;
 import org.dropco.smarthome.heating.heater.Flame;
@@ -12,18 +10,14 @@ import org.dropco.smarthome.heating.pump.FireplaceCircularPump;
 import org.dropco.smarthome.heating.pump.HeaterCircularPump;
 import org.dropco.smarthome.heating.pump.SolarCircularPump;
 import org.dropco.smarthome.heating.solar.*;
-import org.dropco.smarthome.heating.solar.move.*;
-import org.dropco.smarthome.heating.solar.move.horizontal.HorizontalMoveFeedback;
-import org.dropco.smarthome.heating.solar.move.vertical.VerticalMoveFeedback;
 import org.dropco.smarthome.stats.StatsCollector;
 
-import java.util.Calendar;
 import java.util.function.BiConsumer;
 
 import static org.dropco.smarthome.heating.heater.BoilerBlocker.BOILER_BLOCK_PIN;
 import static org.dropco.smarthome.heating.pump.HeaterCircularPump.HEATER_CIRCULAR_REF_CD;
 import static org.dropco.smarthome.heating.pump.SolarCircularPump.CIRCULAR_PUMP_PORT;
-import static org.dropco.smarthome.heating.solar.ThreeWayValve.THREE_WAY_PORT;
+import static org.dropco.smarthome.heating.ThreeWayValve.THREE_WAY_PORT;
 
 public class HeatingMain {
 

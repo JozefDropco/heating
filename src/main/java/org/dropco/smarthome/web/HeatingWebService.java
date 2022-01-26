@@ -15,10 +15,8 @@ import org.dropco.smarthome.heating.pump.HeaterCircularPump;
 import org.dropco.smarthome.heating.heater.Flame;
 import org.dropco.smarthome.heating.heater.BoilerBlocker;
 import org.dropco.smarthome.heating.pump.SolarCircularPump;
-import org.dropco.smarthome.heating.solar.SolarMain;
-import org.dropco.smarthome.heating.solar.ThreeWayValve;
+import org.dropco.smarthome.heating.ThreeWayValve;
 import org.dropco.smarthome.heating.ServiceMode;
-import org.dropco.smarthome.heating.solar.move.SolarPanelStateManager;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
