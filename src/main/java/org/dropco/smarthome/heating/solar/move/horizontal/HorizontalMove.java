@@ -64,7 +64,7 @@ public class HorizontalMove extends Thread {
                         waitForEnd.signal();
                     }
                     Movement movement = this.movement.get();
-                    if (movement!=null) {
+                    if (movement != null) {
                         int tick = movement.getTick();
                         tickUpdater.accept(tick);
                         if (remaining.addAndGet(-tick) == 0) {
@@ -91,6 +91,17 @@ public class HorizontalMove extends Thread {
             this.movement.set(movement);
             remaining.set(limit);
             setState(movement, true);
+            new Thread(() -> {
+                try {
+                    Thread.sleep(1000);
+                    if (!feedback.isMoving()) {
+                        stopMovement();
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+
+            }).start();
         } finally {
             lock.unlock();
         }
