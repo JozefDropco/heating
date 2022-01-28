@@ -37,6 +37,7 @@ public class BoilerBlocker implements Runnable {
                 if (oneTimeManual.get()) {
                     if (state.compareAndSet(true, false)) {
                         LOGGER.info("Jednorázové ohriatie vody v nádobe spustené");
+                        commandExecutor.accept(BOILER_BLOCK_PIN, false);
                     } else {
                         if (!Boiler.getState() && (System.currentTimeMillis() - lastOneTimeStart.get()) > 30000) {
                             oneTimeManual.compareAndSet(true, false);
