@@ -20,9 +20,10 @@ public class ThreeWayValve implements Runnable {
     public static final String THREE_WAY_PORT = "THREE_WAY_PORT";
     static String T31_MEASURE_PLACE;
     static String T2_MEASURE_PLACE;
-    static AtomicBoolean state = new AtomicBoolean(false);
-    AtomicDouble tempT31 = new AtomicDouble(0);
-    AtomicDouble tempT2 = new AtomicDouble(0);
+
+    private static final AtomicBoolean state = new AtomicBoolean(false);
+    private static AtomicDouble tempT31 = new AtomicDouble(0);
+    private static AtomicDouble tempT2 = new AtomicDouble(0);
     private static final Semaphore update = new Semaphore(0);
     private BiConsumer<String, Boolean> commandExecutor;
     private static List<Consumer<Boolean>> subscribers = Collections.synchronizedList(Lists.newArrayList());
@@ -64,16 +65,18 @@ public class ThreeWayValve implements Runnable {
             double difference = tempT31.get() - tempT2.get();
             LOGGER.fine("Rozdiel teplôt pre 3-cestný ventil je " + difference);
             if (difference >= HeatingConfiguration.getCurrent().getThreeWayValveStartDiff() && state.compareAndSet(false, true)) {
+                //prepnut na ohrev
                 if (!ServiceMode.isServiceMode()) raiseChange(true);
             }
             if (difference <= HeatingConfiguration.getCurrent().getThreeWayValveStopDiff() && state.compareAndSet(true, false)) {
+                //prepnut na bypass
                 if (!ServiceMode.isServiceMode()) raiseChange(false);
             }
             update.acquireUninterruptibly();
         }
     }
 
-    void raiseChange(boolean state) {
+    private void raiseChange(boolean state) {
         LOGGER.info("3-cestný ventil sa prepne na " + (state ? "ohrev vody" : "bypass"));
         commandExecutor.accept(THREE_WAY_PORT, state);
         subscribers.forEach(consumer -> consumer.accept(state));

@@ -41,23 +41,28 @@ public class BoilerBlocker implements Runnable {
                     } else {
                         if (!Boiler.getState() && (System.currentTimeMillis() - lastOneTimeStart.get()) > 30000) {
                             oneTimeManual.compareAndSet(true, false);
+                            normalFunctioning();
                             LOGGER.info("Jednorázový ohrev vody dokončený");
                         }
                     }
                 } else {
-                    if (SolarCircularPump.getState() && ThreeWayValve.getState() && state.compareAndSet(false, true)) {
-                        LOGGER.fine("Ohrev nádoby na vodu pomocou soláru, blokujem kotol");
-                        commandExecutor.accept(BOILER_BLOCK_PIN, true);
-                    } else {
-                        boolean boilerBlock = HeatingConfiguration.getCurrent().getBoilerBlock();
-                        if (state.compareAndSet(!boilerBlock, boilerBlock)) {
-                            LOGGER.fine("Ohrev nádoby na vodu " + ((boilerBlock) ? "zablokované" : "povolené"));
-                            commandExecutor.accept(BOILER_BLOCK_PIN, boilerBlock);
-                        }
-                    }
+                    normalFunctioning();
                 }
             }
             update.acquireUninterruptibly();
+        }
+    }
+
+    private void normalFunctioning() {
+        if (SolarCircularPump.getState() && ThreeWayValve.getState() && state.compareAndSet(false, true)) {
+            LOGGER.fine("Ohrev nádoby na vodu pomocou soláru, blokujem kotol");
+            commandExecutor.accept(BOILER_BLOCK_PIN, true);
+        } else {
+            boolean boilerBlock = HeatingConfiguration.getCurrent().getBoilerBlock();
+            if (state.compareAndSet(!boilerBlock, boilerBlock)) {
+                LOGGER.fine("Ohrev nádoby na vodu " + ((boilerBlock) ? "zablokované" : "povolené"));
+                commandExecutor.accept(BOILER_BLOCK_PIN, boilerBlock);
+            }
         }
     }
 
