@@ -24,12 +24,12 @@ public class HorizontalMoveFeedback {
             @Override
             public void handleStateChange(boolean state) {
                 if (state) {
-                    if (moving.compareAndSet(false, state)) {
-                        Lists.newArrayList(movingSubscribers).forEach(sub -> sub.accept(state));
+                    if (moving.compareAndSet(false, true)) {
+                        Lists.newArrayList(movingSubscribers).forEach(sub -> sub.accept(true));
                     }
                 } else {
-                    if (moving.compareAndSet(true, state)) {
-                        Lists.newArrayList(movingSubscribers).forEach(sub -> sub.accept(state));
+                    if (moving.compareAndSet(true, false)) {
+                        Lists.newArrayList(movingSubscribers).forEach(sub -> sub.accept(false));
                     }
                 }
             }

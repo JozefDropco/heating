@@ -7,6 +7,7 @@ import com.pi4j.io.gpio.event.GpioPinDigitalStateChangeEvent;
 import com.pi4j.io.gpio.event.GpioPinListenerDigital;
 
 import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
@@ -19,38 +20,51 @@ public abstract class PulseInputGpioListener implements GpioPinListenerDigital {
     private AtomicReference<ScheduledFuture> inWaitMode = new AtomicReference<>();
     private AtomicLong counter = new AtomicLong();
     private final String pinName;
+    private Watch watch;
 
     public PulseInputGpioListener(PinState logicalHighState, long delayedShutdown, GpioPinDigital sourcePin) {
         this.logicalHighState = logicalHighState;
         this.delayedShutdown = delayedShutdown;
         pinName = sourcePin.getName();
-        if (sourcePin.getState() == logicalHighState) {
-            delayedShutdown(counter.incrementAndGet());
-        }
+        watch = new Watch(sourcePin.getState() == logicalHighState);
+        watch.start();
     }
 
     @Override
     public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent event) {
         if (event.getState() == logicalHighState) {
-            ScheduledFuture future = inWaitMode.getAndSet(null);
-            if (future != null && !future.isDone()) {
-                future.cancel(false);
-            }
+            counter.incrementAndGet();
+            if (watch.sleeps.hasQueuedThreads()) watch.sleeps.release();
             handleStateChange(true);
         }
-        delayedShutdown(counter.incrementAndGet());
     }
 
-    public void delayedShutdown(long expected) {
-        inWaitMode.set(GpioFactory.getExecutorServiceFactory().getScheduledExecutorService().schedule(() -> {
-            inWaitMode.set(null);
-            long current = counter.get();
-            if (current == expected)
-                handleStateChange(false);
-            else
-                Logger.getLogger(pinName).log(Level.FINE, "Counter has changed in meanwhile ignoring it. Expected:" + expected + ", current:" + current);
-        }, delayedShutdown, TimeUnit.MILLISECONDS));
-    }
+    public class Watch extends Thread{
+        private final Semaphore sleeps = new Semaphore(0);
+        private boolean startState;
 
+        public Watch(boolean startState) {
+            this.startState = startState;
+        }
+
+        @Override
+        public void run() {
+            if (!startState) sleeps.acquireUninterruptibly();
+            while (true){
+                long expected = counter.get();
+                try {
+                    Thread.sleep(delayedShutdown);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                if (counter.get() == expected) {
+                    handleStateChange(false);
+                    sleeps.acquireUninterruptibly();
+                }
+            }
+        }
+    }
     public abstract void handleStateChange(boolean state);
+
+
 }
