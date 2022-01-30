@@ -90,18 +90,8 @@ public class HorizontalMove extends Thread {
             stopAndWait(movement.getShutdownFirst());
             this.movement.set(movement);
             remaining.set(limit);
-            setState(movement, true);
-            new Thread(() -> {
-                try {
-                    Thread.sleep(1000);
-                    if (!feedback.isMoving()) {
-                        stopMovement();
-                    }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
-            }).start();
+             setState(movement, true);
+           feedback.wakeUpWatch();
         } finally {
             lock.unlock();
         }

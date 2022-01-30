@@ -17,15 +17,12 @@ import java.util.logging.Logger;
 public abstract class PulseInputGpioListener implements GpioPinListenerDigital {
     private PinState logicalHighState;
     private long delayedShutdown;
-    private AtomicReference<ScheduledFuture> inWaitMode = new AtomicReference<>();
     private AtomicLong counter = new AtomicLong();
-    private final String pinName;
     private Watch watch;
 
     public PulseInputGpioListener(PinState logicalHighState, long delayedShutdown, GpioPinDigital sourcePin) {
         this.logicalHighState = logicalHighState;
         this.delayedShutdown = delayedShutdown;
-        pinName = sourcePin.getName();
         watch = new Watch(sourcePin.getState() == logicalHighState);
         watch.start();
     }
@@ -34,10 +31,15 @@ public abstract class PulseInputGpioListener implements GpioPinListenerDigital {
     public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent event) {
         if (event.getState() == logicalHighState) {
             counter.incrementAndGet();
-            if (watch.sleeps.hasQueuedThreads()) watch.sleeps.release();
+            wakeUpWatchThread();
             handleStateChange(true);
         }
     }
+
+    public void wakeUpWatchThread() {
+        if (watch.sleeps.hasQueuedThreads()) watch.sleeps.release();
+    }
+
 
     public class Watch extends Thread{
         private final Semaphore sleeps = new Semaphore(0);

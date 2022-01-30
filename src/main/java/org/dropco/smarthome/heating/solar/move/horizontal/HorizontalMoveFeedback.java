@@ -18,9 +18,10 @@ public class HorizontalMoveFeedback {
     private static final PinState LOGICAL_HIGH_STATE = PinState.LOW;
     private final List<Consumer<Boolean>> movingSubscribers = Collections.synchronizedList(Lists.newArrayList());
     private final List<Consumer<Boolean>> realTimeSubcribers = Collections.synchronizedList(Lists.newArrayList());
+    private PulseInputGpioListener pulseInputGpioListener;
 
     public void start(GpioPinDigitalInput input) {
-        input.addListener(new PulseInputGpioListener(LOGICAL_HIGH_STATE, 2000, input) {
+        pulseInputGpioListener = new PulseInputGpioListener(LOGICAL_HIGH_STATE, 2000, input) {
             @Override
             public void handleStateChange(boolean state) {
                 if (state) {
@@ -33,7 +34,8 @@ public class HorizontalMoveFeedback {
                     }
                 }
             }
-        });
+        };
+        input.addListener(pulseInputGpioListener);
         input.addListener((GpioPinListenerDigital) event -> {
             if (event.getState() == LOGICAL_HIGH_STATE) tickCount.incrementAndGet();
         });
@@ -65,5 +67,9 @@ public class HorizontalMoveFeedback {
      */
     public int getTickCount() {
         return tickCount.get();
+    }
+
+    public void wakeUpWatch() {
+        pulseInputGpioListener.wakeUpWatchThread();
     }
 }

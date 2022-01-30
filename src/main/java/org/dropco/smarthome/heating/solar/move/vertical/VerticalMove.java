@@ -93,17 +93,7 @@ public class VerticalMove extends Thread {
             this.movement.set(movement);
             remaining.set(limit);
             setState(movement, true);
-            new Thread(() -> {
-                try {
-                    Thread.sleep(1000);
-                    if (!feedback.isMoving()) {
-                        stopMovement();
-                    }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-
-            }).start();
+            feedback.wakeUpWatch();
         } finally {
             lock.unlock();
         }

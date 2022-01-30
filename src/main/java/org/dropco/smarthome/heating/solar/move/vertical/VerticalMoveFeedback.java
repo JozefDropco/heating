@@ -20,9 +20,10 @@ public class VerticalMoveFeedback {
     private static final PinState LOGICAL_HIGH_STATE = PinState.LOW;
     private final List<Consumer<Boolean>> movingSubscribers = Collections.synchronizedList(Lists.newArrayList());
     private final List<Consumer<Boolean>> realTimeSubcribers = Collections.synchronizedList(Lists.newArrayList());
+    private PulseInputGpioListener pulseInputGpioListener;
 
     public void start(GpioPinDigitalInput input) {
-        input.addListener(new PulseInputGpioListener(LOGICAL_HIGH_STATE, 2000, input) {
+        pulseInputGpioListener = new PulseInputGpioListener(LOGICAL_HIGH_STATE, 2000, input) {
             @Override
             public void handleStateChange(boolean state) {
                 if (state) {
@@ -35,7 +36,8 @@ public class VerticalMoveFeedback {
                     }
                 }
             }
-        });
+        };
+        input.addListener(pulseInputGpioListener);
         input.addListener((GpioPinListenerDigital) event -> Lists.newArrayList(realTimeSubcribers).forEach(sub -> sub.accept(event.getState() == LOGICAL_HIGH_STATE)));
 
     }
@@ -56,4 +58,8 @@ public class VerticalMoveFeedback {
 
     public void addRealTimeTicker(Consumer<Boolean> consumer) {
         realTimeSubcribers.add(consumer);    }
+
+    public void wakeUpWatch() {
+        pulseInputGpioListener.wakeUpWatchThread();
+    }
 }
