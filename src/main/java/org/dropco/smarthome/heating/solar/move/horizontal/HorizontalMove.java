@@ -90,8 +90,9 @@ public class HorizontalMove extends Thread {
             stopAndWait(movement.getShutdownFirst());
             this.movement.set(movement);
             remaining.set(limit);
-             setState(movement, true);
-           feedback.wakeUpWatch();
+            setState(movement, true);
+            LOGGER.info("Otacanie zapnute "+movement.getName());
+            feedback.wakeUpWatch();
         } finally {
             lock.unlock();
         }

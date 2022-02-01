@@ -65,13 +65,10 @@ public class SolarMain {
         ServiceMode.addOutput(new NamedPort(WEST_PIN_REF_CD, "Kolektory - Západ"), () -> Main.pinManager.getOutput(WEST_PIN_REF_CD).isHigh(),(state) -> panelStateManager.move(Movement.WEST,state));
         ServiceMode.addOutput(new NamedPort(NORTH_PIN_REF_CD, "Kolektory - Sever"), () -> Main.pinManager.getOutput(NORTH_PIN_REF_CD).isHigh(),(state) -> panelStateManager.move(Movement.NORTH,state));
         ServiceMode.addOutput(new NamedPort(SOUTH_PIN_REF_CD, "Kolektory - Juh"), () -> Main.pinManager.getOutput(SOUTH_PIN_REF_CD).isHigh(),(state) -> panelStateManager.move(Movement.SOUTH,state));
+
         ServiceMode.addInput(new NamedPort(STRONG_WIND_PIN_REF_CD, "Silný vietor"), () -> Main.pinManager.getInput(STRONG_WIND_PIN_REF_CD).isLow());
         ServiceMode.addInput(new NamedPort(DAY_LIGHT_PIN_REF_CD, "Jas"), () -> DayLight.inst().getCurrentState());
         ServiceMode.addInput(new NamedPort("DAY_LIGHT_LIMIT", "Jas - limit splnený"), () -> DayLight.inst().enoughLight());
-        ServiceMode.getExclusions().put(EAST_PIN_REF_CD, WEST_PIN_REF_CD);
-        ServiceMode.getExclusions().put(WEST_PIN_REF_CD, EAST_PIN_REF_CD);
-        ServiceMode.getExclusions().put(NORTH_PIN_REF_CD, SOUTH_PIN_REF_CD);
-        ServiceMode.getExclusions().put(SOUTH_PIN_REF_CD, NORTH_PIN_REF_CD);
         ServiceMode.addInput(new NamedPort(NORTH_SOUTH_MOVE_INDICATOR, "Pohyb S-J"), () -> VERTICAL_MOVE_FEEDBACK.isMoving());
         ServiceMode.addInput(new NamedPort(EAST_WEST_MOVE_INDICATOR, "Pohyb V-Z"), () -> HORIZONTAL_MOVE_FEEDBACK.isMoving());
 

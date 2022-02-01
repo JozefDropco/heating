@@ -1,5 +1,6 @@
 package org.dropco.smarthome;
 
+import com.google.common.collect.Maps;
 import com.pi4j.io.gpio.*;
 import com.pi4j.io.gpio.event.PinListener;
 import com.pi4j.io.gpio.impl.GpioControllerImpl;
@@ -7,10 +8,14 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class MainTest {
+   private static final Map<Pin, PinState> stateMap= Collections.synchronizedMap(Maps.newHashMap());
 
     @Before
     public void init() throws NoSuchFieldException, IllegalAccessException {
@@ -186,13 +191,13 @@ public class MainTest {
 
             @Override
             public void setState(Pin pin, PinState pinState) {
+                stateMap.put(pin,pinState);
 
             }
 
             @Override
             public PinState getState(Pin pin) {
-                if (pin.getName().equals("GPIO 2")) return PinState.HIGH;
-                return PinState.LOW;
+              return stateMap.getOrDefault(pin,PinState.LOW);
             }
 
             @Override

@@ -31,9 +31,8 @@ public class VerticalMoveFeedback {
                         Lists.newArrayList(movingSubscribers).forEach(sub -> sub.accept(state));
                     }
                 } else {
-                    if (moving.compareAndSet(true, state)) {
-                        Lists.newArrayList(movingSubscribers).forEach(sub -> sub.accept(state));
-                    }
+                    moving.set(false);
+                    Lists.newArrayList(movingSubscribers).forEach(sub -> sub.accept(false));
                 }
             }
         };

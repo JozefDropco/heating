@@ -62,7 +62,7 @@ public abstract class ServiceModeWebService {
     @Produces(MediaType.APPLICATION_JSON)
     public Response setServiceModeState(@QueryParam("state") boolean state) {
        setServiceMode(state);
-        return Response.ok(getServiceMode()).build();
+        return Response.ok(getServiceModeJson(getServiceMode())).build();
     }
     String getServiceModeJson(boolean state) {
         return new Gson().toJson(new org.dropco.smarthome.web.dto.ServiceMode(state));

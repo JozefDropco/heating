@@ -21,7 +21,6 @@ public class ServiceMode {
     private static final Map<String, Supplier<Boolean>> inputStateGetterMap = new HashMap<>();
     private static final Map<String, Supplier<Boolean>> outputStateGetterMap = new HashMap<>();
     private static final Map<String, Function<Boolean, Set<String>>> outputStateSetterMap = new HashMap<>();
-    private static final Multimap<String,String> exclusions = Multimaps.newListMultimap(Maps.newHashMap(), ArrayList::new);
     private static final List<Consumer<Boolean>> subscribers = Collections.synchronizedList(Lists.newArrayList());
     public static void startServiceMode(){
         serviceMode.set(true);
@@ -59,9 +58,6 @@ public class ServiceMode {
         return Collections.unmodifiableSet(inputs);
     }
 
-    public static Multimap<String, String> getExclusions() {
-        return exclusions;
-    }
 
     public static Map<String, NamedPort> getNamedPortMap() {
         return Collections.unmodifiableMap(namedPortMap);

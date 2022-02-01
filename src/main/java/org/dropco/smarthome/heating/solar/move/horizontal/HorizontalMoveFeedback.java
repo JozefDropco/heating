@@ -29,9 +29,8 @@ public class HorizontalMoveFeedback {
                         Lists.newArrayList(movingSubscribers).forEach(sub -> sub.accept(true));
                     }
                 } else {
-                    if (moving.compareAndSet(true, false)) {
-                        Lists.newArrayList(movingSubscribers).forEach(sub -> sub.accept(false));
-                    }
+                    moving.set(false);
+                    Lists.newArrayList(movingSubscribers).forEach(sub -> sub.accept(false));
                 }
             }
         };
