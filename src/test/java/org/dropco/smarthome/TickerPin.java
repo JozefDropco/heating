@@ -5,9 +5,18 @@ import com.pi4j.io.gpio.*;
 import com.pi4j.io.gpio.event.GpioPinDigitalStateChangeEvent;
 import com.pi4j.io.gpio.event.GpioPinListener;
 import com.pi4j.io.gpio.event.GpioPinListenerDigital;
+import com.pi4j.io.gpio.event.PinDigitalStateChangeEvent;
+import com.pi4j.io.gpio.event.PinEvent;
+import com.pi4j.io.gpio.event.PinEventType;
+import com.pi4j.io.gpio.event.PinListener;
+import com.pi4j.io.gpio.impl.GpioEventMonitorExecutorImpl;
+import com.pi4j.io.gpio.impl.GpioPinImpl;
+import com.pi4j.io.gpio.impl.PinImpl;
 import com.pi4j.io.gpio.trigger.GpioTrigger;
 
+import java.lang.reflect.Field;
 import java.util.Collection;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
@@ -25,6 +34,7 @@ public class TickerPin implements GpioPinDigitalInput {
     private ReentrantLock lock = new ReentrantLock();
     private Condition waitForResume = lock.newCondition();
     private AtomicBoolean stopped = new AtomicBoolean();
+    private PinImpl pin = new PinImpl("ticker", 123, "name", EnumSet.of(PinMode.DIGITAL_OUTPUT));
 
     public TickerPin(int sleepMiliseconds, int tickCount) {
         this.sleepMiliseconds = sleepMiliseconds;
@@ -151,7 +161,7 @@ public class TickerPin implements GpioPinDigitalInput {
 
     @Override
     public Pin getPin() {
-        return null;
+        return pin;
     }
 
     @Override
@@ -262,6 +272,28 @@ public class TickerPin implements GpioPinDigitalInput {
     @Override
     public Collection<GpioPinListener> getListeners() {
         return null;
+    }
+    public void addListener(PinListener... pinListeners) {
+        for (PinListener listener : pinListeners) {
+            Pin pin = getPin();
+            if (listener instanceof GpioEventMonitorExecutorImpl) {
+                try {
+                    Field declaredField = GpioEventMonitorExecutorImpl.class.getDeclaredField("pin");
+                    declaredField.setAccessible(true);
+                    GpioPinImpl gpioPin = (GpioPinImpl) declaredField.get(listener);
+                    pin=gpioPin.getPin();
+                } catch (NoSuchFieldException | IllegalAccessException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+            Pin finalPin = pin;
+            listeners.add(new GpioPinListenerDigital() {
+                @Override
+                public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent gpioPinDigitalStateChangeEvent) {
+                    listener.handlePinEvent(new PinDigitalStateChangeEvent(this, finalPin, gpioPinDigitalStateChangeEvent.getState()));
+                }
+            });
+        }
     }
 
     @Override

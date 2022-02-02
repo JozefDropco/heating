@@ -101,8 +101,8 @@ public class HorizontalMove extends Thread {
     public void stopMovement() {
         lock.lock();
         try {
-            boolean stateChanged = setState(Movement.SOUTH, false);
-            stateChanged |= setState(Movement.NORTH, false);
+            boolean stateChanged = setState(Movement.EAST, false);
+            stateChanged |= setState(Movement.WEST, false);
             if (stateChanged) waitForEnd();
         } finally {
             lock.unlock();

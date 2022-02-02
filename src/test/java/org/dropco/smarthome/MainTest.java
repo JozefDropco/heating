@@ -1,7 +1,9 @@
 package org.dropco.smarthome;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.pi4j.io.gpio.*;
+import com.pi4j.io.gpio.event.GpioPinListener;
 import com.pi4j.io.gpio.event.PinListener;
 import com.pi4j.io.gpio.impl.GpioControllerImpl;
 import org.junit.Before;
@@ -10,13 +12,17 @@ import org.junit.Test;
 import java.lang.reflect.Field;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class MainTest {
    private static final Map<Pin, PinState> stateMap= Collections.synchronizedMap(Maps.newHashMap());
-
+   private static final List<PinListener> northSouthList= Lists.newArrayList();
+   private static final List<PinListener> eastWestList= Lists.newArrayList();
+   private static final TickerPin nstickerPin= new TickerPin(250, 10000000);
+   private static final TickerPin ewtickerPin= new TickerPin(250, 10000000);
     @Before
     public void init() throws NoSuchFieldException, IllegalAccessException {
         simulate();
@@ -113,7 +119,8 @@ public class MainTest {
 
             @Override
             public void addListener(Pin pin, PinListener listener) {
-
+                if (pin.getName().equals("GPIO 11")) ewtickerPin.addListener(listener);
+                if (pin.getName().equals("GPIO 10")) nstickerPin.addListener(listener);
             }
 
             @Override
@@ -192,6 +199,26 @@ public class MainTest {
             @Override
             public void setState(Pin pin, PinState pinState) {
                 stateMap.put(pin,pinState);
+                String name = pin.getName();
+                switch (name){
+                    case "GPIO 0":
+                    case "GPIO 30":
+                        if (pinState.isHigh()){
+                            nstickerPin.startTicking();
+                        } else{
+                            nstickerPin.stopTicking();
+                        }
+                        break;
+                    case "GPIO 2":
+                    case "GPIO 3":
+                        if (pinState.isHigh()){
+                            ewtickerPin.startTicking();
+                        } else{
+                            ewtickerPin.stopTicking();
+                        }
+                        break;
+                    default:
+                }
 
             }
 
@@ -227,7 +254,8 @@ public class MainTest {
 
             @Override
             public void addListener(Pin pin, PinListener pinListener) {
-
+                if (pin.getName().equals("GPIO 11")) ewtickerPin.addListener((GpioPinListener) pinListener);
+                if (pin.getName().equals("GPIO 10")) nstickerPin.addListener((GpioPinListener) pinListener);
             }
 
             @Override
