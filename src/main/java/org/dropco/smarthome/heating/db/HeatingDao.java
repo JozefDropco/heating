@@ -46,6 +46,12 @@ public class HeatingDao implements Dao {
         Tuple tuple = new MySQLQuery<StringSetting>(getConnection(), SQL_TEMPLATES).select(SOLAR_HEATING.all())
                 .from(SOLAR_HEATING).where(SOLAR_HEATING.day.eq(LocalDate.now().getDayOfWeek().getValue())
                         .and(SOLAR_HEATING.fromTime.gt(LocalTime.now()))).orderBy(SOLAR_HEATING.fromTime.asc()).fetchFirst();
+        if (tuple==null) {
+            LocalDate now = LocalDate.now();
+            now=now.plusDays(1);
+            tuple = new MySQLQuery<StringSetting>(getConnection(), SQL_TEMPLATES).select(SOLAR_HEATING.all())
+                    .from(SOLAR_HEATING).where(SOLAR_HEATING.day.eq(now.getDayOfWeek().getValue())).orderBy(SOLAR_HEATING.fromTime.asc()).fetchFirst();
+        }
         return toSolarHeating(tuple);
 
     }
