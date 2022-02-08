@@ -36,9 +36,6 @@ public abstract class PulseInputGpioListener implements GpioPinListenerDigital {
     public void wakeUpWatchThread() {
         if (watch.sleeps.hasQueuedThreads()) {
             watch.sleeps.release();
-            Logger.getLogger(PulseInputGpioListener.class.getName()).info("PulseInputGpioListener " + pinName + " bol zobudeny.");
-        } else {
-            Logger.getLogger(PulseInputGpioListener.class.getName()).info("PulseInputGpioListener " + pinName + " nebol zobudeny.");
         }
     }
 
@@ -56,17 +53,13 @@ public abstract class PulseInputGpioListener implements GpioPinListenerDigital {
         public void run() {
             if (!startState) sleeps.acquireUninterruptibly();
             while (true) {
-                logger.info("Zijem");
                 long expected = counter.get();
-                logger.info("Counter je: "+expected);
                 try {
                     Thread.sleep(delayedShutdown);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-                logger.info("Counter je: "+counter.get());
                 if (counter.get() == expected) {
-                    logger.info("Volam handler s false");
                     handleStateChange(false);
                     sleeps.acquireUninterruptibly();
                 }
