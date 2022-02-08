@@ -26,13 +26,9 @@ public class SolarPanelSchedule extends com.querydsl.sql.RelationalPathBase<Sola
 
     public final NumberPath<Integer> sunRiseHour = createNumber("sunRiseHour",Integer.class);
     public final NumberPath<Integer> sunRiseMinute = createNumber("sunRiseMinute",Integer.class);
-    public final NumberPath<Integer> sunRiseAbsPosHor = createNumber("sunRiseAbsPosHor",Integer.class);
-    public final NumberPath<Integer> sunRiseAbsPosVert = createNumber("sunRiseAbsPosVert",Integer.class);
 
     public final NumberPath<Integer> sunSetHour = createNumber("sunSetHour",Integer.class);
     public final NumberPath<Integer> sunSetMinute = createNumber("sunSetMinute",Integer.class);
-    public final NumberPath<Integer> sunSetAbsPosHor = createNumber("sunSetAbsPosHor",Integer.class);
-    public final NumberPath<Integer> sunSetAbsPosVert = createNumber("sunSetAbsPosVert",Integer.class);
 
     public final com.querydsl.sql.PrimaryKey<SolarPanelSchedule> posPk = createPrimaryKey(month);
 
@@ -53,13 +49,9 @@ public class SolarPanelSchedule extends com.querydsl.sql.RelationalPathBase<Sola
 
         addMetadata(sunRiseHour, ColumnMetadata.named("SUN_RISE_HOUR").withIndex(4).ofType(Types.NUMERIC).withSize(50).withDigits(0).notNull());
         addMetadata(sunRiseMinute, ColumnMetadata.named("SUN_RISE_MINUTE").withIndex(5).ofType(Types.NUMERIC).withSize(50).withDigits(0).notNull());
-        addMetadata(sunRiseAbsPosHor, ColumnMetadata.named("SUN_RISE_ABS_POS_HOR").withIndex(6).ofType(Types.NUMERIC).notNull());
-        addMetadata(sunRiseAbsPosVert, ColumnMetadata.named("SUN_RISE_ABS_POS_VERT").withIndex(7).ofType(Types.NUMERIC).notNull());
 
-        addMetadata(sunSetHour, ColumnMetadata.named("SUN_SET_HOUR").withIndex(8).ofType(Types.NUMERIC).withSize(50).withDigits(0).notNull());
-        addMetadata(sunSetMinute, ColumnMetadata.named("SUN_SET_MINUTE").withIndex(9).ofType(Types.NUMERIC).withSize(50).withDigits(0).notNull());
-        addMetadata(sunSetAbsPosHor, ColumnMetadata.named("SUN_SET_ABS_POS_HOR").withIndex(10).ofType(Types.NUMERIC).notNull());
-        addMetadata(sunSetAbsPosVert, ColumnMetadata.named("SUN_SET_ABS_POS_VERT").withIndex(11).ofType(Types.NUMERIC).notNull());
+        addMetadata(sunSetHour, ColumnMetadata.named("SUN_SET_HOUR").withIndex(6).ofType(Types.NUMERIC).withSize(50).withDigits(0).notNull());
+        addMetadata(sunSetMinute, ColumnMetadata.named("SUN_SET_MINUTE").withIndex(7).ofType(Types.NUMERIC).withSize(50).withDigits(0).notNull());
     }
 
 }

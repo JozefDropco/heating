@@ -5,9 +5,19 @@ import com.google.common.reflect.TypeToken;
 import org.dropco.smarthome.TimeUtil;
 import org.dropco.smarthome.heating.solar.ServiceMode;
 import org.dropco.smarthome.heating.solar.SolarSerializer;
-import org.dropco.smarthome.heating.solar.dto.*;
+import org.dropco.smarthome.heating.solar.dto.AbsolutePosition;
+import org.dropco.smarthome.heating.solar.dto.DeltaPosition;
+import org.dropco.smarthome.heating.solar.dto.ParkPosition;
+import org.dropco.smarthome.heating.solar.dto.Position;
+import org.dropco.smarthome.heating.solar.dto.PositionProcessor;
+import org.dropco.smarthome.heating.solar.dto.SolarPanelStep;
+import org.dropco.smarthome.heating.solar.dto.SolarSchedule;
 
-import java.util.*;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -53,8 +63,9 @@ public class SolarPanelStateManager {
     }
 
     public void add(Event event) {
-        add(event,true);
+        add(event, true);
     }
+
     public void add(Event event, boolean emitEvents) {
         if (currentEvents.add(event)) {
             updateEvents();
@@ -64,10 +75,10 @@ public class SolarPanelStateManager {
                     break;
                 case PANEL_OVERHEATED:
                 case WATER_OVERHEATED:
-                    if (emitEvents)overheated();
+                    if (emitEvents) overheated();
                     break;
                 case DAY_LIGHT_REACHED:
-                    if (emitEvents)nextTick();
+                    if (emitEvents) nextTick();
                     break;
                 case PARKING_POSITION:
                     if (emitEvents && !ServiceMode.isServiceMode()) {
@@ -133,9 +144,9 @@ public class SolarPanelStateManager {
                 @Override
                 public Void process(DeltaPosition deltaPos) {
                     if (TimeUtil.isAfter(getCurrentTime(), step.getHour(), step.getMinute()))
-                        if (count[0] > 0 && deltaPos.getDeltaVerticalTicks() < 0) {
-                            deltaPos.setDeltaVerticalTicks(0);
-                            count[0]--;
+                        while (count[0] > 0 && deltaPos.getVerticalCount() < 0) {
+                                deltaPos.setVerticalCount(deltaPos.getVerticalCount()+1);
+                                count[0]--;
                         }
                     return null;
                 }
@@ -157,7 +168,8 @@ public class SolarPanelStateManager {
     }
 
     public Optional<Record> calculatePosition() {
-        Iterator<SolarPanelStep> steps = todaysSchedule.get().getSteps().iterator();
+        SolarSchedule solarSchedule = todaysSchedule.get();
+        Iterator<SolarPanelStep> steps = solarSchedule.getSteps().iterator();
         Record record = new Record();
         Calendar currentTime = getCurrentTime();
         while (steps.hasNext()) {
@@ -166,7 +178,7 @@ public class SolarPanelStateManager {
                 if (step.getIgnoreDayLight() || currentEvents.contains(Event.DAY_LIGHT_REACHED)) {
                     record.setHour(step.getHour());
                     record.setMinute(step.getMinute());
-                    record.setPosition(merge(record.getPosition(), step.getPosition()));
+                    record.setPosition(merge(record.getPosition(), step.getPosition(), solarSchedule.getHorizontalTickCountForStep(), solarSchedule.getVerticalTickCountForStep()));
                 }
             } else {
                 record.setNextMoveHour(step.getHour());
@@ -179,7 +191,7 @@ public class SolarPanelStateManager {
         return Optional.ofNullable(record);
     }
 
-    private Position merge(Position prev, Position current) {
+    private Position merge(Position prev, Position current, int horizontalTickCountForStep, int verticalTickCountForStep) {
         if (prev == null) return current;
         return prev.invoke(new PositionProcessor<Position>() {
             @Override
@@ -192,7 +204,7 @@ public class SolarPanelStateManager {
 
                     @Override
                     public Position process(DeltaPosition deltaPos) {
-                        return new AbsolutePosition(prevAbsPos.getHorizontal() + deltaPos.getDeltaHorizontalTicks(), prevAbsPos.getVertical() + deltaPos.getDeltaVerticalTicks());
+                        return new AbsolutePosition(prevAbsPos.getHorizontal() + (deltaPos.getHorizontalCount() * horizontalTickCountForStep), prevAbsPos.getVertical() + (deltaPos.getVerticalCount() * verticalTickCountForStep));
                     }
 
                     @Override
@@ -212,7 +224,7 @@ public class SolarPanelStateManager {
 
                     @Override
                     public Position process(DeltaPosition deltaPos) {
-                        return new DeltaPosition(prevDeltaPos.getDeltaHorizontalTicks() + deltaPos.getDeltaHorizontalTicks(), prevDeltaPos.getDeltaVerticalTicks() + deltaPos.getDeltaVerticalTicks());
+                        return new DeltaPosition(prevDeltaPos.getHorizontalCount() + deltaPos.getHorizontalCount(), prevDeltaPos.getVerticalCount() + deltaPos.getVerticalCount());
                     }
                 });
             }

@@ -1,6 +1,5 @@
 package org.dropco.smarthome.heating.solar.move;
 
-import org.dropco.smarthome.PinManager;
 import org.dropco.smarthome.heating.solar.ServiceMode;
 import org.dropco.smarthome.heating.solar.dto.AbsolutePosition;
 import org.dropco.smarthome.heating.solar.dto.DeltaPosition;
@@ -11,9 +10,7 @@ import org.dropco.smarthome.heating.solar.move.vertical.VerticalMove;
 
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -117,10 +114,10 @@ public class SolarPanelMover implements Mover {
 
             @Override
             public PosDiff process(DeltaPosition deltaPos) {
-                LOGGER.log(Level.FINE, "Natáčanie kolektorov o hor=" + deltaPos.getDeltaHorizontalTicks() + ", vert=" + deltaPos.getDeltaVerticalTicks());
+                LOGGER.log(Level.FINE, "Natáčanie kolektorov o hor=" + deltaPos.getHorizontalCount() + ", vert=" + deltaPos.getVerticalCount());
                 return new PosDiff()
-                        .setHor(deltaPos.getDeltaHorizontalTicks())
-                        .setVert(deltaPos.getDeltaVerticalTicks());
+                        .setHor(deltaPos.getHorizontalCount())
+                        .setVert(deltaPos.getVerticalCount());
             }
         });
         return diff;

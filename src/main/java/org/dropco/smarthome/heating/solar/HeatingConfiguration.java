@@ -30,8 +30,9 @@ public class HeatingConfiguration {
         HeatingConfiguration.CURRENT_RECORD.set(currentRecord);
         Logger.getLogger(HeatingConfiguration.class.getName()).info(currentRecord.toString());
         subscribers.forEach(subs-> subs.accept(currentRecord));
-        LocalTime endTime = HeatingConfiguration.CURRENT_RECORD.get().getToTime();
-        long sleepTime = LocalTime.now().until(endTime, ChronoUnit.SECONDS)+2;
+        SolarHeatingSchedule nextRecord = Db.applyDao(new HeatingDao(),HeatingDao::getNextRecord);
+        LocalTime nextFromTime = nextRecord.getFromTime();
+        long sleepTime = LocalTime.now().until(nextFromTime, ChronoUnit.SECONDS)+2;
         EXECUTOR_SERVICE.schedule(HeatingConfiguration::start,sleepTime,TimeUnit.SECONDS);
     }
 

@@ -27,7 +27,6 @@ public class SolarHeating extends com.querydsl.sql.RelationalPathBase<SolarHeati
     public final NumberPath<Integer> id = createNumber("id",Integer.class);
     public final NumberPath<Integer> day = createNumber("day",Integer.class);
     public final TimePath<LocalTime> fromTime = createTime("fromTime", LocalTime.class);
-    public final TimePath<LocalTime> toTime = createTime("toTime", LocalTime.class);
     public final NumberPath<Double> threeWayValveStartDiff = createNumber("threeWayValveStartDiff",Double.class);
     public final NumberPath<Double> threeWayValveStopDiff = createNumber("threeWayValveStopDiff",Double.class);
     public final BooleanPath boilerBlocked= createBoolean("boilerBlocked");
@@ -48,10 +47,9 @@ public class SolarHeating extends com.querydsl.sql.RelationalPathBase<SolarHeati
         addMetadata(id, ColumnMetadata.named("ID").withIndex(1).ofType(Types.NUMERIC).withSize(255).notNull());
         addMetadata(day, ColumnMetadata.named("DAY").withIndex(2).ofType(Types.NUMERIC).withSize(255).notNull());
         addMetadata(fromTime, ColumnMetadata.named("FROM_TIME").withIndex(3).ofType(Types.TIME).notNull());
-        addMetadata(toTime, ColumnMetadata.named("TO_TIME").withIndex(4).ofType(Types.TIME).notNull());
-        addMetadata(threeWayValveStartDiff, ColumnMetadata.named("3WAY_VALVE_DIFF_START").withIndex(5).ofType(Types.NUMERIC).withSize(255).notNull());
-        addMetadata(threeWayValveStopDiff, ColumnMetadata.named("3WAY_VALVE_DIFF_STOP").withIndex(6).ofType(Types.NUMERIC).withSize(255).notNull());
-        addMetadata(boilerBlocked, ColumnMetadata.named("BOILER_BLOCKED").withIndex(7).ofType(Types.NUMERIC).withSize(255).notNull());
+        addMetadata(threeWayValveStartDiff, ColumnMetadata.named("3WAY_VALVE_DIFF_START").withIndex(4).ofType(Types.NUMERIC).withSize(255).notNull());
+        addMetadata(threeWayValveStopDiff, ColumnMetadata.named("3WAY_VALVE_DIFF_STOP").withIndex(5).ofType(Types.NUMERIC).withSize(255).notNull());
+        addMetadata(boilerBlocked, ColumnMetadata.named("BOILER_BLOCKED").withIndex(6).ofType(Types.NUMERIC).withSize(255).notNull());
     }
 
 }

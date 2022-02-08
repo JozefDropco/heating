@@ -95,8 +95,8 @@ public class SolarPanelStateManagerTest {
 
             @Override
             public Object process(DeltaPosition deltaPos) {
-                Assert.assertEquals(-2 * solarSchedule.getVerticalTickCountForStep(), deltaPos.getDeltaVerticalTicks());
-                Assert.assertEquals(0, deltaPos.getDeltaHorizontalTicks());
+                Assert.assertEquals(-2 * solarSchedule.getVerticalTickCountForStep(), deltaPos.getVerticalCount());
+                Assert.assertEquals(0, deltaPos.getHorizontalCount());
                 return null;
             }
         });
@@ -106,11 +106,11 @@ public class SolarPanelStateManagerTest {
         }.getType());
         Assert.assertTrue(events.contains(SolarPanelStateManager.Event.STRONG_WIND));
         DeltaPosition deltaPosition = (DeltaPosition) updatedSchedule.getSteps().get(1).getPosition();
-        Assert.assertEquals(0, deltaPosition.getDeltaVerticalTicks());
+        Assert.assertEquals(0, deltaPosition.getVerticalCount());
         deltaPosition = (DeltaPosition) updatedSchedule.getSteps().get(2).getPosition();
-        Assert.assertEquals(0, deltaPosition.getDeltaVerticalTicks());
+        Assert.assertEquals(0, deltaPosition.getVerticalCount());
         deltaPosition = (DeltaPosition) updatedSchedule.getSteps().get(3).getPosition();
-        Assert.assertEquals(-1, deltaPosition.getDeltaVerticalTicks());
+        Assert.assertEquals(-1, deltaPosition.getVerticalCount());
     }
 
     @Test
@@ -280,8 +280,8 @@ public class SolarPanelStateManagerTest {
 
             @Override
             public Object process(DeltaPosition deltaPos) {
-                Assert.assertEquals(-2 * solarSchedule.getVerticalTickCountForStep(), deltaPos.getDeltaVerticalTicks());
-                Assert.assertEquals(0, deltaPos.getDeltaHorizontalTicks());
+                Assert.assertEquals(-2 * solarSchedule.getVerticalTickCountForStep(), deltaPos.getVerticalCount());
+                Assert.assertEquals(0, deltaPos.getHorizontalCount());
                 return null;
             }
         });
@@ -291,11 +291,11 @@ public class SolarPanelStateManagerTest {
         }.getType());
         Assert.assertTrue(events.contains(SolarPanelStateManager.Event.STRONG_WIND));
         DeltaPosition deltaPosition = (DeltaPosition) updatedSchedule.getSteps().get(1).getPosition();
-        Assert.assertEquals(0, deltaPosition.getDeltaVerticalTicks());
+        Assert.assertEquals(0, deltaPosition.getVerticalCount());
         deltaPosition = (DeltaPosition) updatedSchedule.getSteps().get(2).getPosition();
-        Assert.assertEquals(0, deltaPosition.getDeltaVerticalTicks());
+        Assert.assertEquals(0, deltaPosition.getVerticalCount());
         deltaPosition = (DeltaPosition) updatedSchedule.getSteps().get(3).getPosition();
-        Assert.assertEquals(-1, deltaPosition.getDeltaVerticalTicks());
+        Assert.assertEquals(-1, deltaPosition.getVerticalCount());
     }
 
     @Test
@@ -337,8 +337,8 @@ public class SolarPanelStateManagerTest {
 
             @Override
             public Object process(DeltaPosition deltaPos) {
-                Assert.assertEquals(-2 * solarSchedule.getVerticalTickCountForStep(), deltaPos.getDeltaVerticalTicks());
-                Assert.assertEquals(0, deltaPos.getDeltaHorizontalTicks());
+                Assert.assertEquals(-2 * solarSchedule.getVerticalTickCountForStep(), deltaPos.getVerticalCount());
+                Assert.assertEquals(0, deltaPos.getHorizontalCount());
                 return null;
             }
         });
@@ -348,13 +348,13 @@ public class SolarPanelStateManagerTest {
         }.getType());
         Assert.assertTrue(events.contains(SolarPanelStateManager.Event.STRONG_WIND));
         DeltaPosition deltaPosition = (DeltaPosition) updatedSchedule.getSteps().get(1).getPosition();
-        Assert.assertEquals(0, deltaPosition.getDeltaVerticalTicks());
+        Assert.assertEquals(0, deltaPosition.getVerticalCount());
         deltaPosition = (DeltaPosition) updatedSchedule.getSteps().get(2).getPosition();
-        Assert.assertEquals(0, deltaPosition.getDeltaVerticalTicks());
+        Assert.assertEquals(0, deltaPosition.getVerticalCount());
         deltaPosition = (DeltaPosition) updatedSchedule.getSteps().get(3).getPosition();
-        Assert.assertEquals(0, deltaPosition.getDeltaVerticalTicks());
+        Assert.assertEquals(0, deltaPosition.getVerticalCount());
         deltaPosition = (DeltaPosition) updatedSchedule.getSteps().get(4).getPosition();
-        Assert.assertEquals(1, deltaPosition.getDeltaVerticalTicks());
+        Assert.assertEquals(1, deltaPosition.getVerticalCount());
     }
 
     private SolarSchedule getSolarSchedule() {

@@ -2,39 +2,39 @@ package org.dropco.smarthome.heating.solar.dto;
 
 public class DeltaPosition implements Position {
 
-    private int deltaVerticalTicks;
-    private int deltaHorizontalTicks;
+    private int verticalCount;
+    private int horizontalCount;
 
     public DeltaPosition() {
     }
 
 
-    public DeltaPosition(int deltaHorizontalTicks, int deltaVerticalTicks) {
-        this.deltaHorizontalTicks = deltaHorizontalTicks;
-        this.deltaVerticalTicks = deltaVerticalTicks;
+    public DeltaPosition(int deltaHorizontalTicks, int verticalCount) {
+        this.horizontalCount = deltaHorizontalTicks;
+        this.verticalCount = verticalCount;
     }
 
-    public int getDeltaVerticalTicks() {
-        return deltaVerticalTicks;
+    public int getVerticalCount() {
+        return verticalCount;
     }
 
-    public void setDeltaVerticalTicks(int deltaVerticalTicks) {
-        this.deltaVerticalTicks = deltaVerticalTicks;
+    public void setVerticalCount(int verticalCount) {
+        this.verticalCount = verticalCount;
     }
 
-    public int getDeltaHorizontalTicks() {
-        return deltaHorizontalTicks;
+    public int getHorizontalCount() {
+        return horizontalCount;
     }
 
-    public void setDeltaHorizontalTicks(int deltaHorizontalTicks) {
-        this.deltaHorizontalTicks = deltaHorizontalTicks;
+    public void setHorizontalCount(int horizontalCount) {
+        this.horizontalCount = horizontalCount;
     }
 
     @Override
     public String toString() {
         final StringBuilder sb = new StringBuilder("DeltaPosition{");
-        sb.append("deltaVerticalTicks=").append(deltaVerticalTicks);
-        sb.append(", deltaHorizontalTicks=").append(deltaHorizontalTicks);
+        sb.append("verticalCount=").append(verticalCount);
+        sb.append(", horizontalCount=").append(horizontalCount);
         sb.append('}');
         return sb.toString();
     }
@@ -51,14 +51,14 @@ public class DeltaPosition implements Position {
 
         DeltaPosition that = (DeltaPosition) o;
 
-        if (deltaVerticalTicks != that.deltaVerticalTicks) return false;
-        return deltaHorizontalTicks == that.deltaHorizontalTicks;
+        if (verticalCount != that.verticalCount) return false;
+        return horizontalCount == that.horizontalCount;
     }
 
     @Override
     public int hashCode() {
-        int result = deltaVerticalTicks;
-        result = 31 * result + deltaHorizontalTicks;
+        int result = verticalCount;
+        result = 31 * result + horizontalCount;
         return result;
     }
 }

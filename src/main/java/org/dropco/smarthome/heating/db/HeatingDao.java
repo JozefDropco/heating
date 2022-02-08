@@ -38,7 +38,14 @@ public class HeatingDao implements Dao {
     public SolarHeatingSchedule getCurrentRecord() {
         Tuple tuple = new MySQLQuery<StringSetting>(getConnection(), SQL_TEMPLATES).select(SOLAR_HEATING.all())
                 .from(SOLAR_HEATING).where(SOLAR_HEATING.day.eq(LocalDate.now().getDayOfWeek().getValue())
-                        .and(SOLAR_HEATING.fromTime.loe(LocalTime.now()).and(SOLAR_HEATING.toTime.gt(LocalTime.now())))).fetchFirst();
+                        .and(SOLAR_HEATING.fromTime.loe(LocalTime.now()))).orderBy(SOLAR_HEATING.fromTime.desc()).fetchFirst();
+        return toSolarHeating(tuple);
+
+    }
+    public SolarHeatingSchedule getNextRecord() {
+        Tuple tuple = new MySQLQuery<StringSetting>(getConnection(), SQL_TEMPLATES).select(SOLAR_HEATING.all())
+                .from(SOLAR_HEATING).where(SOLAR_HEATING.day.eq(LocalDate.now().getDayOfWeek().getValue())
+                        .and(SOLAR_HEATING.fromTime.gt(LocalTime.now()))).orderBy(SOLAR_HEATING.fromTime.asc()).fetchFirst();
         return toSolarHeating(tuple);
 
     }
@@ -88,7 +95,6 @@ public class HeatingDao implements Dao {
         return new SolarHeatingSchedule()
                 .setDay(tuple.get(SOLAR_HEATING.day)).setId(tuple.get(SOLAR_HEATING.id))
                 .setFromTime(tuple.get(SOLAR_HEATING.fromTime))
-                .setToTime(tuple.get(SOLAR_HEATING.toTime))
                 .setThreeWayValveStopDiff(tuple.get(SOLAR_HEATING.threeWayValveStopDiff))
                 .setThreeWayValveStartDiff(tuple.get(SOLAR_HEATING.threeWayValveStartDiff))
                 .setBoilerBlock(tuple.get(SOLAR_HEATING.boilerBlocked));
@@ -104,7 +110,6 @@ public class HeatingDao implements Dao {
         new SQLInsertClause(getConnection(), SQL_TEMPLATES, SOLAR_HEATING)
                 .set(SOLAR_HEATING.fromTime, solarHeatingSchedule.getFromTime())
                 .set(SOLAR_HEATING.day, solarHeatingSchedule.getDay())
-                .set(SOLAR_HEATING.toTime, solarHeatingSchedule.getToTime())
                 .set(SOLAR_HEATING.threeWayValveStartDiff, solarHeatingSchedule.getThreeWayValveStartDiff())
                 .set(SOLAR_HEATING.threeWayValveStopDiff, solarHeatingSchedule.getThreeWayValveStopDiff())
                 .set(SOLAR_HEATING.boilerBlocked, solarHeatingSchedule.getBoilerBlock())
@@ -115,7 +120,6 @@ public class HeatingDao implements Dao {
         new SQLUpdateClause(getConnection(), SQL_TEMPLATES, SOLAR_HEATING)
                 .set(SOLAR_HEATING.fromTime, solarHeatingSchedule.getFromTime())
                 .set(SOLAR_HEATING.day, solarHeatingSchedule.getDay())
-                .set(SOLAR_HEATING.toTime, solarHeatingSchedule.getToTime())
                 .set(SOLAR_HEATING.threeWayValveStartDiff, solarHeatingSchedule.getThreeWayValveStartDiff())
                 .set(SOLAR_HEATING.threeWayValveStopDiff, solarHeatingSchedule.getThreeWayValveStopDiff())
                 .set(SOLAR_HEATING.boilerBlocked, solarHeatingSchedule.getBoilerBlock())

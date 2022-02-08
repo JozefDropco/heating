@@ -13,11 +13,20 @@ import org.dropco.smarthome.heating.solar.DayLight;
 import org.dropco.smarthome.heating.solar.ServiceMode;
 import org.dropco.smarthome.heating.solar.SolarMain;
 import org.dropco.smarthome.heating.solar.StrongWind;
-import org.dropco.smarthome.heating.solar.dto.*;
+import org.dropco.smarthome.heating.solar.dto.AbsolutePosition;
+import org.dropco.smarthome.heating.solar.dto.DeltaPosition;
+import org.dropco.smarthome.heating.solar.dto.ParkPosition;
+import org.dropco.smarthome.heating.solar.dto.PositionProcessor;
+import org.dropco.smarthome.heating.solar.dto.SolarPanelStep;
+import org.dropco.smarthome.heating.solar.dto.SolarSchedule;
 import org.dropco.smarthome.heating.solar.move.Movement;
 import org.dropco.smarthome.heating.solar.move.SolarPanelStateManager;
 
-import javax.ws.rs.*;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.Path;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.text.ParseException;
@@ -34,9 +43,7 @@ public class SolarWebService extends ServiceModeWebService {
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Response getTimetable(@QueryParam("month") String month) throws ParseException {
-        Calendar cal = Calendar.getInstance();
-        cal.set(Calendar.MONTH, Integer.parseInt(month));
-        SolarSchedule schedule = Db.applyDao(new SolarSystemDao(), dao -> dao.getTodaysSchedule(cal));
+        SolarSchedule schedule = Db.applyDao(new SolarSystemDao(), dao -> dao.getTodaysSchedule(Integer.parseInt(month)));
         return Response.ok(new Gson().toJson(toScheduleDTO(schedule))).build();
     }
 
@@ -47,6 +54,17 @@ public class SolarWebService extends ServiceModeWebService {
         boolean inParkingPosition = SolarMain.panelStateManager.has(SolarPanelStateManager.Event.PARKING_POSITION);
         return Response.ok(String.valueOf(inParkingPosition)).build();
     }
+
+    @POST
+    @Path("/cmd/update")
+    @Produces(MediaType.APPLICATION_JSON)
+    public Response update(@QueryParam("month") int month, String json) throws ParseException {
+        Schedule schedule = new Gson().fromJson(json, Schedule.class);
+        SolarSchedule solarSchedule = toSolarSchedule(schedule,month);
+         Db.acceptDao(new SolarSystemDao(), dao -> dao.update(solarSchedule));
+        return Response.ok().build();
+    }
+
 
     @POST
     @Path("/parkingPosition")
@@ -70,14 +88,20 @@ public class SolarWebService extends ServiceModeWebService {
             pos.x = lastKnownPosition.getHorizontal();
             pos.y = lastKnownPosition.getVertical();
             src.pos = pos;
-            return dao.getTodaysSchedule(Calendar.getInstance());
+            return dao.getTodaysSchedule(Calendar.getInstance().get(Calendar.MONTH)+1);
         });
         src.dayLight = DayLight.inst().enoughLight();
         src.windy = StrongWind.isWindy();
 
         List<SolarPanelStep> todayRecords = Lists.newArrayList(Iterables.filter(forMonth.getSteps(), step -> TimeUtil.isAfter(Calendar.getInstance(), step.getHour(), step.getMinute())));
 
-        src.remainingPositions = Lists.transform(todayRecords, this::toSolarDTO);
+        src.remainingPositions = Lists.transform(Lists.transform(todayRecords, this::toSolarDTO),step->{
+            if (step.moveType.equals("Relatívna")) {
+                step.hor*=forMonth.getHorizontalTickCountForStep();
+                step.vert*=forMonth.getVerticalTickCountForStep();
+            }
+            return step;
+        });
         if (Main.pinManager.getState(Movement.NORTH.getPinRefCd()) == PinState.HIGH) {
             src.movement.add("NORTH");
         }
@@ -100,20 +124,48 @@ public class SolarWebService extends ServiceModeWebService {
         SolarPanelStep sunRise = schedule.getSteps().get(0);
         s.sunRiseHour = sunRise.getHour();
         s.sunRiseMinute = sunRise.getMinute();
-        s.sunRiseAbsVer = ((AbsolutePosition) sunRise.getPosition()).getVertical();
-        s.sunRiseAbsHor = ((AbsolutePosition) sunRise.getPosition()).getHorizontal();
         SolarPanelStep sunSet = Iterables.getLast(schedule.getSteps());
         s.sunSetHour = sunSet.getHour();
         s.sunSetMinute = sunSet.getMinute();
-        s.sunSetAbsVer = 0;
-        s.sunSetAbsHor = 0;
         for (SolarPanelStep r : Iterables.limit(Iterables.skip(schedule.getSteps(), 1), schedule.getSteps().size() - 2)) {
             SolarDTO dto = toSolarDTO(r);
-            dto.vert = dto.vert / s.verticalStep;
-            dto.hor = dto.hor / s.horizontalStep;
             s.positions.add(dto);
         }
         return s;
+    }
+
+
+    private SolarSchedule toSolarSchedule(Schedule schedule, int month) {
+        SolarSchedule solarSchedule =new SolarSchedule();
+        solarSchedule.setMonth(month);
+        solarSchedule.setHorizontalTickCountForStep(schedule.horizontalStep);
+        solarSchedule.setVerticalTickCountForStep(schedule.verticalStep);
+        List<SolarPanelStep> steps = Lists.newArrayList(Lists.transform(schedule.positions, pos -> {
+            SolarPanelStep step = new SolarPanelStep();
+            step.setHour(pos.hour);
+            step.setMinute(pos.minute);
+            step.setPosition(toPosition(pos.moveType, pos.hor, pos.vert));
+            return step;
+        }));
+        SolarPanelStep sunRise = new SolarPanelStep();
+        sunRise.setHour(schedule.sunRiseHour);
+        sunRise.setMinute(schedule.sunRiseMinute);
+        steps.add(0, sunRise);
+        SolarPanelStep sunset = new SolarPanelStep();
+        sunset.setHour(schedule.sunSetHour);
+        sunset.setMinute(schedule.sunSetMinute);
+        steps.add(sunset);
+        solarSchedule.setSteps(steps);
+        return solarSchedule;
+    }
+
+    private org.dropco.smarthome.heating.solar.dto.Position toPosition(String moveType, Integer hor, Integer vert) {
+        switch (moveType){
+            case "Absolútna": return new AbsolutePosition(hor,vert);
+            case "Relatívna": return new DeltaPosition(hor,vert);
+            case "Parkovacia": return ParkPosition.INSTANCE;
+            default: throw new UnsupportedOperationException("Not supported case");
+        }
     }
 
     private SolarDTO toSolarDTO(SolarPanelStep rec) {
@@ -130,8 +182,8 @@ public class SolarWebService extends ServiceModeWebService {
             @Override
             public Void process(DeltaPosition deltaPos) {
                 solarDTO.moveType = "Relatívna";
-                solarDTO.hor = deltaPos.getDeltaHorizontalTicks();
-                solarDTO.vert = deltaPos.getDeltaVerticalTicks();
+                solarDTO.hor = deltaPos.getHorizontalCount();
+                solarDTO.vert = deltaPos.getVerticalCount();
                 return null;
             }
 
@@ -147,6 +199,7 @@ public class SolarWebService extends ServiceModeWebService {
         solarDTO.minute = rec.getMinute();
         return solarDTO;
     }
+
     @Override
     protected boolean getServiceMode() {
         return ServiceMode.isServiceMode();
@@ -202,13 +255,9 @@ public class SolarWebService extends ServiceModeWebService {
 
         private int sunRiseHour;
         private int sunRiseMinute;
-        private int sunRiseAbsHor;
-        private int sunRiseAbsVer;
 
         private int sunSetHour;
         private int sunSetMinute;
-        private int sunSetAbsHor;
-        private int sunSetAbsVer;
 
         List<SolarDTO> positions = Lists.newArrayList();
     }
@@ -221,7 +270,6 @@ public class SolarWebService extends ServiceModeWebService {
         private int hour, minute;
         private String moveType;
         private Integer hor, vert;
-        private boolean ignore;
 
         /***
          * Gets the hour
@@ -255,12 +303,5 @@ public class SolarWebService extends ServiceModeWebService {
             return vert;
         }
 
-        /***
-         * Gets the ignore
-         * @return
-         */
-        public boolean getIgnore() {
-            return ignore;
-        }
     }
 }

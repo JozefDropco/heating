@@ -51,7 +51,7 @@ public class SolarMain {
         });
         panelStateManager = new SolarPanelStateManager(settingsDao.getString(AFTERNOON_TIME), mover,
                 () -> Db.applyDao(new SettingsDao(), sdao -> sdao.getString(TODAYS_SCHEDULE)),
-                () -> Db.applyDao(new SolarSystemDao(), sdao -> sdao.getTodaysSchedule(Calendar.getInstance())),
+                () -> Db.applyDao(new SolarSystemDao(), sdao -> sdao.getTodaysSchedule(Calendar.getInstance().get(Calendar.MONTH)+1)),
                 (json) -> Db.acceptDao(new SettingsDao(), sdao -> sdao.setString(TODAYS_SCHEDULE, json)),
                 () -> Db.applyDao(new SettingsDao(), sdao -> sdao.getString(CURRENT_EVENTS)),
                 (json) -> Db.acceptDao(new SettingsDao(), sdao -> sdao.setString(CURRENT_EVENTS, json))

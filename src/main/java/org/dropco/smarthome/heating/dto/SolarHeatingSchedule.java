@@ -7,7 +7,6 @@ public class SolarHeatingSchedule {
     private int id;
     private int day;
     private LocalTime fromTime;
-    private LocalTime toTime;
     private double threeWayValveStartDiff;
     private double threeWayValveStopDiff;
     private boolean boilerBlock;
@@ -48,19 +47,6 @@ public class SolarHeatingSchedule {
 
     public SolarHeatingSchedule setFromTime(LocalTime fromTime) {
         this.fromTime = fromTime;
-        return this;
-    }
-
-    /***
-     * Gets the toTime
-     * @return
-     */
-    public LocalTime getToTime() {
-        return toTime;
-    }
-
-    public SolarHeatingSchedule setToTime(LocalTime toTime) {
-        this.toTime = toTime;
         return this;
     }
 
@@ -109,7 +95,6 @@ public class SolarHeatingSchedule {
         sb.append("id=").append(id);
         sb.append(", day=").append(day);
         sb.append(", fromTime=").append(fromTime);
-        sb.append(", toTime=").append(toTime);
         sb.append(", threeWayValveStartDiff=").append(threeWayValveStartDiff);
         sb.append(", threeWayValveStopDiff=").append(threeWayValveStopDiff);
         sb.append(", boilerBlock=").append(boilerBlock);
