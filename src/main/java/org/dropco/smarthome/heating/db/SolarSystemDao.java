@@ -20,7 +20,6 @@ import org.dropco.smarthome.heating.solar.dto.SolarSchedule;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.Calendar;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -57,6 +56,10 @@ public class SolarSystemDao implements Dao {
     }
 
     public AbsolutePosition getLastKnownPosition() {
+        return new AbsolutePosition(horizontal.get(), vertical.get());
+    }
+
+    private void ensureLoaded() {
         lock.lock();
         try {
             if (!loaded.get()) {
@@ -68,7 +71,6 @@ public class SolarSystemDao implements Dao {
                 SOUTH.set((int) settingsDao.getLong("SOUTH"));
                 loaded.set(true);
             }
-            return new AbsolutePosition(horizontal.get(), vertical.get());
         } finally {
             lock.unlock();
         }
@@ -176,6 +178,7 @@ public class SolarSystemDao implements Dao {
     public void setConnection(Connection connection) {
         this.connection = connection;
         settingsDao.setConnection(connection);
+        ensureLoaded();
     }
 
     public long getDelay() {
