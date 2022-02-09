@@ -5,6 +5,7 @@ import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.heating.HeatingMain;
 import org.dropco.smarthome.stats.StatsCollector;
+import org.dropco.smarthome.temp.PeriodicCleanup;
 import org.dropco.smarthome.temp.TempService;
 import org.dropco.smarthome.watering.WateringMain;
 import org.dropco.smarthome.web.WebServer;
@@ -32,6 +33,7 @@ public class Main {
                 HeatingMain.start(settingsDao);
             }
         });
+        new PeriodicCleanup().start();
         WebServer webServer = new WebServer();
         webServer.start();
         Logger logger = Logger.getLogger("");

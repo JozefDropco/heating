@@ -4,8 +4,6 @@ import com.google.common.collect.Sets;
 import com.pi4j.io.gpio.*;
 import com.pi4j.io.gpio.exception.InvalidPinException;
 import org.dropco.smarthome.dto.NamedPort;
-import org.dropco.smarthome.microservice.RainSensor;
-import org.dropco.smarthome.microservice.WaterPumpFeedback;
 import org.dropco.smarthome.watering.db.WateringRecord;
 import org.junit.*;
 import org.mockito.ArgumentMatchers;

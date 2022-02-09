@@ -1,9 +1,8 @@
-package org.dropco.smarthome.microservice;
+package org.dropco.smarthome.watering;
 
 import com.google.common.collect.Lists;
 import com.pi4j.io.gpio.GpioPinDigitalInput;
 import com.pi4j.io.gpio.PinState;
-import com.pi4j.io.gpio.event.GpioPinListenerDigital;
 import org.dropco.smarthome.gpioextension.DelayedGpioPinListener;
 import org.dropco.smarthome.stats.StatsCollector;
 
@@ -14,30 +13,29 @@ import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-public class WaterPumpFeedback {
-    public static final AtomicBoolean running = new AtomicBoolean(false);
-    public static final PinState LOGICAL_HIGH_STATE = PinState.HIGH;
-    private static Logger logger = Logger.getLogger(WaterPumpFeedback.class.getName());
+public class RainSensor {
+    private static final AtomicBoolean raining = new AtomicBoolean(false);
+    public static final PinState RAIN_STATE = PinState.LOW;
+    private static Logger logger = Logger.getLogger(RainSensor.class.getName());
     private static final List<Consumer<Boolean>> subscribers = Collections.synchronizedList(Lists.newArrayList());
 
     public static void start(GpioPinDigitalInput input) {
-        StatsCollector.getInstance().collect("Čerpadlo zavlažovania",input);
-        running.set(input.getState() == LOGICAL_HIGH_STATE);
-        input.setDebounce(1000);
-        input.addListener(new DelayedGpioPinListener(PinState.HIGH,1000,input) {
-            @Override
-            public void handleStateChange(boolean state) {
-                handlePumpState(state);
-            }
-        });
-        handlePumpState(running.get());
+        StatsCollector.getInstance().collect("Dážď",input,RAIN_STATE);
+        raining.set(input.getState() == RAIN_STATE);
+        input.addListener(new DelayedGpioPinListener(RAIN_STATE,10000,input) {
+                              @Override
+                              public void handleStateChange(boolean state) {
+                                  handleRainSensor(state);
+                              }
+                          });
+        handleRainSensor(raining.get());
 
     }
 
-    static void handlePumpState(boolean newValue) {
-        if (newValue){
-            if (running.compareAndSet(false, newValue)) {
-                logger.log(Level.INFO, "Čerpadlo beží");
+    static void handleRainSensor(boolean newValue) {
+        if (newValue) {
+            if (raining.compareAndSet(false, newValue)) {
+                logger.log(Level.INFO, "Prší");
                 subscribers.forEach(subscriber -> {
                     try {
                         subscriber.accept(newValue);
@@ -47,8 +45,8 @@ public class WaterPumpFeedback {
                 });
             }
         } else {
-            if (running.compareAndSet(true, newValue)) {
-                logger.log(Level.INFO, "Čerpadlo nebeží");
+            if (raining.compareAndSet(true, newValue)) {
+                logger.log(Level.INFO, "Neprší");
                 subscribers.forEach(subscriber -> {
                     try {
                         subscriber.accept(newValue);
@@ -60,8 +58,8 @@ public class WaterPumpFeedback {
         }
     }
 
-    public static boolean getRunning() {
-        return running.get();
+    public static boolean isRaining() {
+        return raining.get();
     }
 
     public static void subscribe(Consumer<Boolean> subscriber) {
@@ -73,7 +71,6 @@ public class WaterPumpFeedback {
     }
 
     public static String getMicroServicePinKey() {
-        return "WATER_PUMP_FEEDBACK";
+        return "RAIN_SENSOR";
     }
-
 }

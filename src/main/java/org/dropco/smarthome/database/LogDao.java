@@ -3,19 +3,26 @@ package org.dropco.smarthome.database;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.querydsl.core.Tuple;
+import com.querydsl.core.types.Expression;
+import com.querydsl.core.types.Order;
+import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Template;
 import com.querydsl.core.types.TemplateFactory;
 import com.querydsl.core.types.dsl.DateExpression;
 import com.querydsl.core.types.dsl.Expressions;
 import com.querydsl.core.types.dsl.NumberExpression;
+import com.querydsl.core.types.dsl.SimplePath;
+import com.querydsl.core.types.dsl.StringExpression;
 import com.querydsl.sql.MySQLTemplates;
 import com.querydsl.sql.SQLTemplates;
+import com.querydsl.sql.dml.SQLDeleteClause;
 import com.querydsl.sql.dml.SQLInsertClause;
 import com.querydsl.sql.dml.SQLUpdateClause;
 import com.querydsl.sql.mysql.MySQLQuery;
 import org.dropco.smarthome.database.querydsl.AppLog;
 import org.dropco.smarthome.database.querydsl.StringSetting;
 import org.dropco.smarthome.database.querydsl.TemperatureLog;
+import org.dropco.smarthome.database.querydsl.TemperatureLogHistory;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -30,7 +37,9 @@ public class LogDao implements Dao {
 
 
     private static final Template leaveoutminutes = TemplateFactory.DEFAULT.create("STR_TO_DATE(DATE_FORMAT({0},'%Y-%m-%d %H'),'%Y-%m-%d %H')");
+    private static final Template keepDay = TemplateFactory.DEFAULT.create("DATE_FORMAT({0},'%Y-%m-%d')");
     protected static final SQLTemplates SQL_TEMPLATES = new MySQLTemplates();
+    public static TemperatureLogHistory _tlogh = new TemperatureLogHistory("logh");
     public static TemperatureLog _tlog = new TemperatureLog("log");
     public static AppLog _alog = new AppLog("alg");
 
@@ -45,21 +54,42 @@ public class LogDao implements Dao {
 
     public List<Tuple> retrieveTemperaturesWithPlaces(Date from, Date to) {
         DateExpression<Date> removeMinutes = Expressions.dateTemplate(Date.class, leaveoutminutes, _tlog.timestamp);
-        return new MySQLQuery<StringSetting>(getConnection()).select(_tlog.placeRefCd,
+        MySQLQuery<Tuple> query1 = new MySQLQuery<StringSetting>(getConnection()).select(_tlog.placeRefCd,
                         removeMinutes.as(_tlog.timestamp),
                         _tlog.value.avg().as(_tlog.value)).from(_tlog).
                 where(_tlog.placeRefCd.isNotNull()
                         .and(_tlog.timestamp.goe(from))
                         .and(_tlog.timestamp.loe(to))
                 )
+                .groupBy(removeMinutes, _tlog.placeRefCd);
+        MySQLQuery<Tuple> query2 = new MySQLQuery<>(getConnection()).from(_tlogh).select(_tlogh.placeRefCd.as(_tlog.placeRefCd), _tlogh.asOfDate.as(_tlog.timestamp), _tlogh.value.as(_tlog.value))
+                .where((_tlogh.asOfDate.goe(from)).and(_tlogh.asOfDate.loe(to)));
+        return new MySQLQuery<Tuple>(getConnection()).union(query1,query2)
+                .orderBy(new OrderSpecifier<>(Order.ASC, Expressions.asString(_tlog.timestamp.getMetadata().getName())), new OrderSpecifier<>(Order.ASC, Expressions.asString(_tlog.placeRefCd.getMetadata().getName())))
+                .fetch();
+    }
+    public Date retrieveLastDay() {
+        return new MySQLQuery<Date>(getConnection())
+                .select(_tlog.timestamp.min())
+                .from(_tlog).fetchFirst();
+    }
+
+
+    public List<Tuple> retrieveForDay(Date from) {
+        DateExpression<Date> removeMinutes = Expressions.dateTemplate(Date.class, leaveoutminutes, _tlog.timestamp);
+        DateExpression<Date> keepDayExp = Expressions.dateTemplate(Date.class, keepDay, _tlog.timestamp);
+        return new MySQLQuery<StringSetting>(getConnection())
+                .select(_tlog.placeRefCd,
+                        removeMinutes.as(_tlog.timestamp),
+                        _tlog.value.avg().as(_tlog.value))
+                .from(_tlog)
+                .where(keepDayExp.eq(Expressions.dateTemplate(Date.class, keepDay, from)).and(_tlog.placeRefCd.isNotNull()))
                 .groupBy(removeMinutes, _tlog.placeRefCd)
                 .orderBy(_tlog.timestamp.asc(), _tlog.placeRefCd.asc()).fetch();
-
-
     }
 
     public List<String> listUnassignedDeviceIds() {
-        return new MySQLQuery<StringSetting>(getConnection()).select(_tlog.devideId).from(_tlog).
+        return new MySQLQuery<StringSetting>(getConnection()).select(_tlog.devideId).distinct().from(_tlog).
                 where(_tlog.placeRefCd.isNull()).fetch();
     }
 
@@ -71,23 +101,34 @@ public class LogDao implements Dao {
     }
 
     public List<AggregateTemp> retrieveAggregatedTemperatures(Date from, Date to) {
-        NumberExpression<Double> min = _tlog.value.min().as("min");
-        NumberExpression<Double> max = _tlog.value.max().as("max");
-        NumberExpression<Double> avg = _tlog.value.avg().as("avg");
-        List<Tuple> result = new MySQLQuery<StringSetting>(getConnection()).select(_tlog.placeRefCd,
-                        min,
-                        max,
-                        avg
+        MySQLQuery<Tuple> query1 = new MySQLQuery<StringSetting>(getConnection()).select(_tlog.placeRefCd,
+                        _tlog.value.min().as("min"),
+                        _tlog.value.max().as("max"),
+                        _tlog.value.avg().as("avg")
                 ).from(_tlog).
                 where(_tlog.placeRefCd.isNotNull()
                         .and(_tlog.timestamp.goe(from))
                         .and(_tlog.timestamp.loe(to))
                 )
-                .groupBy(_tlog.placeRefCd)
-                .orderBy(_tlog.placeRefCd.asc()).fetch();
+                .groupBy(_tlog.placeRefCd);
+        MySQLQuery<Tuple> query2 = new MySQLQuery<>(getConnection()).from(_tlogh).select(_tlogh.placeRefCd.as(_tlog.placeRefCd), _tlogh.value.min().as("min"),_tlogh.value.max().as("max"),_tlogh.value.min().as("avg"))
+                .where((_tlogh.asOfDate.goe(from)).and(_tlogh.asOfDate.loe(to))). groupBy(_tlogh.placeRefCd);
+
+        Expression<Tuple> union = new MySQLQuery<Tuple>(getConnection()).union(query1, query2).as("x");
+        SimplePath<String> placeRefCd = Expressions.path(String.class, "PLACE_REF_CD");
+        SimplePath<Double> min = Expressions.path(Double.class, "min");
+        SimplePath<Double> max = Expressions.path(Double.class, "max");
+        SimplePath<Double> avg = Expressions.path(Double.class, "avg");
+        List<Tuple> result = new MySQLQuery<Tuple>(getConnection()).select(placeRefCd,
+                        min,
+                        max,
+                        avg).from(union)
+                .groupBy(placeRefCd)
+                .orderBy(new OrderSpecifier<>(Order.ASC,placeRefCd))
+                .fetch();
         return Lists.newArrayList(Iterables.transform(result, tuple -> {
             AggregateTemp temp = new AggregateTemp();
-            temp.measurePlace = tuple.get(_tlog.placeRefCd);
+            temp.measurePlace = tuple.get(placeRefCd);
             temp.min = tuple.get(min);
             temp.max = tuple.get(max);
             temp.avg = new BigDecimal(tuple.get(avg)).setScale(1, RoundingMode.HALF_UP).doubleValue();
@@ -159,6 +200,19 @@ public class LogDao implements Dao {
 
     public void setConnection(Connection connection) {
         this.connection = connection;
+    }
+
+    public void moveToHistory(Date when, String place, Double value) {
+        new SQLInsertClause(getConnection(), SQL_TEMPLATES, _tlogh)
+                .set(_tlogh.placeRefCd, place)
+                .set(_tlogh.asOfDate, when)
+                .set(_tlogh.value, value)
+                .execute();
+    }
+
+    public void deleteTempData(Date time) {
+        DateExpression<Date> keepDayExp = Expressions.dateTemplate(Date.class, keepDay, _tlog.timestamp);
+        new SQLDeleteClause(getConnection(), SQL_TEMPLATES,_tlog).where(keepDayExp.eq(Expressions.dateTemplate(Date.class, keepDay, time))).execute();
     }
 
     public static class AggregateTemp {

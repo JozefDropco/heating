@@ -1,8 +1,6 @@
 package org.dropco.smarthome.watering;
 
 import org.dropco.smarthome.dto.NamedPort;
-import org.dropco.smarthome.microservice.RainSensor;
-import org.dropco.smarthome.microservice.WaterPumpFeedback;
 import org.dropco.smarthome.watering.db.WateringRecord;
 
 import java.util.Set;

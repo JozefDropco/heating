@@ -4,8 +4,6 @@ import org.dropco.smarthome.Main;
 import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.dto.NamedPort;
-import org.dropco.smarthome.microservice.RainSensor;
-import org.dropco.smarthome.microservice.WaterPumpFeedback;
 import org.dropco.smarthome.stats.StatsCollector;
 import org.dropco.smarthome.watering.db.WateringDao;
 
