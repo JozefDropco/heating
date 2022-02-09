@@ -129,8 +129,8 @@ public class LogDao implements Dao {
         return Lists.newArrayList(Iterables.transform(result, tuple -> {
             AggregateTemp temp = new AggregateTemp();
             temp.measurePlace = tuple.get(placeRefCd);
-            temp.min = tuple.get(min);
-            temp.max = tuple.get(max);
+            temp.min = new BigDecimal(tuple.get(min)).setScale(1, RoundingMode.HALF_UP).doubleValue();
+            temp.max = new BigDecimal(tuple.get(max)).setScale(1, RoundingMode.HALF_UP).doubleValue();
             temp.avg = new BigDecimal(tuple.get(avg)).setScale(1, RoundingMode.HALF_UP).doubleValue();
             return temp;
         }));
@@ -213,6 +213,16 @@ public class LogDao implements Dao {
     public void deleteTempData(Date time) {
         DateExpression<Date> keepDayExp = Expressions.dateTemplate(Date.class, keepDay, _tlog.timestamp);
         new SQLDeleteClause(getConnection(), SQL_TEMPLATES,_tlog).where(keepDayExp.eq(Expressions.dateTemplate(Date.class, keepDay, time))).execute();
+    }
+
+    public void deleteOldLogs() {
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.HOUR_OF_DAY,0);
+        calendar.set(Calendar.MINUTE,0);
+        calendar.set(Calendar.SECOND,0);
+        calendar.set(Calendar.MILLISECOND,0);
+        calendar.add(Calendar.MONTH,-2);
+        new SQLDeleteClause(getConnection(),SQL_TEMPLATES,_alog).where(_alog.date.loe(calendar.getTime())).execute();
     }
 
     public static class AggregateTemp {

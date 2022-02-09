@@ -1,6 +1,8 @@
 package org.dropco.smarthome;
 
 import com.pi4j.io.gpio.GpioFactory;
+import org.dropco.smarthome.database.Db;
+import org.dropco.smarthome.database.LogDao;
 
 import java.util.concurrent.TimeUnit;
 
@@ -12,7 +14,7 @@ public class LogCleanup {
     }
 
     void runCleanUp(){
-
-        GpioFactory.getExecutorServiceFactory().getScheduledExecutorService().schedule(this::runCleanUp, 1, TimeUnit.HOURS);
+        Db.acceptDao(new LogDao(), LogDao::deleteOldLogs);
+        GpioFactory.getExecutorServiceFactory().getScheduledExecutorService().schedule(this::runCleanUp, 1, TimeUnit.DAYS);
     }
 }

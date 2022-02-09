@@ -42,6 +42,7 @@ public class Main {
         logger.addHandler(handler);
         handler.setLevel(Level.ALL);
         webServer.join();
+        new LogCleanup().start();
     }
 
 }
