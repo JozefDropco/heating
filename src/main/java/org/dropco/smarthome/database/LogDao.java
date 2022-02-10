@@ -64,7 +64,7 @@ public class LogDao implements Dao {
                 .groupBy(removeMinutes, _tlog.placeRefCd);
         MySQLQuery<Tuple> query2 = new MySQLQuery<>(getConnection()).from(_tlogh).select(_tlogh.placeRefCd.as(_tlog.placeRefCd), _tlogh.asOfDate.as(_tlog.timestamp), _tlogh.value.as(_tlog.value))
                 .where((_tlogh.asOfDate.goe(from)).and(_tlogh.asOfDate.loe(to)));
-        return new MySQLQuery<Tuple>(getConnection()).union(query1,query2)
+        return new MySQLQuery<Tuple>(getConnection()).union(query2,query1)
                 .orderBy(new OrderSpecifier<>(Order.ASC, Expressions.asString(_tlog.timestamp.getMetadata().getName())), new OrderSpecifier<>(Order.ASC, Expressions.asString(_tlog.placeRefCd.getMetadata().getName())))
                 .fetch();
     }
