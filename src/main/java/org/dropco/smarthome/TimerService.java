@@ -1,6 +1,7 @@
 package org.dropco.smarthome;
 
 import java.util.Calendar;
+import java.util.Date;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -14,6 +15,11 @@ public class TimerService {
 
     public static void setExecutorService(ScheduledExecutorService executorService) {
         TimerService.executorService = executorService;
+    }
+
+    public static void scheduleFor(String name, Date toDate, Runnable runnable) {
+        long delay = TimeUtil.millisRemaining(Calendar.getInstance(), toDate);
+        schedule(name, runnable, delay);
     }
 
     public static void scheduleFor(String name, int hour, int minute, Runnable runnable) {

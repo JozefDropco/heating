@@ -63,12 +63,12 @@ public class SolarSystemDao implements Dao {
         lock.lock();
         try {
             if (!loaded.get()) {
-                vertical.set((int) settingsDao.getLong(SolarSystemRefCode.LAST_KNOWN_POSITION_VERTICAL));
-                horizontal.set((int) settingsDao.getLong(SolarSystemRefCode.LAST_KNOWN_POSITION_HORIZONTAL));
-                WEST.set((int) settingsDao.getLong("WEST"));
-                EAST.set((int) settingsDao.getLong("EAST"));
-                NORTH.set((int) settingsDao.getLong("NORTH"));
-                SOUTH.set((int) settingsDao.getLong("SOUTH"));
+                vertical.set(settingsDao.getLong(SolarSystemRefCode.LAST_KNOWN_POSITION_VERTICAL).intValue());
+                horizontal.set(settingsDao.getLong(SolarSystemRefCode.LAST_KNOWN_POSITION_HORIZONTAL).intValue());
+                WEST.set(settingsDao.getLong("WEST").intValue());
+                EAST.set(settingsDao.getLong("EAST").intValue());
+                NORTH.set(settingsDao.getLong("NORTH").intValue());
+                SOUTH.set(settingsDao.getLong("SOUTH").intValue());
                 loaded.set(true);
             }
         } finally {

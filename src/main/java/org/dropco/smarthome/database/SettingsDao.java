@@ -4,6 +4,8 @@ import com.google.common.collect.Lists;
 import com.querydsl.core.Tuple;
 import com.querydsl.sql.MySQLTemplates;
 import com.querydsl.sql.SQLTemplates;
+import com.querydsl.sql.dml.SQLDeleteClause;
+import com.querydsl.sql.dml.SQLInsertClause;
 import com.querydsl.sql.dml.SQLUpdateClause;
 import com.querydsl.sql.mysql.MySQLQuery;
 import org.dropco.smarthome.database.querydsl.StringSetting;
@@ -13,7 +15,13 @@ import org.dropco.smarthome.dto.LongConstant;
 import org.dropco.smarthome.dto.StringConstant;
 
 import java.sql.Connection;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.dropco.smarthome.database.querydsl.DoubleSetting.DOUBLE;
@@ -36,7 +44,7 @@ public class SettingsDao implements Dao {
     }
 
 
-    public long getLong(String key) {
+    public Long getLong(String key) {
         updateIfNeeded();
         return Optional.ofNullable(longCacheMap.get(key)).map(LongConstant::getValue).orElse(null);
     }
@@ -46,7 +54,7 @@ public class SettingsDao implements Dao {
         return Optional.ofNullable(longCacheMap.get(key));
     }
 
-    public double getDouble(String key) {
+    public Double getDouble(String key) {
         updateIfNeeded();
         return Optional.ofNullable(doubleCacheMap.get(key)).map(DoubleConstant::getValue).orElse(null);
     }
@@ -92,14 +100,30 @@ public class SettingsDao implements Dao {
         this.connection = connection;
     }
 
-    public void setLong(String key, long value) {
-        long execute = new SQLUpdateClause(getConnection(), SQL_TEMPLATES, LONG)
-                .set(LONG.modifiedTs, new Date())
-                .set(LONG.value, value)
-                .where(LONG.refCd.eq(key))
-                .execute();
-        if (execute == 1) longCacheMap.get(key).setValue(value);
+    public void setLong(String key, Long value) {
+        if (value == null) {
+            long removed = new SQLDeleteClause(getConnection(), SQL_TEMPLATES, LONG).where(LONG.refCd.eq(key)).execute();
+            if (removed == 1) longCacheMap.remove(key);
+        } else {
+            long execute = new SQLUpdateClause(getConnection(), SQL_TEMPLATES, LONG)
+                    .set(LONG.modifiedTs, new Date())
+                    .set(LONG.value, value)
+                    .where(LONG.refCd.eq(key))
+                    .execute();
+            if (execute == 0){
+                new SQLInsertClause(getConnection(),SQL_TEMPLATES,LONG)
+                        .set(LONG.modifiedTs, new Date())
+                        .set(LONG.value, value)
+                        .set(LONG.refCd,key)
+                        .set(LONG.description,"")
+                        .set(LONG.group,"Neznáma")
+                        .set(LONG.valueType,"Neznáma")
+                        .execute();
+                loadLongCache();
 
+            } else                 longCacheMap.get(key).setValue(value);
+
+        }
     }
 
     public void setDouble(String key, double value) {

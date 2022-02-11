@@ -6,6 +6,7 @@ import org.dropco.smarthome.dto.NamedPort;
 import org.dropco.smarthome.heating.heater.Boiler;
 import org.dropco.smarthome.heating.heater.BoilerBlocker;
 import org.dropco.smarthome.heating.heater.Flame;
+import org.dropco.smarthome.heating.heater.HolidayMode;
 import org.dropco.smarthome.heating.pump.FireplaceCircularPump;
 import org.dropco.smarthome.heating.pump.HeaterCircularPump;
 import org.dropco.smarthome.heating.pump.SolarCircularPump;
@@ -32,6 +33,7 @@ public class HeatingMain {
         new Flame(Main.pinManager.getInput(Flame.HEATER_FLAME_REF_CD)).start();
         new HeaterCircularPump(Main.pinManager.getInput(HEATER_CIRCULAR_REF_CD)).start();
         new Boiler(Main.pinManager.getInput(Boiler.HEATER_BOILER_FEC_CD)).start();
+        new Thread(HolidayMode.instance()).start();
         addFireplace();
         configureServiceMode();
         addToStats();

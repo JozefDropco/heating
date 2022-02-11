@@ -11,11 +11,11 @@ public class TimeUtil {
         Date currentDate = calendar.getTime();
         Calendar after = Calendar.getInstance();
         after.setTime(currentDate);
-        after.set(Calendar.HOUR_OF_DAY,hour);
-        after.set(Calendar.MINUTE,minute);
-        after.set(Calendar.SECOND,0);
-        after.set(Calendar.MILLISECOND,0);
-        return currentDate.compareTo(after.getTime())!=1;
+        after.set(Calendar.HOUR_OF_DAY, hour);
+        after.set(Calendar.MINUTE, minute);
+        after.set(Calendar.SECOND, 0);
+        after.set(Calendar.MILLISECOND, 0);
+        return currentDate.compareTo(after.getTime()) != 1;
     }
 
     public static boolean isAfternoon(Calendar currentTime, String afternoonTime) {
@@ -30,6 +30,11 @@ public class TimeUtil {
 
     public static long milisRemaingForNextDay() {
         return millisRemaining(Calendar.getInstance(), 23, 59) + 60 * 1000;
+    }
+
+    public static long millisRemaining(Calendar current, Date future) {
+        Date currentDate = current.getTime();
+        return future.getTime() - currentDate.getTime() + 3 * 1000;
     }
 
     public static long millisRemaining(Calendar current, int hour, int minute) {

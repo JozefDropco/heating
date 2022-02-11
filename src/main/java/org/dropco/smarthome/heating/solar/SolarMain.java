@@ -41,7 +41,7 @@ public class SolarMain {
         HeatingConfiguration.start();
         HORIZONTAL_MOVE.start();
         VERTICAL_MOVE.start();
-        DayLight.setInstance(Main.pinManager.getInput(DAY_LIGHT_PIN_REF_CD), () -> Db.applyDao(new SettingsDao(), dao -> (int) dao.getLong(LIGHT_THRESHOLD)));
+        DayLight.setInstance(Main.pinManager.getInput(DAY_LIGHT_PIN_REF_CD), () -> Db.applyDao(new SettingsDao(), dao -> dao.getLong(LIGHT_THRESHOLD).intValue()));
         StrongWind.connect(Main.pinManager.getInput(STRONG_WIND_PIN_REF_CD));
         connectDayLight(settingsDao);
         configureServiceMode();

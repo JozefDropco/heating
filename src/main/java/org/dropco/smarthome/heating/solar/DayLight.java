@@ -58,7 +58,7 @@ public class DayLight {
                 if (state) {
                     boolean success = enoughLight.compareAndSet(false, state);
                     if (success) {
-                        Db.acceptDao(new SettingsDao(), dao -> dao.setLong(SolarSystemRefCode.DAYLIGHT, 1));
+                        Db.acceptDao(new SettingsDao(), dao -> dao.setLong(SolarSystemRefCode.DAYLIGHT, 1l));
                         LOGGER.log(Level.INFO, "Denný jas splnený");
                         subscribers.forEach(booleanConsumer -> booleanConsumer.accept(true));
                     }
@@ -81,7 +81,7 @@ public class DayLight {
     public void clear() {
         enoughLight.set(false);
         LOGGER.log(Level.INFO, "Reset denného jasu");
-        Db.acceptDao(new SettingsDao(), dao -> dao.setLong(SolarSystemRefCode.DAYLIGHT, 0));
+        Db.acceptDao(new SettingsDao(), dao -> dao.setLong(SolarSystemRefCode.DAYLIGHT, 0l));
         if (input.isLow()) {
             pinListener.delayedCheck();
         }
