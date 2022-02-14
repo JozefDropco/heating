@@ -62,7 +62,7 @@ public class LogDao implements Dao {
                         .and(_tlog.timestamp.loe(to))
                 )
                 .groupBy(removeMinutes, _tlog.placeRefCd);
-        MySQLQuery<Tuple> query2 = new MySQLQuery<>(getConnection()).from(_tlogh).select(_tlogh.placeRefCd.as(_tlog.placeRefCd), _tlogh.asOfDate.as(_tlog.timestamp), _tlogh.value.as(_tlog.value))
+        MySQLQuery<Tuple> query2 = new MySQLQuery<>(getConnection()).from(_tlogh).select(_tlogh.placeRefCd.as(_tlog.placeRefCd), _tlogh.asOfDate.as(_tlog.timestamp), _tlogh.average.as(_tlog.value))
                 .where((_tlogh.asOfDate.goe(from)).and(_tlogh.asOfDate.loe(to)));
         return new MySQLQuery<Tuple>(getConnection()).union(query2, query1)
                 .orderBy(new OrderSpecifier<>(Order.ASC, Expressions.asString(_tlog.timestamp.getMetadata().getName())), new OrderSpecifier<>(Order.ASC, Expressions.asString(_tlog.placeRefCd.getMetadata().getName())))
@@ -73,22 +73,23 @@ public class LogDao implements Dao {
         DateExpression<Date> removeMinutes = Expressions.dateTemplate(Date.class, leaveoutminutes, _tlog.timestamp);
         MySQLQuery<Tuple> query1 = new MySQLQuery<StringSetting>(getConnection()).select(_tlog.placeRefCd,
                         removeMinutes,
-                        _tlog.value.avg().as("val")
+                        _tlog.value.min().as("min"),
+                        _tlog.value.max().as("max"),
+                        _tlog.value.avg().as("avg")
                 ).from(_tlog).
                 where(_tlog.placeRefCd.isNotNull()
                         .and(_tlog.timestamp.goe(from))
                         .and(_tlog.timestamp.loe(to))
                 )
                 .groupBy(removeMinutes, _tlog.placeRefCd);
-        MySQLQuery<Tuple> query2 = new MySQLQuery<>(getConnection()).from(_tlogh).select(_tlogh.placeRefCd.as(_tlog.placeRefCd), _tlogh.asOfDate, _tlogh.value.as("val"))
+        MySQLQuery<Tuple> query2 = new MySQLQuery<>(getConnection()).from(_tlogh).select(_tlogh.placeRefCd.as(_tlog.placeRefCd), _tlogh.asOfDate, _tlogh.minimum.as("min"),_tlogh.maximum.as("max"),_tlogh.average.as("avg"))
                 .where((_tlogh.asOfDate.goe(from)).and(_tlogh.asOfDate.loe(to)));
 
         Expression<Tuple> union = new MySQLQuery<Tuple>(getConnection()).union(query1, query2).as("x");
         SimplePath<String> placeRefCd = Expressions.path(String.class, "PLACE_REF_CD");
-        NumberPath<Double> val = Expressions.numberPath(Double.class, "val");
-        NumberExpression<Double> min = val.min().as("min");
-        NumberExpression<Double> max = val.max().as("max");
-        NumberExpression<Double> avg = val.avg().as("avg");
+        NumberExpression<Double> min = Expressions.numberPath(Double.class, "min").min().as("minValue");
+        NumberExpression<Double> max = Expressions.numberPath(Double.class, "max").max().as("maxValue");
+        NumberExpression<Double> avg = Expressions.numberPath(Double.class, "avg").avg().as("avgValue");
         List<Tuple> result = new MySQLQuery<Tuple>(getConnection()).select(placeRefCd,
                         min,
                         max,
@@ -114,18 +115,33 @@ public class LogDao implements Dao {
     }
 
 
-    public List<Tuple> retrieveForDay(Date from) {
+    public Iterable<HourAggregatedTemp> retrieveForDay(Date from) {
         DateExpression<Date> removeMinutes = Expressions.dateTemplate(Date.class, leaveoutminutes, _tlog.timestamp);
         DateExpression<Date> keepDayExp = Expressions.dateTemplate(Date.class, keepDay, _tlog.timestamp);
-        return new MySQLQuery<StringSetting>(getConnection())
+        NumberExpression<Double> min = _tlog.value.min().as("min");
+        NumberExpression<Double> max = _tlog.value.min().as("max");
+        NumberExpression<Double> avg = _tlog.value.avg().as(_tlog.value);
+        return Iterables.transform(new MySQLQuery<StringSetting>(getConnection())
                 .select(_tlog.placeRefCd,
                         removeMinutes.as(_tlog.timestamp),
-                        _tlog.value.avg().as(_tlog.value))
+                        avg,
+                        min,
+                        max)
                 .from(_tlog)
                 .where(keepDayExp.eq(Expressions.dateTemplate(Date.class, keepDay, from)).and(_tlog.placeRefCd.isNotNull()))
                 .groupBy(removeMinutes, _tlog.placeRefCd)
-                .orderBy(_tlog.timestamp.asc(), _tlog.placeRefCd.asc()).fetch();
+                .orderBy(_tlog.timestamp.asc(), _tlog.placeRefCd.asc()).fetch(),tuple->{
+            HourAggregatedTemp t = new HourAggregatedTemp();
+            t.min = tuple.get(min);
+            t.max = tuple.get(max);
+            t.avg = tuple.get(avg);
+            t.asOf = tuple.get(_tlog.timestamp);
+            t.measurePlace = tuple.get(_tlog.placeRefCd);
+            return t;
+        });
     }
+
+
 
     public List<String> listUnassignedDeviceIds() {
         return new MySQLQuery<StringSetting>(getConnection()).select(_tlog.devideId).distinct().from(_tlog).
@@ -177,7 +193,7 @@ public class LogDao implements Dao {
                         _tlog.value).from(_tlog).
                 where(_tlog.placeRefCd.eq(placeRefCd)).orderBy(_tlog.timestamp.desc()).fetchFirst();
         if (val == null) val = new MySQLQuery<StringSetting>(getConnection()).select(
-                        _tlogh.value).from(_tlogh).
+                        _tlogh.average).from(_tlogh).
                 where(_tlogh.placeRefCd.eq(placeRefCd)).orderBy(_tlogh.asOfDate.desc()).fetchFirst();
         return new BigDecimal(val).setScale(1, RoundingMode.HALF_UP).doubleValue();
     }
@@ -195,7 +211,7 @@ public class LogDao implements Dao {
                 ).orderBy(removeMinutes.desc()).fetchFirst();
         if (val == null) {
             val = new MySQLQuery<StringSetting>(getConnection()).select(
-                            _tlogh.value).from(_tlogh).
+                            _tlogh.average).from(_tlogh).
                     where(_tlogh.placeRefCd.eq(placeRefCd).and(_tlogh.asOfDate.goe(calendar.getTime()))
                             .and(_tlogh.asOfDate.loe(date))).orderBy(_tlogh.asOfDate.desc()).fetchFirst();
         }
@@ -214,11 +230,13 @@ public class LogDao implements Dao {
         this.connection = connection;
     }
 
-    public void moveToHistory(Date when, String place, Double value) {
+    public void moveToHistory(LogDao.HourAggregatedTemp record) {
         new SQLInsertClause(getConnection(), SQL_TEMPLATES, _tlogh)
-                .set(_tlogh.placeRefCd, place)
-                .set(_tlogh.asOfDate, when)
-                .set(_tlogh.value, value)
+                .set(_tlogh.placeRefCd, record.measurePlace)
+                .set(_tlogh.asOfDate, record.asOf)
+                .set(_tlogh.average, record.avg)
+                .set(_tlogh.minimum, record.min)
+                .set(_tlogh.maximum, record.max)
                 .execute();
     }
 
@@ -251,5 +269,13 @@ public class LogDao implements Dao {
         public String minute;
         public String message;
 
+    }
+
+    public static class HourAggregatedTemp{
+        public String measurePlace;
+        public Date asOf;
+        public double min;
+        public double max;
+        public double avg;
     }
 }

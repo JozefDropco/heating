@@ -1,2 +1,6 @@
-alter table `LONG_SETTING` modify VALUE long not null;
+alter table `TEMPERATURE_LOG_HISTORY`
+    add MIN_VALUE double ;
+alter table `TEMPERATURE_LOG_HISTORY`
+    add MAX_VALUE double;
+UPDATE `TEMPERATURE_LOG_HISTORY` SET MAX_VALUE=TEMP_VALUE, MIN_VALUE=TEMP_VALUE;
 

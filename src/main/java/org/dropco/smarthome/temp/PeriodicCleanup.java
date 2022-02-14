@@ -34,11 +34,10 @@ public class PeriodicCleanup {
                 currentCalendar.set(Calendar.MILLISECOND, 0);
                 while (lastDay.getTime().before(currentDate)) {
                     Db.acceptDao(new LogDao(), dao -> {
-                        List<Tuple> forDay = dao.retrieveForDay(lastDay.getTime());
-                        for (Tuple tuple : forDay) {
-                            Date when = tuple.get(LogDao._tlog.timestamp);
-                            if (when.before(currentCalendar.getTime())) {
-                                dao.moveToHistory(when, tuple.get(LogDao._tlog.placeRefCd), tuple.get(LogDao._tlog.value));
+                        Iterable<LogDao.HourAggregatedTemp> forDay = dao.retrieveForDay(lastDay.getTime());
+                        for (LogDao.HourAggregatedTemp record : forDay) {
+                            if (record.asOf.before(currentCalendar.getTime())) {
+                                dao.moveToHistory(record);
                             }
                         }
                     });
