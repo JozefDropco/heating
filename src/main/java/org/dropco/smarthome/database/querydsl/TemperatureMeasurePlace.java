@@ -1,5 +1,6 @@
 package org.dropco.smarthome.database.querydsl;
 
+import com.querydsl.core.types.dsl.NumberPath;
 import com.querydsl.core.types.dsl.StringPath;
 import com.querydsl.sql.ColumnMetadata;
 
@@ -22,6 +23,7 @@ public class TemperatureMeasurePlace extends com.querydsl.sql.RelationalPathBase
     public final StringPath placeRefCd = createString("placeRefCd");
 
     public final StringPath devideId = createString("deviceId");
+    public final NumberPath<Integer> orderId = createNumber("orderId",Integer.class);
 
     public final StringPath name = createString("name");
 
@@ -41,6 +43,7 @@ public class TemperatureMeasurePlace extends com.querydsl.sql.RelationalPathBase
         addMetadata(placeRefCd, ColumnMetadata.named("PLACE_REF_CD").withIndex(1).ofType(Types.VARCHAR).withSize(255).notNull());
         addMetadata(devideId, ColumnMetadata.named("DEVICE_ID").withIndex(2).ofType(Types.VARCHAR).withSize(255).withDigits(5).notNull());
         addMetadata(name, ColumnMetadata.named("NAME").withIndex(3).ofType(Types.VARCHAR).withSize(50).withDigits(5).notNull());
+        addMetadata(orderId, ColumnMetadata.named("ORDER_ID").withIndex(4).ofType(Types.INTEGER).withSize(50).withDigits(5).notNull());
     }
 
 }

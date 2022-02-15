@@ -95,7 +95,6 @@ public class LogDao implements Dao {
                         max,
                         avg).from(union)
                 .groupBy(placeRefCd)
-                .orderBy(new OrderSpecifier<>(Order.ASC, placeRefCd))
                 .fetch();
         return Lists.newArrayList(Iterables.transform(result, tuple -> {
             AggregateTemp temp = new AggregateTemp();
@@ -261,6 +260,15 @@ public class LogDao implements Dao {
         public double max;
         public double avg;
         public Double last;
+        public int orderId;
+
+        /***
+         * Gets the orderId
+         * @return
+         */
+        public int getOrderId() {
+            return orderId;
+        }
     }
 
     public static class AppMsg {

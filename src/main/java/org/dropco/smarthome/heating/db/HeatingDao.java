@@ -75,18 +75,20 @@ public class HeatingDao implements Dao {
                 .from(TEMP_MEASURE_PLACE).fetch();
     }
 
-    public void saveMeasurePlace(String name, String refCd, String deviceId) {
+    public void saveMeasurePlace(String name, String refCd, String deviceId, int orderId) {
         new SQLInsertClause(getConnection(), SQLTemplates.DEFAULT, TEMP_MEASURE_PLACE)
                 .set(TEMP_MEASURE_PLACE.devideId, deviceId)
                 .set(TEMP_MEASURE_PLACE.name, name)
                 .set(TEMP_MEASURE_PLACE.placeRefCd, refCd)
+                .set(TEMP_MEASURE_PLACE.orderId, orderId)
                 .execute();
     }
 
-    public void updateMeasurePlace(String name, String deviceId, String refCd) {
+    public void updateMeasurePlace(String name, String deviceId, String refCd, int orderId) {
         new SQLUpdateClause(getConnection(), SQLTemplates.DEFAULT, TEMP_MEASURE_PLACE)
                 .set(TEMP_MEASURE_PLACE.devideId, deviceId)
                 .set(TEMP_MEASURE_PLACE.name, name)
+                .set(TEMP_MEASURE_PLACE.orderId, orderId)
                 .where(TEMP_MEASURE_PLACE.placeRefCd.eq(refCd))
                 .execute();
     }

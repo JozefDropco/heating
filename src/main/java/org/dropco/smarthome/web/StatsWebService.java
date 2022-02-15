@@ -17,6 +17,8 @@ import javax.ws.rs.core.Response;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Logger;
@@ -47,13 +49,16 @@ public class StatsWebService {
             HeatingDao heatingDao = new HeatingDao();
             heatingDao.setConnection(logDao.getConnection());
             List<LogDao.AggregateTemp> temperatures = logDao.retrieveAggregatedTemperatures(from, finalTo);
-            fullStats.temps = temperatures;
             for (LogDao.AggregateTemp temp : temperatures) {
                 Tuple measurePlace = heatingDao.getMeasurePlaceByRefCd(temp.measurePlace);
                 temp.last = logDao.readLastValue(temp.measurePlace);
                 temp.measurePlace = measurePlace.get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.name);
+                temp.orderId = measurePlace.get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.orderId);
 
             }
+            Collections.sort(temperatures, Comparator.comparing(LogDao.AggregateTemp::getOrderId));
+            fullStats.temps = temperatures;
+
             StatsDao statsDao = new StatsDao();
             statsDao.setConnection(logDao.getConnection());
             List<StatsDao.AggregatedStats> aggregatedStats = statsDao.listAggregatedStats(from, finalTo);

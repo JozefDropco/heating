@@ -153,6 +153,7 @@ public class TempWebService {
             data.name = tuple.get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.name);
             data.refCd = tuple.get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.placeRefCd);
             data.deviceId = tuple.get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.devideId);
+            data.orderId = tuple.get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.orderId);
             result.add(data);
         }
         return Response.ok(new GsonBuilder().setDateFormat("MM-dd-yyyy HH:mm:ss z").create().toJson(result)).build();
@@ -174,7 +175,7 @@ public class TempWebService {
         MeasurePlace measurePlace = new Gson().fromJson(payload, MeasurePlace.class);
         String refCd = getRefCd(measurePlace.name);
         Db.acceptDao(new HeatingDao(), heatingDao -> {
-            heatingDao.saveMeasurePlace(measurePlace.name, refCd, measurePlace.deviceId);
+            heatingDao.saveMeasurePlace(measurePlace.name, refCd, measurePlace.deviceId,measurePlace.orderId);
             LogDao logDao = new LogDao();
             logDao.setConnection(heatingDao.getConnection());
             logDao.updateLogs(measurePlace.deviceId, refCd);
@@ -189,7 +190,7 @@ public class TempWebService {
     public Response editMeasurePlace(@PathParam("refCd") String refCd, String payload) {
         MeasurePlace measurePlace = new Gson().fromJson(payload, MeasurePlace.class);
         Db.acceptDao(new HeatingDao(), heatingDao -> {
-            heatingDao.updateMeasurePlace(measurePlace.name, measurePlace.deviceId, refCd);
+            heatingDao.updateMeasurePlace(measurePlace.name, measurePlace.deviceId, refCd,measurePlace.orderId);
             LogDao logDao = new LogDao();
             logDao.setConnection(heatingDao.getConnection());
             logDao.updateLogs(measurePlace.deviceId, refCd);
@@ -223,6 +224,7 @@ public class TempWebService {
         private String refCd;
         private String name;
         private String deviceId;
+        private int orderId;
     }
 
 
