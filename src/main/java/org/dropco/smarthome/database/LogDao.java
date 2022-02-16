@@ -118,7 +118,7 @@ public class LogDao implements Dao {
         DateExpression<Date> removeMinutes = Expressions.dateTemplate(Date.class, leaveoutminutes, _tlog.timestamp);
         DateExpression<Date> keepDayExp = Expressions.dateTemplate(Date.class, keepDay, _tlog.timestamp);
         NumberExpression<Double> min = _tlog.value.min().as("min");
-        NumberExpression<Double> max = _tlog.value.min().as("max");
+        NumberExpression<Double> max = _tlog.value.max().as("max");
         NumberExpression<Double> avg = _tlog.value.avg().as(_tlog.value);
         return Iterables.transform(new MySQLQuery<StringSetting>(getConnection())
                 .select(_tlog.placeRefCd,
