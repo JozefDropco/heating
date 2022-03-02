@@ -250,6 +250,9 @@ public class LogDao implements Dao {
         calendar.set(Calendar.MINUTE, 0);
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MILLISECOND, 0);
+        calendar.add(Calendar.DAY_OF_YEAR, -14);
+        new SQLDeleteClause(getConnection(), SQL_TEMPLATES, _alog).where(_alog.date.loe(calendar.getTime()).and(_alog.logLevel.eq("FINE"))).execute();
+        calendar.add(Calendar.DAY_OF_YEAR, 14);
         calendar.add(Calendar.MONTH, -2);
         new SQLDeleteClause(getConnection(), SQL_TEMPLATES, _alog).where(_alog.date.loe(calendar.getTime())).execute();
     }

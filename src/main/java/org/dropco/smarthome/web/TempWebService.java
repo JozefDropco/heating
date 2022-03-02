@@ -12,14 +12,27 @@ import org.dropco.smarthome.database.LogDao;
 import org.dropco.smarthome.database.querydsl.TemperatureMeasurePlace;
 import org.dropco.smarthome.heating.db.HeatingDao;
 
-import javax.ws.rs.*;
+import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
+import javax.ws.rs.GET;
+import javax.ws.rs.POST;
+import javax.ws.rs.PUT;
+import javax.ws.rs.Path;
+import javax.ws.rs.PathParam;
+import javax.ws.rs.Produces;
+import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.logging.Logger;
 
 @Path("/ws/temp")
@@ -56,7 +69,6 @@ public class TempWebService {
                     dataLastDate = data.x;
                 }
                 data.y = new BigDecimal(tuple.get(LogDao._tlog.value).toString()).setScale(1, RoundingMode.HALF_UP).doubleValue();
-                currSeries.data.add(data);
                 if (currDT == null) {
                     currDT = data.x;
                     tmpPlaces.remove(currSeries.placeRefCd);
@@ -71,6 +83,7 @@ public class TempWebService {
                         tmpPlaces.remove(currSeries.placeRefCd);
                     }
                 }
+                currSeries.data.add(data);
             }
             addMissingEntries(logDao, seriesMap, currDT, tmpPlaces, heatingDao);
             TempResult tempResult = new TempResult();
@@ -90,10 +103,11 @@ public class TempWebService {
             });
             Data dt = new Data();
             dt.x = currDT;
-            Double prevValue = logDao.readPreviousValue(series, currDT);
-            dt.y = (tmpSeries.data.isEmpty()) ? new BigDecimal(prevValue == null ? 0.0 : prevValue).setScale(1, RoundingMode.HALF_UP).doubleValue() :
-                    tmpSeries.data.get(tmpSeries.data.size() - 1).y;
-
+            if (tmpSeries.data.isEmpty()) {
+                Double prevValue = logDao.readPreviousValue(series, currDT);
+                dt.y = new BigDecimal(prevValue == null ? 0.0 : prevValue).setScale(1, RoundingMode.HALF_UP).doubleValue();
+            } else
+                dt.y = tmpSeries.data.get(tmpSeries.data.size() - 1).y;
             tmpSeries.data.add(dt);
         }
     }
@@ -175,7 +189,7 @@ public class TempWebService {
         MeasurePlace measurePlace = new Gson().fromJson(payload, MeasurePlace.class);
         String refCd = getRefCd(measurePlace.name);
         Db.acceptDao(new HeatingDao(), heatingDao -> {
-            heatingDao.saveMeasurePlace(measurePlace.name, refCd, measurePlace.deviceId,measurePlace.orderId);
+            heatingDao.saveMeasurePlace(measurePlace.name, refCd, measurePlace.deviceId, measurePlace.orderId);
             LogDao logDao = new LogDao();
             logDao.setConnection(heatingDao.getConnection());
             logDao.updateLogs(measurePlace.deviceId, refCd);
@@ -190,7 +204,7 @@ public class TempWebService {
     public Response editMeasurePlace(@PathParam("refCd") String refCd, String payload) {
         MeasurePlace measurePlace = new Gson().fromJson(payload, MeasurePlace.class);
         Db.acceptDao(new HeatingDao(), heatingDao -> {
-            heatingDao.updateMeasurePlace(measurePlace.name, measurePlace.deviceId, refCd,measurePlace.orderId);
+            heatingDao.updateMeasurePlace(measurePlace.name, measurePlace.deviceId, refCd, measurePlace.orderId);
             LogDao logDao = new LogDao();
             logDao.setConnection(heatingDao.getConnection());
             logDao.updateLogs(measurePlace.deviceId, refCd);
@@ -203,7 +217,7 @@ public class TempWebService {
     @Consumes(MediaType.APPLICATION_JSON)
     @Produces(MediaType.APPLICATION_JSON)
     public Response deleteMeasurePlace(@PathParam("refCd") String refCd) {
-        Db.acceptDao(new HeatingDao(), dao->dao.deleteMeasurePlace(refCd));
+        Db.acceptDao(new HeatingDao(), dao -> dao.deleteMeasurePlace(refCd));
         return Response.ok().build();
     }
 
