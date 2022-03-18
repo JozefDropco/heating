@@ -42,7 +42,7 @@ public class PeriodicCleanup {
                         }
                     });
                     Db.acceptDao(new LogDao(), dao -> {
-                        dao.deleteTempData(lastDay.getTime());
+//                        dao.deleteTempData(lastDay.getTime());
                     });
                     lastDay.add(Calendar.DAY_OF_YEAR, 1);
                 }
