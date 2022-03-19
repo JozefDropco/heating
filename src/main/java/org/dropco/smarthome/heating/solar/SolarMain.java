@@ -39,7 +39,6 @@ public class SolarMain {
     public static void start(SettingsDao settingsDao) {
         VERTICAL_MOVE_FEEDBACK.start(Main.pinManager.getInput(NORTH_SOUTH_MOVE_INDICATOR));
         HORIZONTAL_MOVE_FEEDBACK.start(Main.pinManager.getInput(EAST_WEST_MOVE_INDICATOR));
-        HeatingConfiguration.start();
         HORIZONTAL_MOVE.start();
         VERTICAL_MOVE.start();
         DayLight.setInstance(Main.pinManager.getInput(DAY_LIGHT_PIN_REF_CD), () -> Db.applyDao(new SettingsDao(), dao -> dao.getLong(LIGHT_THRESHOLD).intValue()));
