@@ -6,6 +6,7 @@ import org.dropco.smarthome.dto.NamedPort;
 import org.dropco.smarthome.heating.heater.Boiler;
 import org.dropco.smarthome.heating.heater.BoilerBlocker;
 import org.dropco.smarthome.heating.heater.Flame;
+import org.dropco.smarthome.heating.heater.HeatingConfiguration;
 import org.dropco.smarthome.heating.heater.HolidayMode;
 import org.dropco.smarthome.heating.pump.FireplaceCircularPump;
 import org.dropco.smarthome.heating.pump.HeaterCircularPump;

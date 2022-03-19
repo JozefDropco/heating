@@ -1,4 +1,4 @@
-package org.dropco.smarthome.heating.solar;
+package org.dropco.smarthome.heating.heater;
 
 import com.google.common.collect.Lists;
 import com.pi4j.io.gpio.GpioFactory;
@@ -33,6 +33,9 @@ public class HeatingConfiguration {
         SolarHeatingSchedule nextRecord = Db.applyDao(new HeatingDao(),HeatingDao::getNextRecord);
         LocalTime nextFromTime = nextRecord.getFromTime().plusSeconds(30);
         long sleepTime = LocalTime.now().until(nextFromTime, ChronoUnit.SECONDS);
+        if (sleepTime<0){
+            sleepTime+=24*60*60; //convert to next day
+        }
         EXECUTOR_SERVICE.schedule(HeatingConfiguration::start,sleepTime,TimeUnit.SECONDS);
     }
 

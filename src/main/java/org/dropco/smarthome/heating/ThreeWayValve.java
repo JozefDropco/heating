@@ -5,7 +5,7 @@ import com.google.common.util.concurrent.AtomicDouble;
 import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.heating.db.HeatingDao;
-import org.dropco.smarthome.heating.solar.HeatingConfiguration;
+import org.dropco.smarthome.heating.heater.HeatingConfiguration;
 import org.dropco.smarthome.temp.TempService;
 
 import java.util.Collections;

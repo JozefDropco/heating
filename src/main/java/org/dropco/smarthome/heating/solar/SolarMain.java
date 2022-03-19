@@ -5,6 +5,7 @@ import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.dto.NamedPort;
 import org.dropco.smarthome.heating.db.SolarSystemDao;
+import org.dropco.smarthome.heating.heater.HeatingConfiguration;
 import org.dropco.smarthome.heating.solar.move.*;
 import org.dropco.smarthome.heating.solar.move.horizontal.HorizontalMove;
 import org.dropco.smarthome.heating.solar.move.horizontal.HorizontalMoveFeedback;
