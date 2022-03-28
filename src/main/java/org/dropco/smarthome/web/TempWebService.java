@@ -1,5 +1,6 @@
 package org.dropco.smarthome.web;
 
+import com.google.common.collect.Comparators;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -27,8 +28,11 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -88,7 +92,9 @@ public class TempWebService {
             addMissingEntries(logDao, seriesMap, currDT, tmpPlaces, heatingDao);
             TempResult tempResult = new TempResult();
             tempResult.lastDate = dataLastDate;
-            tempResult.series = seriesMap.values();
+            List<Series> values = Lists.newArrayList(seriesMap.values());
+            Collections.sort(values,Comparator.comparing(Series::getName));
+            tempResult.series = values;
             return Response.ok(new GsonBuilder().setDateFormat("MM-dd-yyyy HH:mm:ss z").create().toJson(tempResult)).build();
         });
     }
@@ -251,6 +257,14 @@ public class TempWebService {
         String name;
         String placeRefCd;
         List<Data> data = Lists.newArrayList();
+
+        /***
+         * Gets the name
+         * @return
+         */
+        public String getName() {
+            return name;
+        }
 
         @Override
         public String toString() {
