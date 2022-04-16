@@ -4,6 +4,7 @@ import org.dropco.smarthome.dto.NamedPort;
 import org.dropco.smarthome.watering.db.WateringRecord;
 
 import java.util.Set;
+import java.util.concurrent.FutureTask;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -18,6 +19,7 @@ public class WateringJob implements Runnable {
 
     private static final Level LEVEL = Level.INFO;
 
+    private static Supplier<String> waterPumpPort;
     private static Supplier<Set<NamedPort>> zones;
     private static BiConsumer<String, Boolean> commandExecutor;
     private Thread thisThread;
@@ -50,10 +52,11 @@ public class WateringJob implements Runnable {
     @Override
     public void run() {
         thisThread = Thread.currentThread();
+        String waterPumpPort = WateringJob.waterPumpPort.get();
         long before = System.currentTimeMillis();
         try {
             RainSensor.subscribe(rainSubscriber);
-
+            commandExecutor.accept(waterPumpPort,true);
             set(record.getZoneRefCode(), !RainSensor.isRaining());
             closeOtherZones(record.getZoneRefCode());
             sleep(3);
@@ -71,6 +74,7 @@ public class WateringJob implements Runnable {
                 set(record.getZoneRefCode(), false);
             }
         } finally {
+            commandExecutor.accept(waterPumpPort,false);
             RainSensor.unsubscribe(rainSubscriber);
             WaterPumpFeedback.unsubscribe(pumpSubscriber);
         }
@@ -104,5 +108,7 @@ public class WateringJob implements Runnable {
         WateringJob.zones = zones;
     }
 
-
+    public static void setWaterPumpPort(Supplier<String> waterPumpPort) {
+        WateringJob.waterPumpPort = waterPumpPort;
+    }
 }

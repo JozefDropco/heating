@@ -13,6 +13,8 @@ import java.util.function.Supplier;
 
 public class WateringMain {
 
+    private static final String WATERING_PUMP_PORT = "WATERING_PUMP_PORT";
+
     public static void main(SettingsDao settingsDao) {
         WaterPumpFeedback.start( Main.pinManager.getInput(WaterPumpFeedback.getMicroServicePinKey()));
         RainSensor.start( Main.pinManager.getInput(RainSensor.getMicroServicePinKey()));
@@ -26,6 +28,7 @@ public class WateringMain {
         new WateringScheduler().schedule();
         addToStatsCollector(activeZones);
         WateringJob.setZones(getActiveZones);
+        Db.applyDao(new SettingsDao(), dao->dao.getString(WATERING_PUMP_PORT));
     }
 
     private static void addToStatsCollector(Set<NamedPort> activeZones) {
