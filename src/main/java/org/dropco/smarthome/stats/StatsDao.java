@@ -55,7 +55,7 @@ public class StatsDao implements Dao {
         List<Tuple> result = new MySQLQuery<StringSetting>(getConnection()).select(_s.name,
                 cnt,
                 sum
-        ).from(_s).where(_s.fromDate.goe(from).and(_s.fromDate.loe(to)))
+        ).from(_s).where(_s.fromDate.goe(from).and(_s.fromDate.loe(to)),diff.gt(0))
                 .groupBy(_s.name)
                 .orderBy(_s.name.asc()).fetch();
         return Lists.transform(result,tmp->{
