@@ -43,7 +43,7 @@ public class PinManagerImpl implements PinManager {
         getOutput(key).setState(value);
     }
 
-    GpioPinDigitalOutput getOutput(GpioProvider extendedProvider, Class<? extends PinProvider> pinClass, String key) {
+    GpioPinDigitalOutput getOutput(GpioProvider provider, Class<? extends PinProvider> pinClass, String key) {
         String pinName = Db.applyDao(new SettingsDao(), dao -> dao.getString(key));
         GpioPinDigitalOutput output = outputMap.get(pinName);
         if (output == null) {
@@ -57,7 +57,8 @@ public class PinManagerImpl implements PinManager {
             } catch (NoSuchMethodException e) {
                 e.printStackTrace();
             }
-            output = gpio.provisionDigitalOutputPin(extendedProvider, pin, key, PinState.LOW);
+            System.out.println(key+ "=" +pin);
+            output = gpio.provisionDigitalOutputPin(provider, pin, key, PinState.LOW);
             outputMap.put(pinName, output);
         }
         return output;
