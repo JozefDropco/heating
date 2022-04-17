@@ -24,25 +24,24 @@ public class WateringMain {
         });
         Supplier<Set<NamedPort>> getActiveZones = ()-> Db.applyDao(new WateringDao(), WateringDao::getActiveZones);
         Set<NamedPort> activeZones = getActiveZones.get();
-        String wateringPumpPort = Db.applyDao(new SettingsDao(), dao -> dao.getString(WATERING_PUMP_PORT));
-        configureServiceMode(activeZones,wateringPumpPort);
+        configureServiceMode(activeZones);
         new WateringScheduler().schedule();
-        addToStatsCollector(activeZones,wateringPumpPort);
+        addToStatsCollector(activeZones);
         WateringJob.setZones(getActiveZones);
-        WateringJob.setWaterPumpPort(()-> wateringPumpPort);
+        WateringJob.setWaterPumpPort(()-> WATERING_PUMP_PORT);
     }
 
-    private static void addToStatsCollector(Set<NamedPort> activeZones, String wateringPumpPort) {
+    private static void addToStatsCollector(Set<NamedPort> activeZones) {
         activeZones.forEach(port-> {
             StatsCollector.getInstance().collect(port.getName(), Main.pinManager.getOutput(port.getRefCd()));
         });
-        StatsCollector.getInstance().collect("Čerpadlo zavlažovania", Main.pinManager.getOutput(wateringPumpPort));
+        StatsCollector.getInstance().collect("Čerpadlo zavlažovania", Main.pinManager.getOutput(WATERING_PUMP_PORT));
     }
 
-    private static void configureServiceMode(Set<NamedPort> activeZones, String wateringPumpPort) {
+    private static void configureServiceMode(Set<NamedPort> activeZones) {
         ServiceMode.addInput(new NamedPort(WaterPumpFeedback.getMicroServicePinKey(), "Stav čerpadla"), () ->  Main.pinManager.getInput(WaterPumpFeedback.getMicroServicePinKey()).getState() == WaterPumpFeedback.LOGICAL_HIGH_STATE);
         ServiceMode.addInput(new NamedPort(RainSensor.getMicroServicePinKey(), "Dažďový senzor"), () ->  Main.pinManager.getInput(RainSensor.getMicroServicePinKey()).getState() == RainSensor.RAIN_STATE);
-        ServiceMode.addOutput(new NamedPort(wateringPumpPort, "Čerpadlo zavlažovania"), Main.pinManager::getOutput);
+        ServiceMode.addOutput(new NamedPort(WATERING_PUMP_PORT, "Čerpadlo zavlažovania"), Main.pinManager::getOutput);
         ServiceMode.addSubsriber(state-> {if (state) WateringThreadManager.stop();});
         activeZones.forEach(port-> {
             ServiceMode.addOutput(port, Main.pinManager::getOutput);
