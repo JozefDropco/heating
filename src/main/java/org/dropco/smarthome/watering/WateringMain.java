@@ -25,6 +25,7 @@ public class WateringMain {
         Supplier<Set<NamedPort>> getActiveZones = ()-> Db.applyDao(new WateringDao(), WateringDao::getActiveZones);
         Set<NamedPort> activeZones = getActiveZones.get();
         String wateringPumpPort = Db.applyDao(new SettingsDao(), dao -> dao.getString(WATERING_PUMP_PORT));
+        System.out.println("Watering port pump: "+wateringPumpPort);
         configureServiceMode(activeZones,wateringPumpPort);
         new WateringScheduler().schedule();
         addToStatsCollector(activeZones,wateringPumpPort);
