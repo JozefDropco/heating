@@ -2,7 +2,6 @@ package org.dropco.smarthome.heating.heater;
 
 import com.google.common.collect.Lists;
 import com.pi4j.io.gpio.GpioPinDigitalInput;
-import com.pi4j.io.gpio.Pin;
 import com.pi4j.io.gpio.PinPullResistance;
 import com.pi4j.io.gpio.PinState;
 import com.pi4j.io.gpio.event.GpioPinDigitalStateChangeEvent;
@@ -33,8 +32,11 @@ public class Boiler {
 
     public void start() {
         input.setPullResistance(PinPullResistance.PULL_UP);
-        input.addListener(new PulseInputGpioListener(PinState.LOW, 2000, input) {
-            public  void handleStateChange(boolean state) {
+        input.setDebounce(5000);
+        input.addListener(new GpioPinListenerDigital() {
+            @Override
+            public void handleGpioPinDigitalStateChangeEvent(GpioPinDigitalStateChangeEvent gpioPinDigitalStateChangeEvent) {
+                boolean state = gpioPinDigitalStateChangeEvent.getState()==PinState.LOW;
                 if (state) {
                     if (Boiler.this.state.compareAndSet(false, state)) {
                         subscribers.forEach(sub -> sub.accept(state));
