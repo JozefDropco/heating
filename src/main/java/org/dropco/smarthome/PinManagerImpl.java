@@ -57,7 +57,6 @@ public class PinManagerImpl implements PinManager {
             } catch (NoSuchMethodException e) {
                 e.printStackTrace();
             }
-            System.out.println(key+ "=" +pin);
             output = gpio.provisionDigitalOutputPin(provider, pin, key, PinState.LOW);
             outputMap.put(pinName, output);
         }
