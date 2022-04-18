@@ -29,6 +29,7 @@ public class WateringMain {
         addToStatsCollector(activeZones);
         WateringJob.setZones(getActiveZones);
         WateringJob.setWaterPumpPort(()-> WATERING_PUMP_PORT);
+        WateringJob.setSleepBeforeCloseOfWaterPump(()-> Db.applyDao(new SettingsDao(), dao->dao.getLong("WATERING_PUMP_SLEEP_BEFORE_CLOSE")));
     }
 
     private static void addToStatsCollector(Set<NamedPort> activeZones) {

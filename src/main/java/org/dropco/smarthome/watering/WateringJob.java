@@ -4,7 +4,6 @@ import org.dropco.smarthome.dto.NamedPort;
 import org.dropco.smarthome.watering.db.WateringRecord;
 
 import java.util.Set;
-import java.util.concurrent.FutureTask;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -20,6 +19,7 @@ public class WateringJob implements Runnable {
     private static final Level LEVEL = Level.INFO;
 
     private static Supplier<String> waterPumpPort;
+    private static Supplier<Long> sleepBeforeCloseOfWaterPump;
     private static Supplier<Set<NamedPort>> zones;
     private static BiConsumer<String, Boolean> commandExecutor;
     private Thread thisThread;
@@ -56,9 +56,9 @@ public class WateringJob implements Runnable {
         long before = System.currentTimeMillis();
         try {
             RainSensor.subscribe(rainSubscriber);
-            commandExecutor.accept(waterPumpPort,true);
             set(record.getZoneRefCode(), !RainSensor.isRaining());
             closeOtherZones(record.getZoneRefCode());
+            commandExecutor.accept(waterPumpPort, true);
             sleep(3);
             if (!WaterPumpFeedback.getRunning()) {
                 LOGGER.log(Level.INFO, "Čerpadlo nebeží, vypínam zónu " + record.getName());
@@ -70,15 +70,20 @@ public class WateringJob implements Runnable {
         } catch (InterruptedException ex) {
             if (!WaterPumpFeedback.getRunning()) {
                 int elapsedSeconds = Math.abs((int) ((System.currentTimeMillis() - before) / 1000));
-                WateringThreadManager.tryReschedule(record,elapsedSeconds);
+                WateringThreadManager.tryReschedule(record, elapsedSeconds);
                 set(record.getZoneRefCode(), false);
             }
         } finally {
-            commandExecutor.accept(waterPumpPort,false);
             RainSensor.unsubscribe(rainSubscriber);
             WaterPumpFeedback.unsubscribe(pumpSubscriber);
+            try {
+                Thread.sleep(1000 * sleepBeforeCloseOfWaterPump.get());
+            } catch (InterruptedException e) {
+                LOGGER.log(Level.SEVERE, "Sleep interrupted");
+            } finally {
+                commandExecutor.accept(waterPumpPort, false);
+            }
         }
-
     }
 
 
@@ -110,5 +115,9 @@ public class WateringJob implements Runnable {
 
     public static void setWaterPumpPort(Supplier<String> waterPumpPort) {
         WateringJob.waterPumpPort = waterPumpPort;
+    }
+
+    public static void setSleepBeforeCloseOfWaterPump(Supplier<Long> sleepBeforeCloseOfWaterPump) {
+        WateringJob.sleepBeforeCloseOfWaterPump = sleepBeforeCloseOfWaterPump;
     }
 }
