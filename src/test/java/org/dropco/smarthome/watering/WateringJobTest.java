@@ -68,7 +68,6 @@ public class WateringJobTest {
         record.setZoneRefCode("1");
         record.setTimeInSeconds(10);
         WateringThreadManager.stop();
-        WateringJob.setWaterPumpPort(()-> "dd");
         WateringJob.setZones(()->Sets.newHashSet(new NamedPort("1","1"),new NamedPort("2","2"),new NamedPort("3","3")));
         RainSensor.start(input1);
         PROVIDER.setState(input1.getPin(), PinState.LOW);
@@ -93,7 +92,6 @@ public class WateringJobTest {
         record.setRetryMinute(10);
         record.setZoneRefCode("1");
         record.setTimeInSeconds(180);
-        WateringJob.setWaterPumpPort(()-> "dd");
         WateringJob.setZones(()->Sets.newHashSet(new NamedPort("1","1"),new NamedPort("2","2"),new NamedPort("3","3")));
         RainSensor.start(input1);
         PROVIDER.setState(input1.getPin(), PinState.LOW);
@@ -119,7 +117,6 @@ public class WateringJobTest {
         record.setRetryMinute(10);
         record.setZoneRefCode("zone1");
         WateringJob job = new WateringJob(record);
-        WateringJob.setWaterPumpPort(()-> "dd");
         WateringJob.setZones(()->Sets.newHashSet(new NamedPort("zone1","1"),new NamedPort("zone2","2"),new NamedPort("zone3","3")));
         BiConsumer<String, Boolean> cmdExecutor = new CmdExecutor();
         BiConsumer<String, Boolean> commandExecutor = spy(cmdExecutor);
@@ -139,7 +136,6 @@ public class WateringJobTest {
         record.setRetryMinute(10);
         record.setZoneRefCode("zone1");
         WateringJob job = new WateringJob(record);
-        WateringJob.setWaterPumpPort(()-> "dd");
         WateringJob.setZones(()->Sets.newHashSet(new NamedPort("zone1","1"),new NamedPort("zone2","2"),new NamedPort("zone3","3")));
         BiConsumer<String, Boolean> cmdExecutor = new CmdExecutor();
         BiConsumer<String, Boolean> commandExecutor = spy(cmdExecutor);
@@ -163,7 +159,6 @@ public class WateringJobTest {
         PROVIDER.setState(input1.getPin(), PinState.LOW);
         WaterPumpFeedback.start(input2);
         PROVIDER.setState(input2.getPin(), PinState.HIGH);
-        WateringJob.setWaterPumpPort(()-> "dd");
         WateringJob.setZones(()->Sets.newHashSet(new NamedPort("zone1","1"),new NamedPort("zone2","2"),new NamedPort("zone3","3")));
         BiConsumer<String, Boolean> cmdExecutor = new CmdExecutor();
         BiConsumer<String, Boolean> commandExecutor = spy(cmdExecutor);
