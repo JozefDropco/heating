@@ -18,8 +18,6 @@ public class WateringJob implements Runnable {
 
     private static final Level LEVEL = Level.INFO;
 
-    private static Supplier<String> waterPumpPort;
-    private static Supplier<Long> sleepBeforeCloseOfWaterPump;
     private static Supplier<Set<NamedPort>> zones;
     private static BiConsumer<String, Boolean> commandExecutor;
     private Thread thisThread;
@@ -52,13 +50,11 @@ public class WateringJob implements Runnable {
     @Override
     public void run() {
         thisThread = Thread.currentThread();
-        String waterPumpPort = WateringJob.waterPumpPort.get();
         long before = System.currentTimeMillis();
         try {
             RainSensor.subscribe(rainSubscriber);
             set(record.getZoneRefCode(), !RainSensor.isRaining());
             closeOtherZones(record.getZoneRefCode());
-            commandExecutor.accept(waterPumpPort, true);
             sleep(3);
             if (!WaterPumpFeedback.getRunning()) {
                 LOGGER.log(Level.INFO, "Čerpadlo nebeží, vypínam zónu " + record.getName());
@@ -76,13 +72,6 @@ public class WateringJob implements Runnable {
         } finally {
             RainSensor.unsubscribe(rainSubscriber);
             WaterPumpFeedback.unsubscribe(pumpSubscriber);
-            try {
-                Thread.sleep(1000 * sleepBeforeCloseOfWaterPump.get());
-            } catch (InterruptedException e) {
-                LOGGER.log(Level.SEVERE, "Sleep interrupted");
-            } finally {
-                commandExecutor.accept(waterPumpPort, false);
-            }
         }
     }
 
@@ -113,11 +102,4 @@ public class WateringJob implements Runnable {
         WateringJob.zones = zones;
     }
 
-    public static void setWaterPumpPort(Supplier<String> waterPumpPort) {
-        WateringJob.waterPumpPort = waterPumpPort;
-    }
-
-    public static void setSleepBeforeCloseOfWaterPump(Supplier<Long> sleepBeforeCloseOfWaterPump) {
-        WateringJob.sleepBeforeCloseOfWaterPump = sleepBeforeCloseOfWaterPump;
-    }
 }
