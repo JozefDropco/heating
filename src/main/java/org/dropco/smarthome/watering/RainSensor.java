@@ -22,6 +22,7 @@ public class RainSensor {
     public static void start(GpioPinDigitalInput input) {
         StatsCollector.getInstance().collect("Dážď",input,RAIN_STATE);
         raining.set(input.getState() == RAIN_STATE);
+        input.setDebounce(3000);
         input.addListener(new DelayedGpioPinListener(RAIN_STATE,10000,input) {
                               @Override
                               public void handleStateChange(boolean state) {
