@@ -9,6 +9,7 @@ import org.dropco.smarthome.heating.solar.StrongWind;
 import org.dropco.smarthome.temp.TempService;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -18,8 +19,8 @@ public class SolarPanel {
 
     private static String T1_MEASURE_PLACE;
     private static String T2_MEASURE_PLACE;
-    private static double T1_SOLAR_THRESHOLD = 0;
-    private static double T2_WATER_THRESHOLD = 0;
+    private static Supplier<Double> T1_SOLAR_THRESHOLD;
+    private static Supplier<Double> T2_WATER_THRESHOLD;
 
     private final SolarPanelStateManager panelStateManager;
 
@@ -28,12 +29,12 @@ public class SolarPanel {
     }
 
     public void start() {
-        Db.acceptDao(new SettingsDao(), dao -> {
-            T1_MEASURE_PLACE = dao.getString("T1_MEASURE_PLACE");
-            T2_MEASURE_PLACE = dao.getString("T2_MEASURE_PLACE");
-            T1_SOLAR_THRESHOLD = dao.getDouble("T1_SOLAR_THRESHOLD");
-            T2_WATER_THRESHOLD = dao.getDouble("T2_WATER_THRESHOLD");
-        });
+        T1_MEASURE_PLACE =  Db.applyDao(new SettingsDao(), dao ->dao.getString("T1_MEASURE_PLACE"));
+        T2_MEASURE_PLACE =  Db.applyDao(new SettingsDao(), dao ->dao.getString("T2_MEASURE_PLACE"));
+        T1_SOLAR_THRESHOLD =  ()->Db.applyDao(new SettingsDao(), dao ->dao.getDouble("T1_SOLAR_THRESHOLD"));
+        T2_WATER_THRESHOLD =  ()->Db.applyDao(new SettingsDao(), dao ->dao.getDouble("T2_WATER_THRESHOLD"));
+
+
         DayLight.inst().subscribe((state) -> {
             if (state)
                 panelStateManager.add(SolarPanelStateManager.Event.DAY_LIGHT_REACHED);
@@ -41,7 +42,7 @@ public class SolarPanel {
         String deviceIdT1 = getDeviceId(T1_MEASURE_PLACE);
         TempService.subscribe(deviceIdT1, value -> {
             LOGGER.fine(T1_MEASURE_PLACE + " teplota je " + value);
-            if (value > T1_SOLAR_THRESHOLD) {
+            if (value > T1_SOLAR_THRESHOLD.get()) {
                 panelStateManager.add(SolarPanelStateManager.Event.PANEL_OVERHEATED);
             } else {
                 panelStateManager.remove(SolarPanelStateManager.Event.PANEL_OVERHEATED);
@@ -50,7 +51,7 @@ public class SolarPanel {
         String deviceIdT2 = getDeviceId(T2_MEASURE_PLACE);
         TempService.subscribe(deviceIdT2, value -> {
             LOGGER.fine(T2_MEASURE_PLACE + " teplota je " + value);
-            if (value > T2_WATER_THRESHOLD) {
+            if (value > T2_WATER_THRESHOLD.get()) {
                 panelStateManager.add(SolarPanelStateManager.Event.WATER_OVERHEATED);
             } else {
                 panelStateManager.remove(SolarPanelStateManager.Event.WATER_OVERHEATED);

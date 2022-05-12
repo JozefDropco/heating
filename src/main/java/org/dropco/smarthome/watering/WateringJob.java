@@ -55,13 +55,13 @@ public class WateringJob implements Runnable {
             RainSensor.subscribe(rainSubscriber);
             set(record.getZoneRefCode(), !RainSensor.isRaining());
             closeOtherZones(record.getZoneRefCode());
-            sleep(3);
+            sleep(5);
             if (!WaterPumpFeedback.getRunning()) {
                 LOGGER.log(Level.INFO, "Čerpadlo nebeží, vypínam zónu " + record.getName());
                 thisThread.interrupt();
             }
             WaterPumpFeedback.subscribe(pumpSubscriber);
-            sleep(record.getTimeInSeconds() - 3);
+            sleep(record.getTimeInSeconds() - 5);
             set(record.getZoneRefCode(), false);
         } catch (InterruptedException ex) {
             if (!WaterPumpFeedback.getRunning()) {

@@ -67,6 +67,7 @@ public class SolarPanelStateManager {
     }
 
     public void add(Event event, boolean emitEvents) {
+        LOGGER.log(Level.FINE, "Adding event " + event + " to "+currentEvents+". Emit="+emitEvents);
         if (currentEvents.add(event)) {
             updateEvents();
             switch (event) {
@@ -90,6 +91,7 @@ public class SolarPanelStateManager {
     }
 
     public void remove(Event event) {
+        LOGGER.log(Level.FINE, "Removing event " + event + " from "+currentEvents);
         if (currentEvents.remove(event)) {
             updateEvents();
             switch (event) {
