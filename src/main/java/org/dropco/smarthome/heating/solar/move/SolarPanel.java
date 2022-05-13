@@ -21,6 +21,8 @@ public class SolarPanel {
     private static String T2_MEASURE_PLACE;
     private static Supplier<Double> T1_SOLAR_THRESHOLD;
     private static Supplier<Double> T2_WATER_THRESHOLD;
+    private static Supplier<Double> T1_T2_DIFF_TEMP;
+    private static Supplier<Double> T2_WARM_WATER_TEMP;
 
     private final SolarPanelStateManager panelStateManager;
 
@@ -33,6 +35,8 @@ public class SolarPanel {
         T2_MEASURE_PLACE =  Db.applyDao(new SettingsDao(), dao ->dao.getString("T2_MEASURE_PLACE"));
         T1_SOLAR_THRESHOLD =  ()->Db.applyDao(new SettingsDao(), dao ->dao.getDouble("T1_SOLAR_THRESHOLD"));
         T2_WATER_THRESHOLD =  ()->Db.applyDao(new SettingsDao(), dao ->dao.getDouble("T2_WATER_THRESHOLD"));
+        T1_T2_DIFF_TEMP =  ()->Db.applyDao(new SettingsDao(), dao ->dao.getDouble("T1_T2_DIFF_TEMP"));
+        T2_WARM_WATER_TEMP =  ()->Db.applyDao(new SettingsDao(), dao ->dao.getDouble("T2_WARM_WATER_TEMP"));
 
 
         DayLight.inst().subscribe((state) -> {
@@ -40,17 +44,34 @@ public class SolarPanel {
                 panelStateManager.add(SolarPanelStateManager.Event.DAY_LIGHT_REACHED);
         });
         String deviceIdT1 = getDeviceId(T1_MEASURE_PLACE);
+        String deviceIdT2 = getDeviceId(T2_MEASURE_PLACE);
         TempService.subscribe(deviceIdT1, value -> {
             LOGGER.fine(T1_MEASURE_PLACE + " teplota je " + value);
+            double t2temp = TempService.getTemperature(deviceIdT2);
+            if ((value-t2temp)>=T1_T2_DIFF_TEMP.get()){
+                panelStateManager.add(SolarPanelStateManager.Event.SOLAR_PUMP_MALFUNCTION);
+            } else {
+                panelStateManager.remove(SolarPanelStateManager.Event.SOLAR_PUMP_MALFUNCTION);
+            }
             if (value > T1_SOLAR_THRESHOLD.get()) {
                 panelStateManager.add(SolarPanelStateManager.Event.PANEL_OVERHEATED);
             } else {
                 panelStateManager.remove(SolarPanelStateManager.Event.PANEL_OVERHEATED);
             }
         });
-        String deviceIdT2 = getDeviceId(T2_MEASURE_PLACE);
         TempService.subscribe(deviceIdT2, value -> {
             LOGGER.fine(T2_MEASURE_PLACE + " teplota je " + value);
+            double t1temp = TempService.getTemperature(deviceIdT1);
+            if (value>T2_WARM_WATER_TEMP.get()){
+                panelStateManager.add(SolarPanelStateManager.Event.WARM_WATER);
+            } else {
+                panelStateManager.remove(SolarPanelStateManager.Event.WARM_WATER);
+            }
+            if ((t1temp-value)>=T1_T2_DIFF_TEMP.get()){
+                panelStateManager.add(SolarPanelStateManager.Event.SOLAR_PUMP_MALFUNCTION);
+            } else {
+                panelStateManager.remove(SolarPanelStateManager.Event.SOLAR_PUMP_MALFUNCTION);
+            }
             if (value > T2_WATER_THRESHOLD.get()) {
                 panelStateManager.add(SolarPanelStateManager.Event.WATER_OVERHEATED);
             } else {

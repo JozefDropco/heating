@@ -67,7 +67,7 @@ public class SolarPanelStateManager {
     }
 
     public void add(Event event, boolean emitEvents) {
-        LOGGER.log(Level.FINE, "Adding event " + event + " to "+currentEvents+". Emit="+emitEvents);
+        LOGGER.log(Level.FINE, "Adding event " + event + " to " + currentEvents + ". Emit=" + emitEvents);
         if (currentEvents.add(event)) {
             updateEvents();
             switch (event) {
@@ -76,7 +76,8 @@ public class SolarPanelStateManager {
                     break;
                 case PANEL_OVERHEATED:
                 case WATER_OVERHEATED:
-                    if (emitEvents) overheated();
+                case SOLAR_PUMP_MALFUNCTION:
+                    if (emitEvents) runAwayFromSunPosition();
                     break;
                 case DAY_LIGHT_REACHED:
                     if (emitEvents) nextTick();
@@ -85,13 +86,14 @@ public class SolarPanelStateManager {
                     if (emitEvents && !ServiceMode.isServiceMode()) {
                         mover.moveTo("PARKING_POSITION", Movement.WEST, Movement.NORTH);
                     }
+                default:
             }
 
         }
     }
 
     public void remove(Event event) {
-        LOGGER.log(Level.FINE, "Removing event " + event + " from "+currentEvents);
+        LOGGER.log(Level.FINE, "Removing event " + event + " from " + currentEvents);
         if (currentEvents.remove(event)) {
             updateEvents();
             switch (event) {
@@ -102,6 +104,8 @@ public class SolarPanelStateManager {
                 case PARKING_POSITION:
                 case PANEL_OVERHEATED:
                 case WATER_OVERHEATED:
+                case SOLAR_PUMP_MALFUNCTION:
+                case WARM_WATER:
                     nextTick();
                     break;
                 default:
@@ -111,23 +115,27 @@ public class SolarPanelStateManager {
 
     public void nextTick() {
         if (!currentEvents.contains(Event.PARKING_POSITION)) {
-            if (!(currentEvents.contains(Event.PANEL_OVERHEATED) || currentEvents.contains(Event.WATER_OVERHEATED))) {
+            if (!(currentEvents.contains(Event.PANEL_OVERHEATED) || currentEvents.contains(Event.WATER_OVERHEATED) || currentEvents.contains(Event.SOLAR_PUMP_MALFUNCTION))) {
                 if (!ServiceMode.isServiceMode())
                     calculatePosition().ifPresent(step -> {
                         if (step.getPosition() != null) {
                             if (step.getPosition() instanceof ParkPosition) {
                                 add(Event.PARKING_POSITION);
-                            } else
-                                mover.moveTo(step.getHour() + ":" + step.getMinute(), step.getPosition());
+                            } else {
+                                if (currentEvents.contains(Event.WARM_WATER))
+                                    mover.moveTo("WARM_WATER", null, Movement.SOUTH);
+                                else
+                                    mover.moveTo(step.getHour() + ":" + step.getMinute(), step.getPosition());
+                            }
                         }
                     });
             } else {
-                overheated();
+                runAwayFromSunPosition();
             }
         }
     }
 
-    private void overheated() {
+    private void runAwayFromSunPosition() {
         if (!ServiceMode.isServiceMode())
             if (!currentEvents.contains(Event.PARKING_POSITION)) {
                 if (TimeUtil.isAfternoon(getCurrentTime(), afternoonTime)) {
@@ -147,8 +155,8 @@ public class SolarPanelStateManager {
                 public Void process(DeltaPosition deltaPos) {
                     if (TimeUtil.isAfter(getCurrentTime(), step.getHour(), step.getMinute()))
                         while (count[0] > 0 && deltaPos.getVerticalCount() < 0) {
-                                deltaPos.setVerticalCount(deltaPos.getVerticalCount()+1);
-                                count[0]--;
+                            deltaPos.setVerticalCount(deltaPos.getVerticalCount() + 1);
+                            count[0]--;
                         }
                     return null;
                 }
@@ -268,10 +276,12 @@ public class SolarPanelStateManager {
 
     public enum Event {
         STRONG_WIND,
+        WARM_WATER,
         WATER_OVERHEATED,
         PANEL_OVERHEATED,
         DAY_LIGHT_REACHED,
-        PARKING_POSITION;
+        PARKING_POSITION,
+        SOLAR_PUMP_MALFUNCTION;
     }
 
     public static class Record {

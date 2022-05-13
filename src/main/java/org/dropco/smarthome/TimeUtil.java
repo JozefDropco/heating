@@ -25,7 +25,7 @@ public class TimeUtil {
         String[] split = afternoonTime.split(":");
         calculatedTime.set(Calendar.HOUR_OF_DAY, Integer.parseInt(split[0]));
         calculatedTime.set(Calendar.MINUTE, Integer.parseInt(split[1]));
-        return calculatedTime.after(currentTime);
+        return currentTime.after(calculatedTime);
     }
 
     public static long milisRemaingForNextDay() {

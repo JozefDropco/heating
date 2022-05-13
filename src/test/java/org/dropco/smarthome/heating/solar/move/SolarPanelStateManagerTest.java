@@ -3,9 +3,13 @@ package org.dropco.smarthome.heating.solar.move;
 import com.google.common.collect.Lists;
 import com.google.common.reflect.TypeToken;
 import com.google.gson.Gson;
-import org.dropco.smarthome.TimeUtil;
 import org.dropco.smarthome.heating.solar.SolarSerializer;
-import org.dropco.smarthome.heating.solar.dto.*;
+import org.dropco.smarthome.heating.solar.dto.AbsolutePosition;
+import org.dropco.smarthome.heating.solar.dto.DeltaPosition;
+import org.dropco.smarthome.heating.solar.dto.Position;
+import org.dropco.smarthome.heating.solar.dto.PositionProcessor;
+import org.dropco.smarthome.heating.solar.dto.SolarPanelStep;
+import org.dropco.smarthome.heating.solar.dto.SolarSchedule;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
@@ -18,6 +22,7 @@ import java.util.function.Consumer;
 public class SolarPanelStateManagerTest {
 
     public static final String AFTERNOON_TIME = "13:10";
+
     @Test
     public void daylightReached() {
         MockedMover mover = new MockedMover();
@@ -32,8 +37,8 @@ public class SolarPanelStateManagerTest {
             }
         };
         SolarSchedule solarSchedule = getSolarSchedule();
-        SolarPanelStateManager manager = new SolarPanelStateManager(AFTERNOON_TIME,  mover, () -> null, () -> solarSchedule, recentSolarScheduleUpdater, () -> "[]", currentEventsUpdater
-        ){
+        SolarPanelStateManager manager = new SolarPanelStateManager(AFTERNOON_TIME, mover, () -> null, () -> solarSchedule, recentSolarScheduleUpdater, () -> "['DAY_LIGHT_REACHED']", currentEventsUpdater
+        ) {
             @Override
             protected Calendar getCurrentTime() {
                 Calendar currentTime = super.getCurrentTime();
@@ -42,12 +47,12 @@ public class SolarPanelStateManagerTest {
                 return currentTime;
             }
         };
-        manager.calculatePosition();
-        mover.lastPosition.invoke(new PositionProcessor<Object>() {
+        Position position = manager.calculatePosition().get().getPosition();
+        position.invoke(new PositionProcessor<Object>() {
             @Override
             public Object process(AbsolutePosition absPos) {
-                Assert.assertEquals(8, absPos.getHorizontal());
-                Assert.assertEquals(8, absPos.getVertical());
+                Assert.assertEquals(10, absPos.getHorizontal());
+                Assert.assertEquals(10, absPos.getVertical());
                 return null;
             }
 
@@ -58,6 +63,7 @@ public class SolarPanelStateManagerTest {
             }
         });
     }
+
     @Test
     public void strongWind() {
         MockedMover mover = new MockedMover();
@@ -108,7 +114,7 @@ public class SolarPanelStateManagerTest {
         DeltaPosition deltaPosition = (DeltaPosition) updatedSchedule.getSteps().get(1).getPosition();
         Assert.assertEquals(0, deltaPosition.getVerticalCount());
         deltaPosition = (DeltaPosition) updatedSchedule.getSteps().get(2).getPosition();
-        Assert.assertEquals(0, deltaPosition.getVerticalCount());
+        Assert.assertEquals(-2, deltaPosition.getVerticalCount());
         deltaPosition = (DeltaPosition) updatedSchedule.getSteps().get(3).getPosition();
         Assert.assertEquals(-1, deltaPosition.getVerticalCount());
     }
@@ -130,13 +136,13 @@ public class SolarPanelStateManagerTest {
         SolarPanelStateManager manager = new SolarPanelStateManager("13:10", mover, () -> null, () -> solarSchedule, recentSolarScheduleUpdater, () -> "[\"STRONG_WIND\"]", currentEventsUpdater
         );
         manager.remove(SolarPanelStateManager.Event.STRONG_WIND);
-        Assert.assertNull(mover.lastPosition);
+        Assert.assertEquals(0, ((DeltaPosition) mover.lastPosition).getVerticalCount());
+        Assert.assertEquals(0, ((DeltaPosition) mover.lastPosition).getHorizontalCount());
     }
 
     @Test
     public void overheated() {
         MockedMover mover = new MockedMover();
-        AbsolutePosition current = new AbsolutePosition(10, 10);
         Consumer<String> recentSolarScheduleUpdater = (Consumer<String>) s -> {
             System.out.println("SolarSchedule: " + s);
         };
@@ -148,25 +154,19 @@ public class SolarPanelStateManagerTest {
         };
         SolarSchedule solarSchedule = getSolarSchedule();
         SolarPanelStateManager manager = new SolarPanelStateManager(AFTERNOON_TIME, mover, () -> null, () -> solarSchedule, recentSolarScheduleUpdater, () -> null, currentEventsUpdater
-        );
+        ) {
+            @Override
+            protected Calendar getCurrentTime() {
+                Calendar currentTime = super.getCurrentTime();
+                currentTime.set(Calendar.HOUR_OF_DAY, 21);
+                return currentTime;
+            }
+        };
         manager.add(SolarPanelStateManager.Event.PANEL_OVERHEATED);
-        mover.lastPosition.invoke(new PositionProcessor<Object>() {
-            @Override
-            public Object process(AbsolutePosition absPos) {
-                if (TimeUtil.isAfternoon(Calendar.getInstance(), AFTERNOON_TIME)) {
-                    Assert.assertEquals(10, absPos.getHorizontal());
-                } else
-                    Assert.assertEquals(0, absPos.getHorizontal());
-                Assert.assertEquals(10, absPos.getVertical());
-                return null;
-            }
 
-            @Override
-            public Object process(DeltaPosition deltaPos) {
-                Assert.fail();
-                return null;
-            }
-        });
+        Assert.assertEquals(Movement.EAST, mover.horizontal);
+        Assert.assertEquals(Movement.SOUTH, mover.vertical);
+
     }
 
     @Test
@@ -183,8 +183,17 @@ public class SolarPanelStateManagerTest {
             }
         };
         SolarSchedule solarSchedule = getSolarSchedule();
-        SolarPanelStateManager manager = new SolarPanelStateManager(AFTERNOON_TIME, mover, () -> null, () -> solarSchedule, recentSolarScheduleUpdater, () -> "[\"PANEL_OVERHEATED\"]", currentEventsUpdater
-        );
+        SolarPanelStateManager manager = new SolarPanelStateManager(AFTERNOON_TIME, mover, () -> null, () -> solarSchedule, recentSolarScheduleUpdater, () -> "[\"PANEL_OVERHEATED\",'DAY_LIGHT_REACHED" +
+                "']", currentEventsUpdater
+        ){
+            @Override
+            protected Calendar getCurrentTime() {
+                Calendar currentTime = super.getCurrentTime();
+                currentTime.set(Calendar.HOUR_OF_DAY,8);
+                currentTime.set(Calendar.MINUTE,20);
+                return currentTime;
+            }
+        };
         manager.remove(SolarPanelStateManager.Event.PANEL_OVERHEATED);
         mover.lastPosition.invoke(new PositionProcessor<Object>() {
             @Override
@@ -217,11 +226,12 @@ public class SolarPanelStateManagerTest {
         };
         SolarSchedule solarSchedule = getSolarSchedule();
         SolarPanelStateManager manager = new SolarPanelStateManager(AFTERNOON_TIME, mover, () -> null, () -> solarSchedule, recentSolarScheduleUpdater, () -> "[\"PANEL_OVERHEATED\",\"DAY_LIGHT_REACHED\"]", currentEventsUpdater
-        ){
+        ) {
             @Override
             protected Calendar getCurrentTime() {
                 Calendar currentTime = super.getCurrentTime();
-                currentTime.set(Calendar.HOUR_OF_DAY,15);
+                currentTime.set(Calendar.HOUR_OF_DAY, 15);
+                currentTime.set(Calendar.MINUTE, 45);
                 return currentTime;
             }
         };
@@ -229,8 +239,8 @@ public class SolarPanelStateManagerTest {
         mover.lastPosition.invoke(new PositionProcessor<Object>() {
             @Override
             public Object process(AbsolutePosition absPos) {
-                Assert.assertEquals(6, absPos.getHorizontal());
-                Assert.assertEquals(6, absPos.getVertical());
+                Assert.assertEquals(10, absPos.getHorizontal());
+                Assert.assertEquals(2, absPos.getVertical());
                 return null;
             }
 
@@ -293,7 +303,7 @@ public class SolarPanelStateManagerTest {
         DeltaPosition deltaPosition = (DeltaPosition) updatedSchedule.getSteps().get(1).getPosition();
         Assert.assertEquals(0, deltaPosition.getVerticalCount());
         deltaPosition = (DeltaPosition) updatedSchedule.getSteps().get(2).getPosition();
-        Assert.assertEquals(0, deltaPosition.getVerticalCount());
+        Assert.assertEquals(-2, deltaPosition.getVerticalCount());
         deltaPosition = (DeltaPosition) updatedSchedule.getSteps().get(3).getPosition();
         Assert.assertEquals(-1, deltaPosition.getVerticalCount());
     }
@@ -352,7 +362,7 @@ public class SolarPanelStateManagerTest {
         deltaPosition = (DeltaPosition) updatedSchedule.getSteps().get(2).getPosition();
         Assert.assertEquals(0, deltaPosition.getVerticalCount());
         deltaPosition = (DeltaPosition) updatedSchedule.getSteps().get(3).getPosition();
-        Assert.assertEquals(0, deltaPosition.getVerticalCount());
+        Assert.assertEquals(-1, deltaPosition.getVerticalCount());
         deltaPosition = (DeltaPosition) updatedSchedule.getSteps().get(4).getPosition();
         Assert.assertEquals(1, deltaPosition.getVerticalCount());
     }
@@ -393,6 +403,8 @@ public class SolarPanelStateManagerTest {
 
     private class MockedMover implements Mover {
         Position lastPosition;
+        Movement horizontal;
+        Movement vertical;
 
         @Override
         public void moveTo(String movementRefCd, Position position) {
@@ -406,12 +418,14 @@ public class SolarPanelStateManagerTest {
 
         @Override
         public void moveTo(String movementRefCd, Movement horizontal, Movement vertical) {
-            System.out.println("Move to ref-cd="+movementRefCd+" "+horizontal.getPinRefCd()+", " +vertical.getPinRefCd());
+            System.out.println("Move to ref-cd=" + movementRefCd + " " + horizontal.getPinRefCd() + ", " + vertical.getPinRefCd());
+            this.horizontal = horizontal;
+            this.vertical = vertical;
         }
 
         @Override
         public void moveTo(Movement movement, boolean state) {
-            System.out.println("Move to mover - "+movement.getPinRefCd()+", state="+state);
+            System.out.println("Move to mover - " + movement.getPinRefCd() + ", state=" + state);
         }
     }
 }
