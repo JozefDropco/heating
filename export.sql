@@ -1,3 +1,15 @@
-INSERT INTO heating.long_setting (REF_CD, VALUE, MODIFIED_TS, `GROUP`, DESCRIPTION, VALUE_TYPE)
-VALUES ('WATERING_PUMP_SLEEP_BEFORE_CLOSE', 5, '2022-04-18 20:25:22', 'Zavlažovanie',
-        'Koľko sekúnd sa má počkať pred vypnutím čerpadla zavložovania ', 'number');
+UPDATE `HEATING`.`DOUBLE_SETTING` t
+SET t.VALUE_TYPE = 'number'
+WHERE t.REF_CD LIKE 'T1#_SOLAR#_THRESHOLD' ESCAPE '#';
+
+UPDATE `HEATING`.`DOUBLE_SETTING` t
+SET t.VALUE_TYPE = 'number'
+WHERE t.REF_CD LIKE 'T2#_WATER#_THRESHOLD' ESCAPE '#';
+
+INSERT INTO `HEATING`.`DOUBLE_SETTING` (REF_CD, VALUE, MODIFIED_TS, `GROUP`, DESCRIPTION, VALUE_TYPE)
+VALUES ('T1_T2_DIFF_TEMP', 30, '2021-04-21 21:28:53', 'Kúrenie',
+        'Rozdiel teplôt T1 a T2 pri ktorej sa má považovať čerpadlo za nefunkčné', 'number');
+
+INSERT INTO `HEATING`.`DOUBLE_SETTING` (REF_CD, VALUE, MODIFIED_TS, `GROUP`, DESCRIPTION, VALUE_TYPE)
+VALUES ('T2_WARM_WATER_TEMP', 45, '2021-04-21 21:28:53', 'Kúrenie', 'Teplota kedy je dostatočne teplá voda', 'number');
+
