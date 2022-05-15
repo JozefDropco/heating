@@ -18,6 +18,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
@@ -29,6 +30,7 @@ public class SolarPanelStateManager {
     private final Mover mover;
     private final Set<Event> currentEvents = Collections.synchronizedSet(Sets.newHashSet());
     private String afternoonTime;
+    private AtomicBoolean beforeFirstMove = new AtomicBoolean(true);
     private AtomicReference<SolarSchedule> todaysSchedule = new AtomicReference<>();
     private Supplier<SolarSchedule> solarScheduleSupplier;
     private Consumer<String> recentSolarScheduleUpdater;
@@ -63,7 +65,11 @@ public class SolarPanelStateManager {
     }
 
     public void add(Event event) {
-        add(event, true);
+        if (event == Event.WARM_WATER) {
+          if (beforeFirstMove.get())   add(event, true);
+        } else
+            add(event, true);
+
     }
 
     public void add(Event event, boolean emitEvents) {
@@ -105,7 +111,6 @@ public class SolarPanelStateManager {
                 case PANEL_OVERHEATED:
                 case WATER_OVERHEATED:
                 case SOLAR_PUMP_MALFUNCTION:
-                case WARM_WATER:
                     nextTick();
                     break;
                 default:
@@ -119,6 +124,7 @@ public class SolarPanelStateManager {
                 if (!ServiceMode.isServiceMode())
                     calculatePosition().ifPresent(step -> {
                         if (step.getPosition() != null) {
+                            beforeFirstMove.set(false);
                             if (step.getPosition() instanceof ParkPosition) {
                                 add(Event.PARKING_POSITION);
                             } else {
@@ -245,6 +251,7 @@ public class SolarPanelStateManager {
     public void dailyReset() {
         currentEvents.clear();
         updateEvents();
+        beforeFirstMove.set(true);
         todaysSchedule.set(solarScheduleSupplier.get());
         updateSchedule();
     }

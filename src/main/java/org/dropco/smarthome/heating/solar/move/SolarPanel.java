@@ -64,8 +64,6 @@ public class SolarPanel {
             double t1temp = TempService.getTemperature(deviceIdT1);
             if (value>T2_WARM_WATER_TEMP.get()){
                 panelStateManager.add(SolarPanelStateManager.Event.WARM_WATER);
-            } else {
-                panelStateManager.remove(SolarPanelStateManager.Event.WARM_WATER);
             }
             if ((t1temp-value)>=T1_T2_DIFF_TEMP.get()){
                 panelStateManager.add(SolarPanelStateManager.Event.SOLAR_PUMP_MALFUNCTION);
