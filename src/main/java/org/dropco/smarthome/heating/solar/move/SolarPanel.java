@@ -31,12 +31,12 @@ public class SolarPanel {
     }
 
     public void start() {
-        T1_MEASURE_PLACE =  Db.applyDao(new SettingsDao(), dao ->dao.getString("T1_MEASURE_PLACE"));
-        T2_MEASURE_PLACE =  Db.applyDao(new SettingsDao(), dao ->dao.getString("T2_MEASURE_PLACE"));
-        T1_SOLAR_THRESHOLD =  ()->Db.applyDao(new SettingsDao(), dao ->dao.getDouble("T1_SOLAR_THRESHOLD"));
-        T2_WATER_THRESHOLD =  ()->Db.applyDao(new SettingsDao(), dao ->dao.getDouble("T2_WATER_THRESHOLD"));
-        T1_T2_DIFF_TEMP =  ()->Db.applyDao(new SettingsDao(), dao ->dao.getDouble("T1_T2_DIFF_TEMP"));
-        T2_WARM_WATER_TEMP =  ()->Db.applyDao(new SettingsDao(), dao ->dao.getDouble("T2_WARM_WATER_TEMP"));
+        T1_MEASURE_PLACE = Db.applyDao(new SettingsDao(), dao -> dao.getString("T1_MEASURE_PLACE"));
+        T2_MEASURE_PLACE = Db.applyDao(new SettingsDao(), dao -> dao.getString("T2_MEASURE_PLACE"));
+        T1_SOLAR_THRESHOLD = () -> Db.applyDao(new SettingsDao(), dao -> dao.getDouble("T1_SOLAR_THRESHOLD"));
+        T2_WATER_THRESHOLD = () -> Db.applyDao(new SettingsDao(), dao -> dao.getDouble("T2_WATER_THRESHOLD"));
+        T1_T2_DIFF_TEMP = () -> Db.applyDao(new SettingsDao(), dao -> dao.getDouble("T1_T2_DIFF_TEMP"));
+        T2_WARM_WATER_TEMP = () -> Db.applyDao(new SettingsDao(), dao -> dao.getDouble("T2_WARM_WATER_TEMP"));
 
 
         DayLight.inst().subscribe((state) -> {
@@ -48,7 +48,7 @@ public class SolarPanel {
         TempService.subscribe(deviceIdT1, value -> {
             LOGGER.fine(T1_MEASURE_PLACE + " teplota je " + value);
             double t2temp = TempService.getTemperature(deviceIdT2);
-            if ((value-t2temp)>=T1_T2_DIFF_TEMP.get()){
+            if ((value - t2temp) >= T1_T2_DIFF_TEMP.get()) {
                 panelStateManager.add(SolarPanelStateManager.Event.SOLAR_PUMP_MALFUNCTION);
             } else {
                 panelStateManager.remove(SolarPanelStateManager.Event.SOLAR_PUMP_MALFUNCTION);
@@ -62,10 +62,12 @@ public class SolarPanel {
         TempService.subscribe(deviceIdT2, value -> {
             LOGGER.fine(T2_MEASURE_PLACE + " teplota je " + value);
             double t1temp = TempService.getTemperature(deviceIdT1);
-            if (value>T2_WARM_WATER_TEMP.get()){
+            if (value > T2_WARM_WATER_TEMP.get()) {
                 panelStateManager.add(SolarPanelStateManager.Event.WARM_WATER);
+            } else {
+                panelStateManager.remove(SolarPanelStateManager.Event.WARM_WATER);
             }
-            if ((t1temp-value)>=T1_T2_DIFF_TEMP.get()){
+            if ((t1temp - value) >= T1_T2_DIFF_TEMP.get()) {
                 panelStateManager.add(SolarPanelStateManager.Event.SOLAR_PUMP_MALFUNCTION);
             } else {
                 panelStateManager.remove(SolarPanelStateManager.Event.SOLAR_PUMP_MALFUNCTION);
@@ -94,14 +96,14 @@ public class SolarPanel {
             }
         });
         ticker();
-        if (DayLight.inst().enoughLight()) panelStateManager.add(SolarPanelStateManager.Event.DAY_LIGHT_REACHED,false);
-        if (StrongWind.isWindy()) panelStateManager.add(SolarPanelStateManager.Event.STRONG_WIND,false);
+        if (DayLight.inst().enoughLight()) panelStateManager.add(SolarPanelStateManager.Event.DAY_LIGHT_REACHED, false);
+        if (StrongWind.isWindy()) panelStateManager.add(SolarPanelStateManager.Event.STRONG_WIND, false);
         panelStateManager.nextTick();
     }
 
     private void ticker() {
         Optional<SolarPanelStateManager.Record> nextStep = panelStateManager.calculatePosition();
-        if (!nextStep.isPresent())LOGGER.log(Level.CONFIG,"Žiadny ďaľší posun na tento deň");
+        if (!nextStep.isPresent()) LOGGER.log(Level.CONFIG, "Žiadny ďaľší posun na tento deň");
         nextStep.ifPresent(step -> {
             if (step.getNextMoveHour() != null) {
                 TimerService.scheduleFor("Solar - ďalší posun", step.getNextMoveHour(), step.getNextMoveMinute(), () -> {
@@ -109,7 +111,7 @@ public class SolarPanel {
                     ticker();
                 });
             } else {
-                LOGGER.log(Level.CONFIG,"Žiadny ďaľší posun na tento deň");
+                LOGGER.log(Level.CONFIG, "Žiadny ďaľší posun na tento deň");
             }
         });
     }
