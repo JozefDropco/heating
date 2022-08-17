@@ -66,7 +66,7 @@ public class SolarPanelStateManager {
 
     public void add(Event event) {
         if (event == Event.WARM_WATER) {
-          if (beforeFirstMove.get())   add(event, true);
+            if (beforeFirstMove.get()) add(event, true);
         } else
             add(event, true);
 
@@ -119,26 +119,26 @@ public class SolarPanelStateManager {
     }
 
     public void nextTick() {
-        if (!currentEvents.contains(Event.PARKING_POSITION)) {
-            if (!(currentEvents.contains(Event.PANEL_OVERHEATED) || currentEvents.contains(Event.WATER_OVERHEATED) || currentEvents.contains(Event.SOLAR_PUMP_MALFUNCTION))) {
-                if (!ServiceMode.isServiceMode())
-                    calculatePosition().ifPresent(step -> {
-                        if (step.getPosition() != null) {
-                            beforeFirstMove.set(false);
-                            if (step.getPosition() instanceof ParkPosition) {
-                                add(Event.PARKING_POSITION);
-                            } else {
+        if (!ServiceMode.isServiceMode())
+            if (!currentEvents.contains(Event.PARKING_POSITION)) {
+                calculatePosition().ifPresent(step -> {
+                    if (step.getPosition() != null) {
+                        beforeFirstMove.set(false);
+                        if (step.getPosition() instanceof ParkPosition) {
+                            add(Event.PARKING_POSITION);
+                        } else {
+                            if (!(currentEvents.contains(Event.PANEL_OVERHEATED) || currentEvents.contains(Event.WATER_OVERHEATED) || currentEvents.contains(Event.SOLAR_PUMP_MALFUNCTION))) {
                                 if (currentEvents.contains(Event.WARM_WATER))
                                     mover.moveTo("WARM_WATER", null, Movement.SOUTH);
                                 else
                                     mover.moveTo(step.getHour() + ":" + step.getMinute(), step.getPosition());
+                            } else {
+                                runAwayFromSunPosition();
                             }
                         }
-                    });
-            } else {
-                runAwayFromSunPosition();
+                    }
+                });
             }
-        }
     }
 
     private void runAwayFromSunPosition() {
