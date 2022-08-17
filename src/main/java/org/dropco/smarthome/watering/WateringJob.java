@@ -67,9 +67,9 @@ public class WateringJob implements Runnable {
             if (!WaterPumpFeedback.getRunning()) {
                 int elapsedSeconds = Math.abs((int) ((System.currentTimeMillis() - before) / 1000));
                 WateringThreadManager.tryReschedule(record, elapsedSeconds);
-                set(record.getZoneRefCode(), false);
             }
         } finally {
+            set(record.getZoneRefCode(), false);
             RainSensor.unsubscribe(rainSubscriber);
             WaterPumpFeedback.unsubscribe(pumpSubscriber);
         }
