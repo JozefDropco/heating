@@ -50,7 +50,7 @@ public class SolarPanel {
         TempService.subscribe(deviceIdT1, value -> {
             LOGGER.fine(T1_MEASURE_PLACE + " teplota je " + value);
             double t2temp = TempService.getTemperature(deviceIdT2);
-            if ((value - t2temp) >= T1_T2_DIFF_TEMP.get()) {
+            if ((value - t2temp) >= T1_T2_DIFF_TEMP.get() && panelStateManager.has(SolarPanelStateManager.Event.WATER_OVERHEATED)) {
                 panelStateManager.add(SolarPanelStateManager.Event.SOLAR_PUMP_MALFUNCTION);
             } else {
                 panelStateManager.remove(SolarPanelStateManager.Event.SOLAR_PUMP_MALFUNCTION);
@@ -73,15 +73,15 @@ public class SolarPanel {
                         && overheatedDiff >T2_WARM_WATER_DIFF_TEMP.get())
                 panelStateManager.remove(SolarPanelStateManager.Event.WARM_WATER);
             }
-            if ((t1temp - value) >= T1_T2_DIFF_TEMP.get()) {
-                panelStateManager.add(SolarPanelStateManager.Event.SOLAR_PUMP_MALFUNCTION);
-            } else {
-                panelStateManager.remove(SolarPanelStateManager.Event.SOLAR_PUMP_MALFUNCTION);
-            }
             if (value > T2_WATER_THRESHOLD.get()) {
                 panelStateManager.add(SolarPanelStateManager.Event.WATER_OVERHEATED);
             } else {
                 panelStateManager.remove(SolarPanelStateManager.Event.WATER_OVERHEATED);
+            }
+            if ((t1temp - value) >= T1_T2_DIFF_TEMP.get() && panelStateManager.has(SolarPanelStateManager.Event.WATER_OVERHEATED)) {
+                panelStateManager.add(SolarPanelStateManager.Event.SOLAR_PUMP_MALFUNCTION);
+            } else {
+                panelStateManager.remove(SolarPanelStateManager.Event.SOLAR_PUMP_MALFUNCTION);
             }
         });
         Runnable runnable = new Runnable() {
