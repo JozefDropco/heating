@@ -55,9 +55,11 @@ public class BoilerBlocker implements Runnable {
     }
 
     private void normalFunctioning() {
-        if (holidayMode.get() && state.compareAndSet(false, true)) {
-            LOGGER.info("Ohrev nádoby na vodu blokovaný pre prázdninový mód");
-            commandExecutor.accept(BOILER_BLOCK_PIN, true);
+        if (holidayMode.get()) {
+            if (state.compareAndSet(false, true)) {
+                LOGGER.fine("Ohrev nádoby na vodu blokovaný pre prázdninový mód");
+                commandExecutor.accept(BOILER_BLOCK_PIN, true);
+            }
         } else {
             if (SolarCircularPump.getState() && ThreeWayValve.getState() && state.compareAndSet(false, true)) {
                 LOGGER.fine("Ohrev nádoby na vodu pomocou soláru, blokujem kotol");

@@ -283,6 +283,7 @@ public class MainTest {
     @Test
     public void run() throws Exception {
         Logger.getGlobal().setLevel(Level.FINE);
+        System.setProperty("html","C:\\SRDEV\\projects\\heating\\resources");
         Main.main(new String[]{"--heating","--solar"});
     }
 }
