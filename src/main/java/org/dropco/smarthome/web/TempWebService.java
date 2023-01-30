@@ -64,7 +64,9 @@ public class TempWebService {
                 Series currSeries = seriesMap.computeIfAbsent(tuple.get(LogDao._tlog.placeRefCd), key -> {
                     Series series = new Series();
                     series.placeRefCd = key;
-                    series.name = heatingDao.getMeasurePlaceByRefCd(key).get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.name);
+                    Tuple measurePlaceByRefCd = heatingDao.getMeasurePlaceByRefCd(key);
+                    series.name = measurePlaceByRefCd.get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.name);
+                    series.orderId = measurePlaceByRefCd.get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.orderId);
                     return series;
                 });
                 Data data = new Data();
@@ -93,7 +95,7 @@ public class TempWebService {
             TempResult tempResult = new TempResult();
             tempResult.lastDate = dataLastDate;
             List<Series> values = Lists.newArrayList(seriesMap.values());
-            Collections.sort(values,Comparator.comparing(Series::getName));
+            Collections.sort(values,Comparator.comparing(Series::getOrderId));
             tempResult.series = values;
             return Response.ok(new GsonBuilder().setDateFormat("MM-dd-yyyy HH:mm:ss z").create().toJson(tempResult)).build();
         });
@@ -104,7 +106,9 @@ public class TempWebService {
             Series tmpSeries = seriesMap.computeIfAbsent(series, key -> {
                 Series tmp = new Series();
                 tmp.placeRefCd = key;
-                tmp.name = heatingDao.getMeasurePlaceByRefCd(key).get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.name);
+                Tuple measurePlaceByRefCd = heatingDao.getMeasurePlaceByRefCd(key);
+                tmp.name = measurePlaceByRefCd.get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.name);
+                tmp.orderId = measurePlaceByRefCd.get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.orderId);
                 return tmp;
             });
             Data dt = new Data();
@@ -145,7 +149,9 @@ public class TempWebService {
                 Series currSeries = seriesMap.computeIfAbsent(tuple.get(LogDao._tlog.placeRefCd), key -> {
                     Series series = new Series();
                     series.placeRefCd = key;
-                    series.name = heatingDao.getMeasurePlaceByRefCd(key).get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.name);
+                    Tuple measurePlaceByRefCd = heatingDao.getMeasurePlaceByRefCd(key);
+                    series.name = measurePlaceByRefCd.get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.name);
+                    series.orderId = measurePlaceByRefCd.get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.orderId);
                     return series;
                 });
                 Data data = new Data();
@@ -157,7 +163,9 @@ public class TempWebService {
                 currSeries.data.add(data);
             }
             tempResult.lastDate = dataLastDate;
-            tempResult.series = seriesMap.values();
+            List<Series> values = Lists.newArrayList(seriesMap.values());
+            Collections.sort(values,Comparator.comparing(Series::getOrderId));
+            tempResult.series = values;
         });
         return Response.ok(new GsonBuilder().setDateFormat("MM-dd-yyyy HH:mm:ss z").create().toJson(tempResult)).build();
     }
@@ -254,6 +262,7 @@ public class TempWebService {
     }
 
     private static class Series {
+        public int orderId;
         String name;
         String placeRefCd;
         List<Data> data = Lists.newArrayList();
@@ -264,6 +273,10 @@ public class TempWebService {
          */
         public String getName() {
             return name;
+        }
+
+        public int getOrderId() {
+            return orderId;
         }
 
         @Override
