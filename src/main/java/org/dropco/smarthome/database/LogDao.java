@@ -214,6 +214,7 @@ public class LogDao implements Dao {
                     where(_tlogh.placeRefCd.eq(placeRefCd).and(_tlogh.asOfDate.goe(calendar.getTime()))
                             .and(_tlogh.asOfDate.loe(date))).orderBy(_tlogh.asOfDate.desc()).fetchFirst();
         }
+        if (val == null) return 0.0;
         return new BigDecimal(val).setScale(1, RoundingMode.HALF_UP).doubleValue();
     }
 
