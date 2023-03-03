@@ -1,6 +1,8 @@
 package org.dropco.smarthome.heating;
 
+import org.dropco.smarthome.EmulatedOutput;
 import org.dropco.smarthome.Main;
+import org.dropco.smarthome.PinOutput;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.dto.NamedPort;
 import org.dropco.smarthome.heating.heater.Boiler;
@@ -48,9 +50,9 @@ public class HeatingMain {
 
     private static void configureServiceMode() {
         ServiceMode.addInput(new NamedPort(HEATER_CIRCULAR_REF_CD, "Kúrenie chod čerpadla"), () -> HeaterCircularPump.getState());
-        ServiceMode.addOutput(new NamedPort(CIRCULAR_PUMP_PORT, "Kolektory - obehové čerpadlo"), key -> Main.pinManager.getOutput(key));
-        ServiceMode.addOutput(new NamedPort(THREE_WAY_PORT, "3-cestný ventil"), key -> Main.pinManager.getOutput(key));
-//        ServiceMode.addOutput(new NamedPort(BOILER_BLOCK_PIN, "Blokovanie ohrevu TA3"), key -> BoilerBlocker.boilerBlockerRelay..pinManager.getOutput(key));
+        ServiceMode.addOutput(new NamedPort(CIRCULAR_PUMP_PORT, "Kolektory - obehové čerpadlo"), key -> new PinOutput(key,Main.pinManager::getOutput));
+        ServiceMode.addOutput(new NamedPort(THREE_WAY_PORT, "3-cestný ventil"), key -> new PinOutput(key,Main.pinManager::getOutput));
+        ServiceMode.addOutput(new NamedPort("BOILER_BLOCK_PIN", "Blokovanie ohrevu TA3"), key -> new EmulatedOutput(BoilerBlocker::getState, BoilerBlocker::setState));
         ServiceMode.addInput(new NamedPort(Flame.HEATER_FLAME_REF_CD, "Horák plynového kotla"), () -> Flame.getState());
         ServiceMode.addInput(new NamedPort(Boiler.HEATER_BOILER_FEC_CD, "Ohrev TA3 plynovým kotlom"), () -> Boiler.getState());
     }
@@ -80,7 +82,7 @@ public class HeatingMain {
             });
 
         });
-//        StatsCollector.getInstance().collect("Blokovanie ohrevu TA3", BoilerBlocker.Main.pinManager.getOutput(BOILER_BLOCK_PIN));
+        StatsCollector.getInstance().collect("Blokovanie ohrevu TA3", BoilerBlocker.getState(), countStats->BoilerBlocker.addSubscriber(countStats));
         StatsCollector.getInstance().collect("Horák plynového kotla", Flame.getState(), countStats -> Flame.addSubscriber(countStats));
         StatsCollector.getInstance().collect("Kúrenie chod čerpadla", HeaterCircularPump.getState(), countStats -> HeaterCircularPump.addSubscriber(countStats));
         StatsCollector.getInstance().collect("Ohrev TA3 plynovým kotlom", Boiler.getState(), countStats -> Boiler.addSubscriber(countStats));

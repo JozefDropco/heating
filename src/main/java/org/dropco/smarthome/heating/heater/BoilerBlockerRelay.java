@@ -18,7 +18,6 @@ public class BoilerBlockerRelay {
 
     public BoilerBlockerRelay(BiConsumer<String, Boolean> commandExecutor) {
         this.commandExecutor = commandExecutor;
-        commandExecutor.accept(BOILER_BLOCK_PIN7,false);
     }
 
 

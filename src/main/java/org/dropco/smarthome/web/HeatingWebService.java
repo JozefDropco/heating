@@ -147,7 +147,7 @@ public class HeatingWebService extends ServiceModeWebService {
 
     @Override
     protected boolean getOutputState(String portRefCd) {
-        return ServiceMode.getPort(portRefCd).getState().isHigh();
+        return ServiceMode.getPort(portRefCd).getState();
     }
 
     @Override

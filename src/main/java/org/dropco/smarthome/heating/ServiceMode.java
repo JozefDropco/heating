@@ -5,6 +5,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import com.pi4j.io.gpio.GpioPinDigitalOutput;
+import org.dropco.smarthome.ServiceOutput;
 import org.dropco.smarthome.dto.NamedPort;
 
 import java.util.*;
@@ -18,7 +19,7 @@ public class ServiceMode {
     private static final Set<NamedPort> outputs = new LinkedHashSet<>();
     private static final Set<NamedPort> inputs = new LinkedHashSet<>();
     private static final Map<String,NamedPort> namedPortMap = new HashMap<>();
-    private static final Map<String, Function<String, GpioPinDigitalOutput>> outputGetterMap = new HashMap<>();
+    private static final Map<String, Function<String, ServiceOutput>> outputGetterMap = new HashMap<>();
     private static final Map<String, Supplier<Boolean>> inputStateGetterMap = new HashMap<>();
     private static final Multimap<String,String> exclusions = Multimaps.newListMultimap(Maps.newHashMap(), ArrayList::new);
     private static final List<Consumer<Boolean>> subscribers = Collections.synchronizedList(Lists.newArrayList());
@@ -41,7 +42,7 @@ public class ServiceMode {
         return Collections.unmodifiableSet(outputs);
     }
 
-    public static  void addOutput(NamedPort port, Function<String, GpioPinDigitalOutput> portGetter) {
+    public static  void addOutput(NamedPort port, Function<String, ServiceOutput> portGetter) {
         outputs.add(port);
         namedPortMap.put(port.getRefCd(),port);
         outputGetterMap.put(port.getRefCd(),portGetter);
@@ -73,7 +74,7 @@ public class ServiceMode {
      * Gets the digitalOutput
      * @return
      */
-    public static GpioPinDigitalOutput getPort(String refCd) {
+    public static ServiceOutput getPort(String refCd) {
         return outputGetterMap.get(refCd).apply(refCd);
     }
     /***

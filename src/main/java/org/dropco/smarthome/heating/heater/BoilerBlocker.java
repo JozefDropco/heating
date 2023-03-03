@@ -1,14 +1,18 @@
 package org.dropco.smarthome.heating.heater;
 
+import com.google.common.collect.Lists;
 import org.dropco.smarthome.TimerService;
 import org.dropco.smarthome.heating.ServiceMode;
 import org.dropco.smarthome.heating.pump.SolarCircularPump;
 import org.dropco.smarthome.heating.ThreeWayValve;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import java.util.logging.Logger;
 
 public class BoilerBlocker implements Runnable {
@@ -20,6 +24,7 @@ public class BoilerBlocker implements Runnable {
     public static BoilerBlockerRelay boilerBlockerRelay;
     static AtomicBoolean state = new AtomicBoolean(false);
     public static final Logger LOGGER = Logger.getLogger(BoilerBlocker.class.getName());
+    private static List<Consumer<Boolean>> subscribers = Collections.synchronizedList(Lists.newArrayList());
 
     public BoilerBlocker(BiConsumer<String, Boolean> commandExecutor) {
         boilerBlockerRelay = new BoilerBlockerRelay(commandExecutor);
@@ -27,7 +32,7 @@ public class BoilerBlocker implements Runnable {
         ThreeWayValve.addSubscriber((state) -> update.release());
         HeatingConfiguration.addSubscriber(subs -> update.release());
         Boiler.addSubscriber(subs -> update.release());
-        ServiceMode.addSubsriber((state)->update.release());
+        ServiceMode.addSubsriber((state) -> update.release());
     }
 
     @Override
@@ -38,6 +43,7 @@ public class BoilerBlocker implements Runnable {
                     if (state.compareAndSet(true, false)) {
                         LOGGER.info("Jednorázové ohriatie vody v nádobe spustené");
                         boilerBlockerRelay.stopBlocking();
+                        raiseEvent();
                     } else {
                         if (!Boiler.getState() && (System.currentTimeMillis() - lastOneTimeStart.get()) > 30000) {
                             oneTimeManual.compareAndSet(true, false);
@@ -53,28 +59,29 @@ public class BoilerBlocker implements Runnable {
         }
     }
 
-
-
     private void normalFunctioning() {
         if (holidayMode.get()) {
             if (state.compareAndSet(false, true)) {
                 LOGGER.fine("Ohrev nádoby na vodu blokovaný pre prázdninový mód");
                 boilerBlockerRelay.startBlocking();
+                raiseEvent();
             }
         } else {
             if (SolarCircularPump.getState() && ThreeWayValve.getState() && state.compareAndSet(false, true)) {
                 LOGGER.fine("Ohrev nádoby na vodu pomocou soláru, blokujem kotol");
                 boilerBlockerRelay.startBlocking();
+                raiseEvent();
             } else {
                 boolean boilerBlock = HeatingConfiguration.getCurrent().getBoilerBlock();
                 if (state.compareAndSet(!boilerBlock, boilerBlock)) {
                     if (boilerBlock) {
                         LOGGER.fine("Ohrev nádoby na vodu zablokované");
                         boilerBlockerRelay.startBlocking();
-                    }else {
+                    } else {
                         LOGGER.fine("Ohrev nádoby na vodu povolené");
                         boilerBlockerRelay.stopBlocking();
                     }
+                    raiseEvent();
                 }
             }
         }
@@ -88,7 +95,7 @@ public class BoilerBlocker implements Runnable {
     public static void manualOverride() {
         if (oneTimeManual.compareAndSet(false, true)) {
             lastOneTimeStart.set(System.currentTimeMillis());
-            TimerService.schedule("Delayed shutdown of one time manual", () -> update.release(),35000);
+            TimerService.schedule("Delayed shutdown of one time manual", () -> update.release(), 35000);
             update.release();
         } else {
             if (oneTimeManual.compareAndSet(true, false)) {
@@ -105,6 +112,16 @@ public class BoilerBlocker implements Runnable {
         return state.get();
     }
 
+    public static void setState(boolean state) {
+        if (BoilerBlocker.state.compareAndSet(!state, state)) {
+            if (state)
+                boilerBlockerRelay.startBlocking();
+            else
+                boilerBlockerRelay.stopBlocking();
+            raiseEvent();
+        }
+    }
+
     public static void setHolidayMode(boolean holidayMode) {
         BoilerBlocker.holidayMode.set(holidayMode);
         update.release();
@@ -117,4 +134,15 @@ public class BoilerBlocker implements Runnable {
     public static boolean getHolidayMode() {
         return holidayMode.get();
     }
+
+
+    private static void raiseEvent() {
+        subscribers.forEach(sub -> sub.accept(state.get()));
+    }
+
+
+    public static void addSubscriber(Consumer<Boolean> subscriber) {
+        subscribers.add(subscriber);
+    }
+
 }
