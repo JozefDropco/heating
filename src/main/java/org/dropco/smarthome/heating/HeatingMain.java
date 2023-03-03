@@ -16,7 +16,6 @@ import org.dropco.smarthome.stats.StatsCollector;
 
 import java.util.function.BiConsumer;
 
-import static org.dropco.smarthome.heating.heater.BoilerBlocker.BOILER_BLOCK_PIN;
 import static org.dropco.smarthome.heating.pump.HeaterCircularPump.HEATER_CIRCULAR_REF_CD;
 import static org.dropco.smarthome.heating.pump.SolarCircularPump.CIRCULAR_PUMP_PORT;
 import static org.dropco.smarthome.heating.ThreeWayValve.THREE_WAY_PORT;
