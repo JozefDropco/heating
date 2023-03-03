@@ -81,7 +81,7 @@ public class HeatingMain {
             });
 
         });
-        StatsCollector.getInstance().collect("Blokovanie ohrevu TA3", Main.pinManager.getOutput(BOILER_BLOCK_PIN));
+//        StatsCollector.getInstance().collect("Blokovanie ohrevu TA3", BoilerBlocker.Main.pinManager.getOutput(BOILER_BLOCK_PIN));
         StatsCollector.getInstance().collect("Horák plynového kotla", Flame.getState(), countStats -> Flame.addSubscriber(countStats));
         StatsCollector.getInstance().collect("Kúrenie chod čerpadla", HeaterCircularPump.getState(), countStats -> HeaterCircularPump.addSubscriber(countStats));
         StatsCollector.getInstance().collect("Ohrev TA3 plynovým kotlom", Boiler.getState(), countStats -> Boiler.addSubscriber(countStats));
