@@ -283,6 +283,7 @@ public class SolarPanelStateManager {
 
     public enum Event {
         STRONG_WIND,
+        WAS_WINDY,
         WARM_WATER,
         WATER_OVERHEATED,
         PANEL_OVERHEATED,

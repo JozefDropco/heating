@@ -47,7 +47,7 @@ public class StatsDao implements Dao {
                 .where(_s.id.eq(previousId))
                 .execute();
     }
-
+//TODO: add those which has started earlier than from date and those who ended after the "to" date
     public List<AggregatedStats> listAggregatedStats(Date from, Date to){
         NumberTemplate<Long> diff = Expressions.numberTemplate(Long.class, secondsDiff, _s.fromDate,_s.toDate,to);
         NumberExpression<Long> cnt = _s.count().as("cnt");

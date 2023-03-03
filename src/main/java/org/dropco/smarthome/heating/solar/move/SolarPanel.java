@@ -97,6 +97,7 @@ public class SolarPanel {
         StrongWind.addSubscriber((state) -> {
             if (state) {
                 panelStateManager.add(SolarPanelStateManager.Event.STRONG_WIND);
+                panelStateManager.add(SolarPanelStateManager.Event.WAS_WINDY);
             } else {
                 panelStateManager.remove(SolarPanelStateManager.Event.STRONG_WIND);
             }

@@ -91,7 +91,7 @@ public class SolarWebService extends ServiceModeWebService {
             return dao.getTodaysSchedule(Calendar.getInstance().get(Calendar.MONTH)+1);
         });
         src.dayLight = DayLight.inst().enoughLight();
-        src.windy = StrongWind.isWindy();
+        src.windy = SolarMain.panelStateManager.has(SolarPanelStateManager.Event.WAS_WINDY);
 
         List<SolarPanelStep> todayRecords = Lists.newArrayList(Iterables.filter(forMonth.getSteps(), step -> TimeUtil.isAfter(Calendar.getInstance(), step.getHour(), step.getMinute())));
 

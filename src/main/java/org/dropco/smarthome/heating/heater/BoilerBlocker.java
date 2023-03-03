@@ -13,17 +13,16 @@ import java.util.logging.Logger;
 
 public class BoilerBlocker implements Runnable {
 
-    public static final String BOILER_BLOCK_PIN = "BOILER_BLOCK_PIN";
     private static AtomicBoolean holidayMode = new AtomicBoolean(false);
     private static AtomicBoolean oneTimeManual = new AtomicBoolean(false);
     private static AtomicLong lastOneTimeStart = new AtomicLong();
     static final Semaphore update = new Semaphore(0);
-    private BiConsumer<String, Boolean> commandExecutor;
+    private BoilerBlockerRelay boilerBlockerRelay;
     static AtomicBoolean state = new AtomicBoolean(false);
     public static final Logger LOGGER = Logger.getLogger(BoilerBlocker.class.getName());
 
     public BoilerBlocker(BiConsumer<String, Boolean> commandExecutor) {
-        this.commandExecutor = commandExecutor;
+        boilerBlockerRelay = new BoilerBlockerRelay(commandExecutor);
         SolarCircularPump.addSubscriber((state) -> update.release());
         ThreeWayValve.addSubscriber((state) -> update.release());
         HeatingConfiguration.addSubscriber(subs -> update.release());
@@ -38,7 +37,7 @@ public class BoilerBlocker implements Runnable {
                 if (oneTimeManual.get()) {
                     if (state.compareAndSet(true, false)) {
                         LOGGER.info("Jednorázové ohriatie vody v nádobe spustené");
-                        commandExecutor.accept(BOILER_BLOCK_PIN, false);
+                        boilerBlockerRelay.stopBlocking();
                     } else {
                         if (!Boiler.getState() && (System.currentTimeMillis() - lastOneTimeStart.get()) > 30000) {
                             oneTimeManual.compareAndSet(true, false);
@@ -54,25 +53,33 @@ public class BoilerBlocker implements Runnable {
         }
     }
 
+
+
     private void normalFunctioning() {
         if (holidayMode.get()) {
             if (state.compareAndSet(false, true)) {
                 LOGGER.fine("Ohrev nádoby na vodu blokovaný pre prázdninový mód");
-                commandExecutor.accept(BOILER_BLOCK_PIN, true);
+                boilerBlockerRelay.startBlocking();
             }
         } else {
             if (SolarCircularPump.getState() && ThreeWayValve.getState() && state.compareAndSet(false, true)) {
                 LOGGER.fine("Ohrev nádoby na vodu pomocou soláru, blokujem kotol");
-                commandExecutor.accept(BOILER_BLOCK_PIN, true);
+                boilerBlockerRelay.startBlocking();
             } else {
                 boolean boilerBlock = HeatingConfiguration.getCurrent().getBoilerBlock();
                 if (state.compareAndSet(!boilerBlock, boilerBlock)) {
-                    LOGGER.fine("Ohrev nádoby na vodu " + ((boilerBlock) ? "zablokované" : "povolené"));
-                    commandExecutor.accept(BOILER_BLOCK_PIN, boilerBlock);
+                    if (boilerBlock) {
+                        LOGGER.fine("Ohrev nádoby na vodu zablokované");
+                        boilerBlockerRelay.startBlocking();
+                    }else {
+                        LOGGER.fine("Ohrev nádoby na vodu povolené");
+                        boilerBlockerRelay.stopBlocking();
+                    }
                 }
             }
         }
     }
+
 
     public static boolean getManualOverride() {
         return oneTimeManual.get();
