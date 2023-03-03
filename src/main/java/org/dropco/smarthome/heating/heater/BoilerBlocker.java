@@ -17,7 +17,7 @@ public class BoilerBlocker implements Runnable {
     private static AtomicBoolean oneTimeManual = new AtomicBoolean(false);
     private static AtomicLong lastOneTimeStart = new AtomicLong();
     static final Semaphore update = new Semaphore(0);
-    private BoilerBlockerRelay boilerBlockerRelay;
+    public static BoilerBlockerRelay boilerBlockerRelay;
     static AtomicBoolean state = new AtomicBoolean(false);
     public static final Logger LOGGER = Logger.getLogger(BoilerBlocker.class.getName());
 
