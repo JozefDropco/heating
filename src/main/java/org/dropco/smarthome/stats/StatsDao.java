@@ -77,6 +77,12 @@ public class StatsDao implements Dao {
         this.connection = connection;
     }
 
+    public Date retrieveLastDay() {
+        return new MySQLQuery<Date>(getConnection())
+                .select(_s.fromDate.min())
+                .from(_s).fetchFirst();
+    }
+
     public static class AggregatedStats {
         public String name;
         public long count;

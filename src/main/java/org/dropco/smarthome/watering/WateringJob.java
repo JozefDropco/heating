@@ -23,8 +23,8 @@ public class WateringJob implements Runnable {
     private Thread thisThread;
     private WateringRecord record;
     private Consumer<Boolean> rainSubscriber = isRaining -> {
-        set(record.getZoneRefCode(), !isRaining);
         if (!isRaining) {
+            set(record.getZoneRefCode(), true);
             try {
                 sleep(3);
             } catch (InterruptedException e) {
@@ -34,6 +34,9 @@ public class WateringJob implements Runnable {
                 LOGGER.log(Level.INFO, "Čerpadlo nebeží, vypínam zónu " + record.getName());
                 thisThread.interrupt();
             }
+        } else {
+            set(record.getZoneRefCode(), false);
+            thisThread.interrupt();
         }
     };
     private Consumer<Boolean> pumpSubscriber = running -> {

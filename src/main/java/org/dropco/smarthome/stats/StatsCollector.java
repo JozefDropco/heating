@@ -4,7 +4,6 @@ import com.pi4j.io.gpio.GpioFactory;
 import com.pi4j.io.gpio.GpioPinDigital;
 import com.pi4j.io.gpio.PinState;
 import com.pi4j.io.gpio.event.GpioPinListenerDigital;
-import org.dropco.smarthome.watering.ServiceMode;
 import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.database.SettingsDao;
 import org.dropco.smarthome.gpioextension.DelayedGpioPinListener;
@@ -16,6 +15,9 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -23,8 +25,8 @@ import java.util.logging.Logger;
 public class StatsCollector {
     private static final StatsCollector instance = new StatsCollector();
     private static final Logger LOGGER = Logger.getLogger(StatsCollector.class.getName());
-
-    private Map<String, Long> lastIdMap = Collections.synchronizedMap(new HashMap<>());
+    private Lock lock = new ReentrantLock(true);
+    private static final Map<String, Long> lastIdMap = Collections.synchronizedMap(new HashMap<>());
     private SimpleDateFormat format = new SimpleDateFormat("dd. MM. yyyy HH:mm:ss z");
 
     public void start(SettingsDao settingsDao) {
@@ -71,31 +73,28 @@ public class StatsCollector {
     }
 
     protected void collect(boolean state, String name) {
-            if (state)
-                handle(state, name);
-            else
-                handle(state, name);
-    }
-
-
-    private void handle(boolean state, String name) {
-        if (state) {
-            if (name.length() > 100) {
-                name = name.substring(0, 99);
-            }
-            String finalName = name;
-            Db.acceptDao(new StatsDao(), statsDao -> {
-                long id = statsDao.addEntry(finalName, new Date());
-                Long prevId = lastIdMap.put(finalName, id);
-                if (prevId != null) {
-                    statsDao.finishEntry(prevId, new Date());
+        try {
+            lock.lock();
+            if (state) {
+                if (name.length() > 100) {
+                    name = name.substring(0, 99);
                 }
-            });
-        } else {
-            Long previousId = lastIdMap.remove(name);
-            if (previousId != null) {
-                Db.acceptDao(new StatsDao(), statsDao -> statsDao.finishEntry(previousId, new Date()));
+                String finalName = name;
+                Db.acceptDao(new StatsDao(), statsDao -> {
+                    long id = statsDao.addEntry(finalName, new Date());
+                    Long prevId = lastIdMap.put(finalName, id);
+                    if (prevId != null) {
+                        statsDao.finishEntry(prevId, new Date());
+                    }
+                });
+            } else {
+                Long previousId = lastIdMap.remove(name);
+                if (previousId != null) {
+                    Db.acceptDao(new StatsDao(), statsDao -> statsDao.finishEntry(previousId, new Date()));
+                }
             }
+        } finally {
+            lock.unlock();
         }
     }
 
