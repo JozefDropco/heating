@@ -67,10 +67,12 @@ public class BoilerBlocker implements Runnable {
                 raiseEvent();
             }
         } else {
-            if (SolarCircularPump.getState() && ThreeWayValve.getState() && state.compareAndSet(false, true)) {
-                LOGGER.fine("Ohrev nádoby na vodu pomocou soláru, blokujem kotol");
-                boilerBlockerRelay.startBlocking();
-                raiseEvent();
+            if (SolarCircularPump.getState() && ThreeWayValve.getState()) {
+                if (state.compareAndSet(false, true)) {
+                   LOGGER.fine("Ohrev nádoby na vodu pomocou soláru, blokujem kotol");
+                   boilerBlockerRelay.startBlocking();
+                   raiseEvent();
+                }
             } else {
                 boolean boilerBlock = HeatingConfiguration.getCurrent().getBoilerBlock();
                 if (state.compareAndSet(!boilerBlock, boilerBlock)) {
