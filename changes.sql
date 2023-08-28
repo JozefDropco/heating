@@ -1,2 +1,1 @@
-INSERT INTO `DOUBLE_SETTING` (REF_CD, VALUE, MODIFIED_TS, `GROUP`, DESCRIPTION, VALUE_TYPE)
-VALUES ('T2_WATER_DIFF_TEMP', 2.0, '2021-04-21 21:28:53', 'Kúrenie', 'Differencia pre prehriatu vodu. Súvisí z T2_WATER_THRESHOLD', 'number');
+alter table `TEMP_MEASURE_PLACE` add ADJUSTMENT_TEMP double default 0.0 null;

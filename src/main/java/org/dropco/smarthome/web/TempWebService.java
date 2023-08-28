@@ -12,6 +12,7 @@ import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.database.LogDao;
 import org.dropco.smarthome.database.querydsl.TemperatureMeasurePlace;
 import org.dropco.smarthome.heating.db.HeatingDao;
+import org.dropco.smarthome.heating.db.TempSensor;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -64,9 +65,9 @@ public class TempWebService {
                 Series currSeries = seriesMap.computeIfAbsent(tuple.get(LogDao._tlog.placeRefCd), key -> {
                     Series series = new Series();
                     series.placeRefCd = key;
-                    Tuple measurePlaceByRefCd = heatingDao.getMeasurePlaceByRefCd(key);
-                    series.name = measurePlaceByRefCd.get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.name);
-                    series.orderId = measurePlaceByRefCd.get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.orderId);
+                    TempSensor sensor = heatingDao.getDeviceByPlaceRefCd(key);
+                    series.name = sensor.getName();
+                    series.orderId = sensor.getOrderId();
                     return series;
                 });
                 Data data = new Data();
@@ -106,9 +107,9 @@ public class TempWebService {
             Series tmpSeries = seriesMap.computeIfAbsent(series, key -> {
                 Series tmp = new Series();
                 tmp.placeRefCd = key;
-                Tuple measurePlaceByRefCd = heatingDao.getMeasurePlaceByRefCd(key);
-                tmp.name = measurePlaceByRefCd.get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.name);
-                tmp.orderId = measurePlaceByRefCd.get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.orderId);
+                TempSensor sensor = heatingDao.getDeviceByPlaceRefCd(key);
+                tmp.name = sensor.getName();
+                tmp.orderId = sensor.getOrderId();
                 return tmp;
             });
             Data dt = new Data();
@@ -149,9 +150,9 @@ public class TempWebService {
                 Series currSeries = seriesMap.computeIfAbsent(tuple.get(LogDao._tlog.placeRefCd), key -> {
                     Series series = new Series();
                     series.placeRefCd = key;
-                    Tuple measurePlaceByRefCd = heatingDao.getMeasurePlaceByRefCd(key);
-                    series.name = measurePlaceByRefCd.get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.name);
-                    series.orderId = measurePlaceByRefCd.get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.orderId);
+                    TempSensor sensor = heatingDao.getDeviceByPlaceRefCd(key);
+                    series.name = sensor.getName();
+                    series.orderId = sensor.getOrderId();
                     return series;
                 });
                 Data data = new Data();

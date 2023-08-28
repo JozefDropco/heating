@@ -10,12 +10,14 @@ import com.querydsl.sql.dml.SQLUpdateClause;
 import com.querydsl.sql.mysql.MySQLQuery;
 import org.dropco.smarthome.database.Dao;
 import org.dropco.smarthome.database.querydsl.StringSetting;
+import org.dropco.smarthome.database.querydsl.TemperatureMeasurePlace;
 import org.dropco.smarthome.heating.dto.SolarHeatingSchedule;
 
 import java.sql.Connection;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 import static org.dropco.smarthome.database.querydsl.SolarHeating.SOLAR_HEATING;
 import static org.dropco.smarthome.database.querydsl.TemperatureMeasurePlace.TEMP_MEASURE_PLACE;
@@ -25,41 +27,37 @@ public class HeatingDao implements Dao {
     public static final MySQLTemplates SQL_TEMPLATES = new MySQLTemplates();
     private Connection connection;
 
-    public String getDeviceId(String placeRefCd) {
-        return new MySQLQuery<StringSetting>(getConnection()).select(TEMP_MEASURE_PLACE.devideId)
-                .from(TEMP_MEASURE_PLACE).where(TEMP_MEASURE_PLACE.placeRefCd.eq(placeRefCd)).fetchFirst();
+    public TempSensor getDeviceByPlaceRefCd(String placeRefCd) {
+        return toTempSensor(new MySQLQuery<TemperatureMeasurePlace>(getConnection()).select(TEMP_MEASURE_PLACE.all())
+                .from(TEMP_MEASURE_PLACE).where(TEMP_MEASURE_PLACE.placeRefCd.eq(placeRefCd)).fetchFirst()).get();
     }
 
-    public String getPlaceRefCd(String deviceId) {
-        return new MySQLQuery<StringSetting>(getConnection()).select(TEMP_MEASURE_PLACE.placeRefCd)
-                .from(TEMP_MEASURE_PLACE).where(TEMP_MEASURE_PLACE.devideId.eq(deviceId)).fetchFirst();
+    public Optional<TempSensor> getDeviceById(String deviceId) {
+        return toTempSensor(new MySQLQuery<TemperatureMeasurePlace>(getConnection()).select(TEMP_MEASURE_PLACE.all())
+                .from(TEMP_MEASURE_PLACE).where(TEMP_MEASURE_PLACE.devideId.eq(deviceId)).fetchFirst());
     }
 
     public SolarHeatingSchedule getCurrentRecord() {
-        Tuple tuple = new MySQLQuery<StringSetting>(getConnection(), SQL_TEMPLATES).select(SOLAR_HEATING.all())
+        Tuple tuple = new MySQLQuery<TemperatureMeasurePlace>(getConnection(), SQL_TEMPLATES).select(SOLAR_HEATING.all())
                 .from(SOLAR_HEATING).where(SOLAR_HEATING.day.eq(LocalDate.now().getDayOfWeek().getValue())
                         .and(SOLAR_HEATING.fromTime.loe(LocalTime.now()))).orderBy(SOLAR_HEATING.fromTime.desc()).fetchFirst();
         return toSolarHeating(tuple);
 
     }
     public SolarHeatingSchedule getNextRecord() {
-        Tuple tuple = new MySQLQuery<StringSetting>(getConnection(), SQL_TEMPLATES).select(SOLAR_HEATING.all())
+        Tuple tuple = new MySQLQuery<TemperatureMeasurePlace>(getConnection(), SQL_TEMPLATES).select(SOLAR_HEATING.all())
                 .from(SOLAR_HEATING).where(SOLAR_HEATING.day.eq(LocalDate.now().getDayOfWeek().getValue())
                         .and(SOLAR_HEATING.fromTime.gt(LocalTime.now()))).orderBy(SOLAR_HEATING.fromTime.asc()).fetchFirst();
         if (tuple==null) {
             LocalDate now = LocalDate.now();
             now=now.plusDays(1);
-            tuple = new MySQLQuery<StringSetting>(getConnection(), SQL_TEMPLATES).select(SOLAR_HEATING.all())
+            tuple = new MySQLQuery<TemperatureMeasurePlace>(getConnection(), SQL_TEMPLATES).select(SOLAR_HEATING.all())
                     .from(SOLAR_HEATING).where(SOLAR_HEATING.day.eq(now.getDayOfWeek().getValue())).orderBy(SOLAR_HEATING.fromTime.asc()).fetchFirst();
         }
         return toSolarHeating(tuple);
 
     }
 
-    public Tuple getMeasurePlaceByRefCd(String refCd) {
-        return new MySQLQuery<StringSetting>(getConnection()).select(TEMP_MEASURE_PLACE.all())
-                .from(TEMP_MEASURE_PLACE).where(TEMP_MEASURE_PLACE.placeRefCd.eq(refCd)).fetchFirst();
-    }
 
     public Connection getConnection() {
         return connection;
@@ -71,7 +69,7 @@ public class HeatingDao implements Dao {
     }
 
     public List<Tuple> listMeasurePlaces() {
-        return new MySQLQuery<StringSetting>(getConnection()).select(TEMP_MEASURE_PLACE.all())
+        return new MySQLQuery<TemperatureMeasurePlace>(getConnection()).select(TEMP_MEASURE_PLACE.all())
                 .from(TEMP_MEASURE_PLACE).fetch();
     }
 
@@ -133,6 +131,15 @@ public class HeatingDao implements Dao {
                 .set(SOLAR_HEATING.boilerBlocked, solarHeatingSchedule.getBoilerBlock())
                 .where(SOLAR_HEATING.id.eq(solarHeatingSchedule.getId()))
                 .execute();
+    }
+
+    private static Optional<TempSensor> toTempSensor(Tuple tuple){
+        return Optional.ofNullable(tuple).map(t -> new TempSensor()
+                .setId(t.get(TEMP_MEASURE_PLACE.devideId))
+                .setName(t.get(TEMP_MEASURE_PLACE.name))
+                .setAdjustmentTemp(t.get(TEMP_MEASURE_PLACE.adjustmentTemp))
+                .setOrderId(t.get(TEMP_MEASURE_PLACE.orderId))
+                .setPlaceRefCd(t.get(TEMP_MEASURE_PLACE.placeRefCd)));
     }
 
 }

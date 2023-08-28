@@ -11,11 +11,9 @@ import com.pi4j.temperature.TemperatureScale;
 import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.database.LogDao;
 import org.dropco.smarthome.heating.db.HeatingDao;
+import org.dropco.smarthome.heating.db.TempSensor;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.logging.Level;
@@ -24,6 +22,7 @@ import java.util.logging.Logger;
 public class TempService implements Runnable {
     private static final Map<String, AtomicDouble> recentTemperatures = new HashMap<>();
     private static final Map<String, List<Consumer<Double>>> subscribers = Maps.newHashMap();
+    protected static final double INITIAL_VALUE = -999;
 
 
     @Override
@@ -31,27 +30,32 @@ public class TempService implements Runnable {
         GpioFactory.getExecutorServiceFactory().getScheduledExecutorService().scheduleAtFixedRate(() -> {
             try {
                 W1Master master = new W1Master();
-                    List<TemperatureSensor> sensors = master.getDevices(TemperatureSensor.class);
-                    for (TemperatureSensor sensor : sensors) {
-                        W1Device device = (W1Device) sensor;
-                        double temperature = sensor.getTemperature(TemperatureScale.CELSIUS);
-                        if (!(Double.compare(temperature, 85.0d) == 0 || temperature<-55.0 || temperature>125.0)) {
-                            String deviceId = device.getId().trim();
-                            AtomicDouble value = recentTemperatures.computeIfAbsent(deviceId, key -> new AtomicDouble(-999));
-                            double oldValue = value.getAndSet(temperature);
-                            if (Double.compare(oldValue, temperature) != 0) {
-                                Db.acceptDao(new LogDao() ,log-> {
-                                    HeatingDao heatingDao = new HeatingDao();
-                                    heatingDao.setConnection(log.getConnection());
-                                    log.logTemperature(deviceId, heatingDao.getPlaceRefCd(deviceId), new Date(), temperature);});
-                                subscribers.computeIfAbsent(deviceId, key -> Lists.newArrayList()).forEach(subscriber -> subscriber.accept(temperature));
-                            }
+                List<TemperatureSensor> sensors = master.getDevices(TemperatureSensor.class);
+                for (TemperatureSensor sensor : sensors) {
+                    W1Device device = (W1Device) sensor;
+                    double temperature = sensor.getTemperature(TemperatureScale.CELSIUS);
+                    if (!(Double.compare(temperature, 85.0d) == 0 || temperature < -55.0 || temperature > 125.0)) {
+                        String deviceId = device.getId().trim();
+                        Optional<TempSensor> tempSensor = Db.applyDao(new HeatingDao(), dao -> dao.getDeviceById(deviceId));
+                        if (tempSensor.isPresent()) {
+                            temperature += tempSensor.get().getAdjustmentTemp();
                         }
+                        update(deviceId, temperature, tempSensor);
                     }
+                }
             } catch (RuntimeException e) {
                 Logger.getLogger(TempService.class.getName()).log(Level.FINE, "Temp service not working", e);
             }
         }, 0, 1, TimeUnit.MINUTES);
+    }
+
+    private static void update(String deviceId, double temperature, Optional<TempSensor> tempSensor) {
+        AtomicDouble value = recentTemperatures.computeIfAbsent(deviceId, key -> new AtomicDouble(INITIAL_VALUE));
+        double oldValue = value.getAndSet(temperature);
+        if (Double.compare(oldValue, temperature) != 0 && Double.compare(INITIAL_VALUE, oldValue) != 0) {
+            Db.acceptDao(new LogDao(), log -> log.logTemperature(deviceId, tempSensor.map(TempSensor::getPlaceRefCd).orElse(null), new Date(), temperature));
+            subscribers.computeIfAbsent(deviceId, key -> Lists.newArrayList()).forEach(subscriber -> subscriber.accept(temperature));
+        }
     }
 
 
@@ -64,15 +68,15 @@ public class TempService implements Runnable {
     }
 
     public static double getOutsideTemperature() {
-        return recentTemperatures.getOrDefault(Db.applyDao(new HeatingDao(), dao->dao.getDeviceId(TempRefCode.EXTERNAL_TEMPERATURE_PLACE_REF_CD)), new AtomicDouble(-999)).get();
+        return recentTemperatures.getOrDefault(Db.applyDao(new HeatingDao(), dao -> dao.getDeviceByPlaceRefCd(TempRefCode.EXTERNAL_TEMPERATURE_PLACE_REF_CD).getId()), new AtomicDouble(INITIAL_VALUE)).get();
     }
 
     public static double getTemperature(String deviceId) {
-        return recentTemperatures.getOrDefault(deviceId, new AtomicDouble(-999)).get();
+        return recentTemperatures.getOrDefault(deviceId, new AtomicDouble(INITIAL_VALUE)).get();
     }
 
     public static void setTemperature(String deviceId, double value) {
-        AtomicDouble tempValue = recentTemperatures.computeIfAbsent(deviceId, key -> new AtomicDouble(-999));
+        AtomicDouble tempValue = recentTemperatures.computeIfAbsent(deviceId, key -> new AtomicDouble(INITIAL_VALUE));
         double oldValue = tempValue.getAndSet(value);
         if (Double.compare(oldValue, value) != 0) {
             subscribers.computeIfAbsent(deviceId, key -> Lists.newArrayList()).forEach(subscriber -> subscriber.accept(value));

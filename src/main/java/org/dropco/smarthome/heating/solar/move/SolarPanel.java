@@ -127,7 +127,7 @@ public class SolarPanel {
     }
 
 
-    String getDeviceId(String deviceId) {
-        return Db.applyDao(new HeatingDao(), dao -> dao.getDeviceId(deviceId));
+    String getDeviceId(String measurePlace) {
+        return Db.applyDao(new HeatingDao(), dao -> dao.getDeviceByPlaceRefCd(measurePlace).getId());
     }
 }

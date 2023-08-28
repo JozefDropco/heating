@@ -69,11 +69,6 @@ public class SolarCircularPump implements Runnable {
             LOGGER.fine(T2_MEASURE_PLACE + " teplota je " + value);
             update.release();
         });
-//        SolarTemperatureWatch.addSubscriber(value -> {
-//            overheated.set(value);
-//            LOGGER.fine("Solárny panel je " + (value ? "prehriaty" : "späť v normále"));
-//            update.release();
-//        });
         ThreeWayValve.addSubscriber(value -> {
             update.release();
         });
@@ -122,8 +117,8 @@ public class SolarCircularPump implements Runnable {
     }
 
 
-    String getDeviceId(String devideId) {
-        return Db.applyDao(new HeatingDao(), dao -> dao.getDeviceId(devideId));
+    String getDeviceId(String placeRefCd) {
+        return Db.applyDao(new HeatingDao(), dao -> dao.getDeviceByPlaceRefCd(placeRefCd).getId());
     }
 
     double getStopThreshold() {

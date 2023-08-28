@@ -24,6 +24,7 @@ public class TemperatureMeasurePlace extends com.querydsl.sql.RelationalPathBase
 
     public final StringPath devideId = createString("deviceId");
     public final NumberPath<Integer> orderId = createNumber("orderId",Integer.class);
+    public final NumberPath<Double> adjustmentTemp = createNumber("adjustmentTemp",Double.class);
 
     public final StringPath name = createString("name");
 
@@ -44,6 +45,7 @@ public class TemperatureMeasurePlace extends com.querydsl.sql.RelationalPathBase
         addMetadata(devideId, ColumnMetadata.named("DEVICE_ID").withIndex(2).ofType(Types.VARCHAR).withSize(255).withDigits(5).notNull());
         addMetadata(name, ColumnMetadata.named("NAME").withIndex(3).ofType(Types.VARCHAR).withSize(50).withDigits(5).notNull());
         addMetadata(orderId, ColumnMetadata.named("ORDER_ID").withIndex(4).ofType(Types.INTEGER).withSize(50).withDigits(5).notNull());
+        addMetadata(adjustmentTemp, ColumnMetadata.named("ADJUSTMENT_TEMP").withIndex(5).ofType(Types.DECIMAL).withSize(50).withDigits(5).withSize(10).notNull());
     }
 
 }
