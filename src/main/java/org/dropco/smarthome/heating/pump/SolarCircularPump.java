@@ -118,7 +118,7 @@ public class SolarCircularPump implements Runnable {
 
 
     String getDeviceId(String placeRefCd) {
-        return Db.applyDao(new HeatingDao(), dao -> dao.getDeviceByPlaceRefCd(placeRefCd).getId());
+        return Db.applyDao(new HeatingDao(), dao -> dao.getPlaceRefCd(placeRefCd).getDeviceId());
     }
 
     double getStopThreshold() {

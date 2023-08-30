@@ -87,7 +87,7 @@ public class ThreeWayValve implements Runnable {
     }
 
     String getDeviceId(String measurePlace) {
-        return Db.applyDao(new HeatingDao(), dao-> dao.getDeviceByPlaceRefCd(measurePlace).getId());
+        return Db.applyDao(new HeatingDao(), dao-> dao.getPlaceRefCd(measurePlace).getDeviceId());
     }
 
 

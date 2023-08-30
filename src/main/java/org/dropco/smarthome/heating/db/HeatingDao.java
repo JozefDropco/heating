@@ -18,6 +18,7 @@ import java.time.LocalDate;
 import java.time.LocalTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static org.dropco.smarthome.database.querydsl.SolarHeating.SOLAR_HEATING;
 import static org.dropco.smarthome.database.querydsl.TemperatureMeasurePlace.TEMP_MEASURE_PLACE;
@@ -27,13 +28,13 @@ public class HeatingDao implements Dao {
     public static final MySQLTemplates SQL_TEMPLATES = new MySQLTemplates();
     private Connection connection;
 
-    public TempSensor getDeviceByPlaceRefCd(String placeRefCd) {
-        return toTempSensor(new MySQLQuery<TemperatureMeasurePlace>(getConnection()).select(TEMP_MEASURE_PLACE.all())
+    public MeasurePlace getPlaceRefCd(String placeRefCd) {
+        return toMeasurePlace(new MySQLQuery<TemperatureMeasurePlace>(getConnection()).select(TEMP_MEASURE_PLACE.all())
                 .from(TEMP_MEASURE_PLACE).where(TEMP_MEASURE_PLACE.placeRefCd.eq(placeRefCd)).fetchFirst()).get();
     }
 
-    public Optional<TempSensor> getDeviceById(String deviceId) {
-        return toTempSensor(new MySQLQuery<TemperatureMeasurePlace>(getConnection()).select(TEMP_MEASURE_PLACE.all())
+    public Optional<MeasurePlace> getById(String deviceId) {
+        return toMeasurePlace(new MySQLQuery<TemperatureMeasurePlace>(getConnection()).select(TEMP_MEASURE_PLACE.all())
                 .from(TEMP_MEASURE_PLACE).where(TEMP_MEASURE_PLACE.devideId.eq(deviceId)).fetchFirst());
     }
 
@@ -68,26 +69,28 @@ public class HeatingDao implements Dao {
         this.connection = connection;
     }
 
-    public List<Tuple> listMeasurePlaces() {
+    public List<MeasurePlace> list() {
         return new MySQLQuery<TemperatureMeasurePlace>(getConnection()).select(TEMP_MEASURE_PLACE.all())
-                .from(TEMP_MEASURE_PLACE).fetch();
+                .from(TEMP_MEASURE_PLACE).fetch().stream().map(HeatingDao::toMeasurePlace).map(Optional::get).collect(Collectors.toList());
     }
 
-    public void saveMeasurePlace(String name, String refCd, String deviceId, int orderId) {
+    public void saveMeasurePlace(MeasurePlace place) {
         new SQLInsertClause(getConnection(), SQLTemplates.DEFAULT, TEMP_MEASURE_PLACE)
-                .set(TEMP_MEASURE_PLACE.devideId, deviceId)
-                .set(TEMP_MEASURE_PLACE.name, name)
-                .set(TEMP_MEASURE_PLACE.placeRefCd, refCd)
-                .set(TEMP_MEASURE_PLACE.orderId, orderId)
+                .set(TEMP_MEASURE_PLACE.devideId, place.getDeviceId())
+                .set(TEMP_MEASURE_PLACE.name, place.getName())
+                .set(TEMP_MEASURE_PLACE.placeRefCd, place.getRefCd())
+                .set(TEMP_MEASURE_PLACE.adjustmentTemp, place.getAdjustmentTemp())
+                .set(TEMP_MEASURE_PLACE.orderId, place.getOrderId())
                 .execute();
     }
 
-    public void updateMeasurePlace(String name, String deviceId, String refCd, int orderId) {
+    public void updateMeasurePlace(MeasurePlace place) {
         new SQLUpdateClause(getConnection(), SQLTemplates.DEFAULT, TEMP_MEASURE_PLACE)
-                .set(TEMP_MEASURE_PLACE.devideId, deviceId)
-                .set(TEMP_MEASURE_PLACE.name, name)
-                .set(TEMP_MEASURE_PLACE.orderId, orderId)
-                .where(TEMP_MEASURE_PLACE.placeRefCd.eq(refCd))
+                .set(TEMP_MEASURE_PLACE.devideId, place.getDeviceId())
+                .set(TEMP_MEASURE_PLACE.name, place.getName())
+                .set(TEMP_MEASURE_PLACE.adjustmentTemp, place.getAdjustmentTemp())
+                .set(TEMP_MEASURE_PLACE.orderId, place.getOrderId())
+                .where(TEMP_MEASURE_PLACE.placeRefCd.eq(place.getRefCd()))
                 .execute();
     }
 
@@ -133,13 +136,13 @@ public class HeatingDao implements Dao {
                 .execute();
     }
 
-    private static Optional<TempSensor> toTempSensor(Tuple tuple){
-        return Optional.ofNullable(tuple).map(t -> new TempSensor()
-                .setId(t.get(TEMP_MEASURE_PLACE.devideId))
+    private static Optional<MeasurePlace> toMeasurePlace(Tuple tuple){
+        return Optional.ofNullable(tuple).map(t -> new MeasurePlace()
+                .setDeviceId(t.get(TEMP_MEASURE_PLACE.devideId))
                 .setName(t.get(TEMP_MEASURE_PLACE.name))
                 .setAdjustmentTemp(t.get(TEMP_MEASURE_PLACE.adjustmentTemp))
                 .setOrderId(t.get(TEMP_MEASURE_PLACE.orderId))
-                .setPlaceRefCd(t.get(TEMP_MEASURE_PLACE.placeRefCd)));
+                .setRefCd(t.get(TEMP_MEASURE_PLACE.placeRefCd)));
     }
 
 }

@@ -1,6 +1,5 @@
 package org.dropco.smarthome.web;
 
-import com.google.common.collect.Comparators;
 import com.google.common.collect.FluentIterable;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -12,7 +11,7 @@ import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.database.LogDao;
 import org.dropco.smarthome.database.querydsl.TemperatureMeasurePlace;
 import org.dropco.smarthome.heating.db.HeatingDao;
-import org.dropco.smarthome.heating.db.TempSensor;
+import org.dropco.smarthome.heating.db.MeasurePlace;
 
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DELETE;
@@ -29,7 +28,6 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
 import java.util.Collections;
@@ -65,7 +63,7 @@ public class TempWebService {
                 Series currSeries = seriesMap.computeIfAbsent(tuple.get(LogDao._tlog.placeRefCd), key -> {
                     Series series = new Series();
                     series.placeRefCd = key;
-                    TempSensor sensor = heatingDao.getDeviceByPlaceRefCd(key);
+                    org.dropco.smarthome.heating.db.MeasurePlace sensor = heatingDao.getPlaceRefCd(key);
                     series.name = sensor.getName();
                     series.orderId = sensor.getOrderId();
                     return series;
@@ -107,7 +105,7 @@ public class TempWebService {
             Series tmpSeries = seriesMap.computeIfAbsent(series, key -> {
                 Series tmp = new Series();
                 tmp.placeRefCd = key;
-                TempSensor sensor = heatingDao.getDeviceByPlaceRefCd(key);
+                org.dropco.smarthome.heating.db.MeasurePlace sensor = heatingDao.getPlaceRefCd(key);
                 tmp.name = sensor.getName();
                 tmp.orderId = sensor.getOrderId();
                 return tmp;
@@ -150,7 +148,7 @@ public class TempWebService {
                 Series currSeries = seriesMap.computeIfAbsent(tuple.get(LogDao._tlog.placeRefCd), key -> {
                     Series series = new Series();
                     series.placeRefCd = key;
-                    TempSensor sensor = heatingDao.getDeviceByPlaceRefCd(key);
+                    org.dropco.smarthome.heating.db.MeasurePlace sensor = heatingDao.getPlaceRefCd(key);
                     series.name = sensor.getName();
                     series.orderId = sensor.getOrderId();
                     return series;
@@ -175,17 +173,9 @@ public class TempWebService {
     @Path("/measurePlace")
     @Produces(MediaType.APPLICATION_JSON)
     public Response measurePlace() {
-        List<Tuple> measurePlaces = Db.applyDao(new HeatingDao(), HeatingDao::listMeasurePlaces);
-        List<MeasurePlace> result = Lists.newArrayList();
-        for (Tuple tuple : measurePlaces) {
-            MeasurePlace data = new MeasurePlace();
-            data.name = tuple.get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.name);
-            data.refCd = tuple.get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.placeRefCd);
-            data.deviceId = tuple.get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.devideId);
-            data.orderId = tuple.get(TemperatureMeasurePlace.TEMP_MEASURE_PLACE.orderId);
-            result.add(data);
-        }
-        return Response.ok(new GsonBuilder().setDateFormat("MM-dd-yyyy HH:mm:ss z").create().toJson(result)).build();
+        List<MeasurePlace> measurePlaces = Db.applyDao(new HeatingDao(), HeatingDao::list);
+
+        return Response.ok(new GsonBuilder().setDateFormat("MM-dd-yyyy HH:mm:ss z").create().toJson(measurePlaces)).build();
     }
 
     @GET
@@ -202,12 +192,12 @@ public class TempWebService {
     @Produces(MediaType.APPLICATION_JSON)
     public Response saveMeasurePlace(String payload) {
         MeasurePlace measurePlace = new Gson().fromJson(payload, MeasurePlace.class);
-        String refCd = getRefCd(measurePlace.name);
+        String refCd = getRefCd(measurePlace.getName());
         Db.acceptDao(new HeatingDao(), heatingDao -> {
-            heatingDao.saveMeasurePlace(measurePlace.name, refCd, measurePlace.deviceId, measurePlace.orderId);
+            heatingDao.saveMeasurePlace(measurePlace);
             LogDao logDao = new LogDao();
             logDao.setConnection(heatingDao.getConnection());
-            logDao.updateLogs(measurePlace.deviceId, refCd);
+            logDao.updateLogs(measurePlace.getDeviceId(), refCd);
         });
         return Response.ok().build();
     }
@@ -219,10 +209,10 @@ public class TempWebService {
     public Response editMeasurePlace(@PathParam("refCd") String refCd, String payload) {
         MeasurePlace measurePlace = new Gson().fromJson(payload, MeasurePlace.class);
         Db.acceptDao(new HeatingDao(), heatingDao -> {
-            heatingDao.updateMeasurePlace(measurePlace.name, measurePlace.deviceId, refCd, measurePlace.orderId);
+            heatingDao.updateMeasurePlace(measurePlace);
             LogDao logDao = new LogDao();
             logDao.setConnection(heatingDao.getConnection());
-            logDao.updateLogs(measurePlace.deviceId, refCd);
+            logDao.updateLogs(measurePlace.getDeviceId(), refCd);
         });
         return Response.ok().build();
     }
@@ -247,13 +237,6 @@ public class TempWebService {
         refCode = refCode.replaceAll("_{2,}", "");
         if (refCode.endsWith("_")) return refCode.substring(0, refCode.length() - 1);
         return refCode;
-    }
-
-    private static class MeasurePlace {
-        private String refCd;
-        private String name;
-        private String deviceId;
-        private int orderId;
     }
 
 

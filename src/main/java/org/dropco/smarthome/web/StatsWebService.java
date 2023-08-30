@@ -1,12 +1,10 @@
 package org.dropco.smarthome.web;
 
 import com.google.gson.GsonBuilder;
-import com.querydsl.core.Tuple;
 import org.dropco.smarthome.database.Db;
 import org.dropco.smarthome.database.LogDao;
-import org.dropco.smarthome.database.querydsl.TemperatureMeasurePlace;
 import org.dropco.smarthome.heating.db.HeatingDao;
-import org.dropco.smarthome.heating.db.TempSensor;
+import org.dropco.smarthome.heating.db.MeasurePlace;
 import org.dropco.smarthome.stats.StatsDao;
 
 import javax.ws.rs.GET;
@@ -51,7 +49,7 @@ public class StatsWebService {
             heatingDao.setConnection(logDao.getConnection());
             List<LogDao.AggregateTemp> temperatures = logDao.retrieveAggregatedTemperatures(from, finalTo);
             for (LogDao.AggregateTemp temp : temperatures) {
-                TempSensor sensor = heatingDao.getDeviceByPlaceRefCd(temp.measurePlace);
+                MeasurePlace sensor = heatingDao.getPlaceRefCd(temp.measurePlace);
                 temp.last = logDao.readLastValue(temp.measurePlace);
                 temp.measurePlace = sensor.getName();
                 temp.orderId = sensor.getOrderId();
