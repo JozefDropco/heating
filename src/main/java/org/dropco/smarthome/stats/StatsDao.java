@@ -25,8 +25,7 @@ public class StatsDao implements Dao {
     private Connection connection;
     public static Stats _s = new Stats("s");
 
-    private static final Template secondsDiff = TemplateFactory.DEFAULT.create("TIMESTAMPDIFF(SECOND,IF({0}>{1},{0},{1}),IF({2}<>NULL and {2}<{3},{2},{3}))");
-    private static final Template tick = TemplateFactory.DEFAULT.create("IF({0}>{1},0,1)");
+    private static final Template secondsDiff = TemplateFactory.DEFAULT.create("TIMESTAMPDIFF(SECOND,{0},IF({1}<{2},{1},{2}))");
 
     public void markAllFinished(Date date) {
         new SQLUpdateClause(getConnection(), SQLTemplates.DEFAULT, _s)
@@ -48,17 +47,15 @@ public class StatsDao implements Dao {
                 .where(_s.id.eq(previousId))
                 .execute();
     }
+    //TODO: add those which has started earlier than from date and those who ended after the "to" date
     public List<AggregatedStats> listAggregatedStats(Date from, Date to){
-        NumberTemplate<Long> diff = Expressions.numberTemplate(Long.class, secondsDiff, _s.fromDate,from, _s.toDate,to);
-        NumberTemplate<Long> ticker = Expressions.numberTemplate(Long.class, tick, from,_s.fromDate);
-        NumberExpression<Long> cnt = ticker.sum().as("cnt");
+        NumberTemplate<Long> diff = Expressions.numberTemplate(Long.class, secondsDiff, _s.fromDate,_s.toDate,to);
+        NumberExpression<Long> cnt = _s.count().as("cnt");
         NumberExpression<Long> sum = diff.sum().as("sum");
         List<Tuple> result = new MySQLQuery<StringSetting>(getConnection()).select(_s.name,
-                cnt,
-                sum
-        ).from(_s).where(_s.fromDate.lt(to)
-                        .and(_s.toDate.gt(from).or(_s.toDate.isNull()))
-                        .and(diff.gt(0)))
+                        cnt,
+                        sum
+                ).from(_s).where(_s.fromDate.goe(from).and(_s.fromDate.loe(to)),diff.gt(0))
                 .groupBy(_s.name)
                 .orderBy(_s.name.asc()).fetch();
         return Lists.transform(result,tmp->{
