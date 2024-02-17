@@ -22,7 +22,6 @@ public class HolidayMode implements Runnable {
     static final Semaphore update = new Semaphore(0);
 
 
-
     @Override
     public void run() {
         load();
@@ -35,16 +34,18 @@ public class HolidayMode implements Runnable {
                             BoilerBlocker.setHolidayMode(true);
                             TimerService.scheduleFor("HolidayMode", to.get(), () -> update.release());
                         } else {
-                            if (state.compareAndSet(true, false)) {
-                                from.set(null);
-                                to.set(null);
-                                update(null,null);
-                                BoilerBlocker.setHolidayMode(false);
-                            }
+                            state.set(false);
+                            from.set(null);
+                            to.set(null);
+                            update(null, null);
+                            BoilerBlocker.setHolidayMode(false);
                         }
                     } else
                         TimerService.scheduleFor("HolidayMode", from.get(), () -> update.release());
-                } else if (state.compareAndSet(true, false)) {
+                } else {
+                    state.set(false);
+                    to.set(null);
+                    update(null, null);
                     BoilerBlocker.setHolidayMode(false);
                 }
             }
@@ -71,7 +72,7 @@ public class HolidayMode implements Runnable {
     private void update(Date from, Date to) {
         Db.acceptDao(new SettingsDao(), dao -> {
             dao.setLong(HOLIDAY_FROM_DATE, Optional.ofNullable(from).map(Date::getTime).orElse(null));
-            dao.setLong(HOLIDAY_TO_DATE,Optional.ofNullable(to).map(Date::getTime).orElse(null));
+            dao.setLong(HOLIDAY_TO_DATE, Optional.ofNullable(to).map(Date::getTime).orElse(null));
         });
     }
 
@@ -90,9 +91,11 @@ public class HolidayMode implements Runnable {
     public boolean getState() {
         return state.get();
     }
+
     public Date getFrom() {
         return from.get();
     }
+
     public Date getTo() {
         return to.get();
     }
