@@ -38,6 +38,7 @@ public class HolidayMode implements Runnable {
                             if (state.compareAndSet(true, false)) {
                                 from.set(null);
                                 to.set(null);
+                                update(null,null);
                                 BoilerBlocker.setHolidayMode(false);
                             }
                         }

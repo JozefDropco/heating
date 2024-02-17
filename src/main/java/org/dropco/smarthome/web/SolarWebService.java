@@ -42,7 +42,7 @@ public class SolarWebService extends ServiceModeWebService {
 
     @GET
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getTimetable(@QueryParam("month") String month) throws ParseException {
+    public Response getTimetable(@QueryParam("month") String month) {
         SolarSchedule schedule = Db.applyDao(new SolarSystemDao(), dao -> dao.getTodaysSchedule(Integer.parseInt(month)));
         return Response.ok(new Gson().toJson(toScheduleDTO(schedule))).build();
     }
@@ -50,7 +50,7 @@ public class SolarWebService extends ServiceModeWebService {
     @GET
     @Path("/parkingPosition")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response parkingPositionGet() throws ParseException {
+    public Response parkingPositionGet() {
         boolean inParkingPosition = SolarMain.panelStateManager.has(SolarPanelStateManager.Event.PARKING_POSITION);
         return Response.ok(String.valueOf(inParkingPosition)).build();
     }
@@ -69,7 +69,7 @@ public class SolarWebService extends ServiceModeWebService {
     @POST
     @Path("/parkingPosition")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response parkingPositionSet() throws ParseException {
+    public Response parkingPositionSet() {
         if (SolarMain.panelStateManager.has(SolarPanelStateManager.Event.PARKING_POSITION))
             SolarMain.panelStateManager.remove(SolarPanelStateManager.Event.PARKING_POSITION);
         else
@@ -80,7 +80,7 @@ public class SolarWebService extends ServiceModeWebService {
     @GET
     @Path("/currentState")
     @Produces(MediaType.APPLICATION_JSON)
-    public Response getCurrentPosition() throws ParseException {
+    public Response getCurrentPosition() {
         CurrentState src = new CurrentState();
         SolarSchedule forMonth = Db.applyDao(new SolarSystemDao(), dao -> {
             AbsolutePosition lastKnownPosition = dao.getLastKnownPosition();
