@@ -89,7 +89,7 @@ public class StatsDao implements Dao {
                 .orderBy(_s.name.asc());
         MySQLQuery<Tuple> query2 = new MySQLQuery<>(getConnection()).from(_sh).select(_sh.name.as(_s.name), _sh.count.as("cnt"),_sh.secondsSum.as("sum"))
                 .where((_sh.asOfDate.goe(from)).and(_sh.asOfDate.loe(to)));
-        List<Tuple> result = new MySQLQuery<Tuple>(getConnection()).union(query2, query1)
+        List<Tuple> result = new MySQLQuery<Tuple>(getConnection()).union(query1, query2)
                 .orderBy(new OrderSpecifier<>(Order.ASC, Expressions.asString(_s.name.getMetadata().getName())))
                 .fetch();
         return Lists.transform(result, tmp -> {
