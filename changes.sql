@@ -1,1 +1,6 @@
-alter table `TEMP_MEASURE_PLACE` add ADJUSTMENT_TEMP double default 0.0 null;
+CREATE TABLE `STATS_HISTORY` (
+    TICK_COUNT long null,
+    AS_OF_DATE DATE null,
+    NAME VARCHAR(255) null,
+    SECONDS_SUM long null
+);

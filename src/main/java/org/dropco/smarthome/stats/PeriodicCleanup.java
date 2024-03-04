@@ -13,11 +13,11 @@ import java.util.logging.Logger;
 public class PeriodicCleanup {
 
 
-    public void start(){
+    public void start() {
         GpioFactory.getExecutorServiceFactory().getScheduledExecutorService().schedule(this::runCleanUp, 1, TimeUnit.MINUTES);
     }
 
-    void runCleanUp(){
+    void runCleanUp() {
         try {
             Date date = Db.applyDao(new StatsDao(), dao -> dao.retrieveLastDay());
             if (date != null) {
@@ -30,23 +30,21 @@ public class PeriodicCleanup {
                 currentCalendar.set(Calendar.SECOND, 0);
                 currentCalendar.set(Calendar.MILLISECOND, 0);
                 while (lastDay.getTime().before(currentDate)) {
-                    Db.acceptDao(new LogDao(), dao -> {
-                        Iterable<LogDao.HourAggregatedTemp> forDay = dao.retrieveForDay(lastDay.getTime());
-                        for (LogDao.HourAggregatedTemp record : forDay) {
-                            if (record.asOf.before(currentCalendar.getTime())) {
-                                dao.moveToHistory(record);
-                            }
+                    Db.acceptDao(new StatsDao(), dao -> {
+                        Iterable<StatsDao.AggregatedStats> forDay = dao.listAggregatedStats(lastDay.getTime());
+                        for (StatsDao.AggregatedStats record : forDay) {
+                            dao.moveToHistory(record,lastDay.getTime());
                         }
                     });
-                    Db.acceptDao(new LogDao(), dao -> {
+                    Db.acceptDao(new StatsDao(), dao -> {
                         dao.deleteTempData(lastDay.getTime());
                     });
                     lastDay.add(Calendar.DAY_OF_YEAR, 1);
                 }
 
             }
-        } catch (Exception e){
-            Logger.getLogger(PeriodicCleanup.class.getName()).log(Level.SEVERE,"Periodické čistenie teplôt zlyhalo", e);
+        } catch (Exception e) {
+            Logger.getLogger(PeriodicCleanup.class.getName()).log(Level.SEVERE, "Periodické čistenie statistik zlyhalo", e);
         }
         GpioFactory.getExecutorServiceFactory().getScheduledExecutorService().schedule(this::runCleanUp, 1, TimeUnit.HOURS);
     }
