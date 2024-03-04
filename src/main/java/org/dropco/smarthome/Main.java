@@ -34,6 +34,7 @@ public class Main {
             }
         });
         new PeriodicCleanup().start();
+        new org.dropco.smarthome.stats.PeriodicCleanup().start();
         WebServer webServer = new WebServer();
         webServer.start();
         Logger logger = Logger.getLogger("");
