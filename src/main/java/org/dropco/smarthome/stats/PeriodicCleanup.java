@@ -15,7 +15,6 @@ public class PeriodicCleanup {
 
     public void start() {
         GpioFactory.getExecutorServiceFactory().getScheduledExecutorService().schedule(this::runCleanUp, 1, TimeUnit.MINUTES);
-        runCleanUp();
     }
 
     void runCleanUp() {
