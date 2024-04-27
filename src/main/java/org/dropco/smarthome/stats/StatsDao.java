@@ -6,10 +6,7 @@ import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
 import com.querydsl.core.types.Template;
 import com.querydsl.core.types.TemplateFactory;
-import com.querydsl.core.types.dsl.DateExpression;
-import com.querydsl.core.types.dsl.Expressions;
-import com.querydsl.core.types.dsl.NumberExpression;
-import com.querydsl.core.types.dsl.NumberTemplate;
+import com.querydsl.core.types.dsl.*;
 import com.querydsl.sql.MySQLTemplates;
 import com.querydsl.sql.SQLTemplates;
 import com.querydsl.sql.dml.SQLDeleteClause;
@@ -76,7 +73,8 @@ public class StatsDao implements Dao {
         NumberTemplate<Long> ticker = Expressions.numberTemplate(Long.class, tick, from, _s.fromDate);
         NumberExpression<Long> cnt = ticker.sum().as("cnt");
         NumberExpression<Long> sum = diff.sum().as("sum");
-        MySQLQuery<Tuple> query1 = new MySQLQuery<StringSetting>(getConnection()).select(_s.name,
+        StringExpression name = _s.name.as("name");
+        MySQLQuery<Tuple> query1 = new MySQLQuery<StringSetting>(getConnection()).select(name,
                         cnt,
                         sum
                 ).from(_s).where(
@@ -86,7 +84,7 @@ public class StatsDao implements Dao {
                         ))
                 .groupBy(_s.name)
                 .orderBy(_s.name.asc());
-        MySQLQuery<Tuple> query2 = new MySQLQuery<>(getConnection()).from(_sh).select(_sh.name.as(_s.name), _sh.count.sum().as("cnt"),_sh.secondsSum.sum().as("sum"))
+        MySQLQuery<Tuple> query2 = new MySQLQuery<>(getConnection()).from(_sh).select(_sh.name.as("name"), _sh.count.sum().as("cnt"),_sh.secondsSum.sum().as("sum"))
                 .where((_sh.asOfDate.goe(from)).and(_sh.asOfDate.loe(to))).groupBy(_sh.name);
         List<Tuple> result = new MySQLQuery<Tuple>(getConnection()).union(query1, query2)
                 .groupBy(Expressions.asString(_s.name.getMetadata().getName()))
@@ -94,7 +92,7 @@ public class StatsDao implements Dao {
                 .fetch();
         return Lists.transform(result, tmp -> {
             AggregatedStats stats = new AggregatedStats();
-            stats.name = tmp.get(_s.name);
+            stats.name = tmp.get(name);
             stats.count = tmp.get(cnt);
             stats.secondsSum = tmp.get(sum);
             return stats;
