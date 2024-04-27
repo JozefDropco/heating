@@ -46,6 +46,6 @@ public class PeriodicCleanup {
         } catch (Exception e) {
             Logger.getLogger(PeriodicCleanup.class.getName()).log(Level.SEVERE, "Periodické čistenie statistik zlyhalo", e);
         }
-        GpioFactory.getExecutorServiceFactory().getScheduledExecutorService().schedule(this::runCleanUp, 1, TimeUnit.HOURS);
+        GpioFactory.getExecutorServiceFactory().getScheduledExecutorService().schedule(this::runCleanUp, 1, TimeUnit.DAYS);
     }
 }

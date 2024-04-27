@@ -17,7 +17,6 @@ import com.querydsl.sql.dml.SQLInsertClause;
 import com.querydsl.sql.dml.SQLUpdateClause;
 import com.querydsl.sql.mysql.MySQLQuery;
 import org.dropco.smarthome.database.Dao;
-import org.dropco.smarthome.database.LogDao;
 import org.dropco.smarthome.database.querydsl.Stats;
 import org.dropco.smarthome.database.querydsl.StatsHistory;
 import org.dropco.smarthome.database.querydsl.StringSetting;
@@ -90,6 +89,7 @@ public class StatsDao implements Dao {
         MySQLQuery<Tuple> query2 = new MySQLQuery<>(getConnection()).from(_sh).select(_sh.name.as(_s.name), _sh.count.sum().as("cnt"),_sh.secondsSum.sum().as("sum"))
                 .where((_sh.asOfDate.goe(from)).and(_sh.asOfDate.loe(to))).groupBy(_sh.name);
         List<Tuple> result = new MySQLQuery<Tuple>(getConnection()).union(query1, query2)
+                .groupBy(Expressions.asString(_s.name.getMetadata().getName()))
                 .orderBy(new OrderSpecifier<>(Order.ASC, Expressions.asString(_s.name.getMetadata().getName())))
                 .fetch();
         return Lists.transform(result, tmp -> {
