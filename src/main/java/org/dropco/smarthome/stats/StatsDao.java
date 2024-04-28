@@ -86,17 +86,19 @@ public class StatsDao implements Dao {
                 .orderBy(_s.name.asc());
         MySQLQuery<Tuple> query2 = new MySQLQuery<>(getConnection()).from(_sh).select(_sh.name.as("name"), _sh.count.sum().as("cnt"),_sh.secondsSum.sum().as("sum"))
                 .where((_sh.asOfDate.goe(from)).and(_sh.asOfDate.loe(to))).groupBy(_sh.name);
-        StringExpression nameAlias = Expressions.stringPath("name");
+        StringPath namePath = Expressions.stringPath("name");
+        NumberPath<Long> cntPath = Expressions.numberPath(Long.class,"cnt");
+        NumberPath<Long> sumPath = Expressions.numberPath(Long.class,"sum");
         List<Tuple> result = new MySQLQuery<Tuple>(getConnection())
-                .select(nameAlias,Expressions.stringPath("cnt"), Expressions.stringPath("sum")).from(new MySQLQuery<>(getConnection()).union(query1, query2).as("x"))
-                .groupBy(nameAlias)
-                .orderBy(new OrderSpecifier<>(Order.ASC, nameAlias))
+                .select(namePath, cntPath, sumPath).from(new MySQLQuery<>(getConnection()).union(query1, query2).as("x"))
+                .groupBy(namePath)
+                .orderBy(new OrderSpecifier<>(Order.ASC, namePath))
                 .fetch();
         return Lists.transform(result, tmp -> {
             AggregatedStats stats = new AggregatedStats();
-            stats.name = tmp.get(name);
-            stats.count = tmp.get(cnt);
-            stats.secondsSum = tmp.get(sum);
+            stats.name = tmp.get(namePath);
+            stats.count = tmp.get(cntPath);
+            stats.secondsSum = tmp.get(sumPath);
             return stats;
         });
     }
