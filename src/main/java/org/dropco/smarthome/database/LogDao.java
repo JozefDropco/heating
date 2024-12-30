@@ -175,7 +175,7 @@ public class LogDao implements Dao {
                         .and(_alog.date.goe(from))
                         .and(_alog.date.loe(to))
                 )
-                .orderBy(_alog.date.desc()).limit(maxCount).fetch();
+                .orderBy(_alog.date.asc(),_alog.seqId.asc()).limit(maxCount).fetch();
         return Lists.transform(result, tuple -> {
             AppMsg temp = new AppMsg();
             temp.id = tuple.get(_alog.id);

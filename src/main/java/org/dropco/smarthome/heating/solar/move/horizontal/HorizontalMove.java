@@ -57,7 +57,7 @@ public class HorizontalMove extends Thread {
                 Update upd = eventQueue.take();
                 lock.lock();
                 try {
-                    if (upd == Update.STOP) {
+                    if (upd == Update.STOP && movement.get() != null) {
                         LOGGER.log(Level.INFO, "Spätná väzba nebliká 2 sekundy, zastavujem");
                         Movement movement = this.movement.getAndSet(null);
                         if (movement != null) setState(movement, false);

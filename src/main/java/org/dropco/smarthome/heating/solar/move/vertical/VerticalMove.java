@@ -57,7 +57,7 @@ public class VerticalMove extends Thread {
                 Update upd = eventQueue.take();
                 lock.lock();
                 try {
-                    if (upd == Update.STOP) {
+                    if (upd == Update.STOP && movement.get() != null) {
                         LOGGER.log(Level.INFO, "Spätná väzba nebliká 2 sekundy, zastavujem");
                         Movement movement = this.movement.getAndSet(null);
                         if (movement != null) setState(movement, false);
@@ -66,7 +66,7 @@ public class VerticalMove extends Thread {
                     }
                     if (upd == Update.TICK) {
                         Movement movement = this.movement.get();
-                        if (movement!=null) {
+                        if (movement != null) {
                             int tick = movement.getTick();
                             tickUpdater.accept(tick);
                             if (remaining.addAndGet(-tick) == 0) {
