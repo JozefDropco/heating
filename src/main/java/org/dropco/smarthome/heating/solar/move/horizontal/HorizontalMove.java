@@ -3,6 +3,7 @@ package org.dropco.smarthome.heating.solar.move.horizontal;
 import org.dropco.smarthome.PinManager;
 import org.dropco.smarthome.heating.solar.move.Movement;
 
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.Semaphore;
@@ -60,6 +61,7 @@ public class HorizontalMove extends Thread {
                     if (upd == Update.STOP && movement.get() != null) {
                         LOGGER.log(Level.INFO, "Spätná väzba nebliká 2 sekundy, zastavujem");
                         Movement movement = this.movement.getAndSet(null);
+                        raiseWarningIfNeeded(movement);
                         if (movement != null) setState(movement, false);
                         flush.accept(null);
                         waitForEnd.signal();
@@ -80,9 +82,15 @@ public class HorizontalMove extends Thread {
             }
         }
     }
+    private void raiseWarningIfNeeded(Movement movement) {
+        int remainTicks = remaining.get();
+        if (remainTicks > 10 && remainTicks<1000) {
+            LOGGER.log(Level.WARNING, "Zastavujem pohyb na " + Optional.ofNullable(movement).map(Movement::getName).orElse("(ALE NIC)") + ", ale zostáva ešte " + remainTicks + " krokov.");
+        }
+    }
 
     public void moveTo(Movement movement) {
-        moveTo(movement, -movement.getTick() * 1000);
+        moveTo(movement, -movement.getTick() * 10000);
     }
 
     public void moveTo(Movement movement, int limit) {
