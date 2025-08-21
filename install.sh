@@ -8,6 +8,7 @@ Exec=chromium-browser
 """ > /home/jodido/.config/autostart/chrome.desktop
 
 sudo -s
+apt-get remove wayvnc
 echo "Advanced settings -> Wayland na X11 a inteface options -> OneWire"
 raspi-config
 wget https://github.com/WiringPi/WiringPi/releases/download/3.16/wiringpi_3.16_armhf.deb
