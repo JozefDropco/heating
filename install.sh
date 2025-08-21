@@ -1,4 +1,12 @@
 #!/bin/bash
+mkdir /home/jodido/.config/autostart
+echo """[Desktop entry]
+Type=Application
+Name=Chrome
+icon=chromium-browser
+Exec=chromium-browser
+""" > /home/jodido/.config/autostart/chrome.desktop
+
 sudo -s
 echo "Advanced settings -> Wayland na X11 a inteface options -> OneWire"
 raspi-config
@@ -34,5 +42,7 @@ echo """
 java  -Dhtml='/home/jodido/heating/resources' -jar /home/jodido/heating/target/heating-jar-with-dependencies.jar --heating --solar & > /var/log/heating 
 exit 0
 """ >/etc/rc.local
-sudo chmod +x /etc/rc.local
-sudo systemctl enable rc-local
+chmod +x /etc/rc.local
+systemctl enable rc-local
+/etc/vnc/vncservice start vncserver-x11-serviced
+
