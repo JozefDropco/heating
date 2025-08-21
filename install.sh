@@ -1,6 +1,6 @@
 #!/bin/bash
 sudo -s
-echo "Advanced settings -> Wayland na X11"
+echo "Advanced settings -> Wayland na X11 a inteface options -> OneWire"
 raspi-config
 wget https://github.com/WiringPi/WiringPi/releases/download/3.16/wiringpi_3.16_armhf.deb
 dpkg -i wiringpi_3.16_armhf.deb
@@ -13,9 +13,6 @@ apt-get install mariadb-server
 apt-get install phpmyadmin
 git clone https://github.com/JozefDropco/heating.git
 mvn clean package -DskipTests=true
-#zapnut VNC v konfiguracii a one wire
-# do rc.local dopisat javu jar java -jar -Dhtml='/home/pi/heating/resources' target/heating-jar-with-dependencies.jar
-# do /home/pi/autostart pridat odkaz na chrome
 #
 echo """# /etc/systemd/system/rc-local.service
 [Unit]
