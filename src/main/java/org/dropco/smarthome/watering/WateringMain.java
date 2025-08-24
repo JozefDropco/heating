@@ -7,6 +7,8 @@ import org.dropco.smarthome.dto.NamedPort;
 import org.dropco.smarthome.stats.StatsCollector;
 import org.dropco.smarthome.watering.db.WateringDao;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.Set;
 import java.util.function.Supplier;
 
@@ -15,6 +17,10 @@ public class WateringMain {
 
 
     public static void main(SettingsDao settingsDao) {
+        Logger log = Logger.getLogger("com.pi4j.component.temperature.impl");
+        log.setLevel(Level.OFF);
+        log = Logger.getLogger("com.pi4j.io.w1");
+        log.setLevel(Level.OFF);
         WaterPumpFeedback.start( Main.pinManager.getInput(WaterPumpFeedback.getMicroServicePinKey()));
         RainSensor.start( Main.pinManager.getInput(RainSensor.getMicroServicePinKey()));
         WateringThreadManager.thresholdTempValue = settingsDao.getDouble("TEMP_THRESHOLD");
